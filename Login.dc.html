@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>body{margin:0}a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-700)}</style>
+</helmet>
+
+<div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
+
+  <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
+    <div class="nav-brand" style="letter-spacing:.1em;">AURUM &amp; CO.</div>
+    <input type="checkbox" class="nav-check" id="navCheck" hidden>
+    <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <a href="Home.dc.html">Home</a>
+    <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+      <a href="Diamonds.dc.html">Diamonds</a>
+    </sc-if>
+    <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+      <a href="Jewelry.dc.html">Jewelry</a>
+    </sc-if>
+    <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+      <a href="Gemstones.dc.html">Gemstones</a>
+    </sc-if>
+    <a href="About.dc.html">About</a>
+    <a href="Contact.dc.html">Contact</a>
+    <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
+      <a href="Login.dc.html" class="btn btn-primary" aria-current="page">Login</a>
+      <a href="Register.dc.html" class="btn btn-secondary">Register</a>
+    </div>
+  </nav>
+
+  <section style="display:flex;justify-content:center;padding:96px 24px;">
+
+    <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+      <form onSubmit="{{ handleSubmit }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;">
+        <h6 style="color:var(--color-accent-700);">Welcome Back</h6>
+        <h2 style="margin-top:8px;">Log in to Your Account</h2>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px;">
+          <div class="field"><label>Email</label><input class="input" type="email" ref="{{ loginEmailRef }}" required=""/></div>
+          <div class="field"><label>Password</label><input class="input" type="password" ref="{{ loginPasswordRef }}" required=""/></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+          <a href="#" onClick="{{ goForgotEmail }}" style="font-size:12px;">Forgot password?</a>
+        </div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <p style="font-size:12px;text-align:center;margin-top:16px;opacity:.7;">No account yet? <a href="Register.dc.html">Register here</a></p>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotEmail }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleSendOtp }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;">
+        <h6 style="color:var(--color-accent-700);">Reset Password</h6>
+        <h2 style="margin-top:8px;">Forgot Your Password?</h2>
+        <p style="opacity:.7;font-size:13px;margin-top:8px;">Enter your account email — we'll send a one-time verification code.</p>
+        <div class="field" style="margin-top:20px;"><label>Email</label><input class="input" type="email" ref="{{ resetEmailRef }}" required=""/></div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <p style="font-size:12px;text-align:center;margin-top:16px;opacity:.7;"><a href="#" onClick="{{ goLogin }}">Back to login</a></p>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotOtp }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleVerifyOtp }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;text-align:center;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="margin:0 auto 16px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        <h2>Enter Verification Code</h2>
+        <p style="opacity:.7;font-size:13px;margin-top:8px;">We sent a 6-digit code to <strong>{{ resetEmail }}</strong>.</p>
+        <div class="field" style="margin-top:24px;text-align:left;">
+          <label>Verification Code</label>
+          <input class="input" style="text-align:center;letter-spacing:.4em;font-size:20px;" maxlength="6" placeholder="••••••" ref="{{ otpCodeRef }}" required=""/>
+        </div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <p style="font-size:12px;margin-top:16px;opacity:.7;">Didn't get a code? <a href="#" onClick="{{ handleSendOtp }}">Resend</a></p>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotReset }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleResetDone }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;">
+        <h6 style="color:var(--color-accent-700);">Almost Done</h6>
+        <h2 style="margin-top:8px;">Set a New Password</h2>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:20px;">
+          <div class="field"><label>New Password</label><input class="input" type="password" ref="{{ newPasswordRef }}" required=""/></div>
+          <div class="field"><label>Confirm Password</label><input class="input" type="password" ref="{{ confirmPasswordRef }}" required=""/></div>
+        </div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotDone }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:420px;text-align:center;padding:clamp(20px,6vw,56px) 40px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="2" style="margin:0 auto 16px;"><path d="M5 13l4 4L19 7"/></svg>
+        <h2>Password Updated</h2>
+        <p style="opacity:.75;font-size:14px;">You can now log in with your new password.</p>
+        <a href="#" onClick="{{ goLogin }}" class="btn btn-primary" style="margin-top:12px;">Back to Login</a>
+      </div>
+    </sc-if>
+  </section>
+
+  <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">AURUM &amp; CO.</div>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+            <a href="Diamonds.dc.html" style="color:var(--color-neutral-300);">Diamonds</a>
+          </sc-if>
+          <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+            <a href="Jewelry.dc.html" style="color:var(--color-neutral-300);">Jewelry</a>
+          </sc-if>
+          <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+            <a href="Gemstones.dc.html" style="color:var(--color-neutral-300);">Gemstones</a>
+          </sc-if>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Company</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <a href="About.dc.html" style="color:var(--color-neutral-300);">About Us</a>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Contact</a>
+          <a href="Register.dc.html" style="color:var(--color-neutral-300);">Trade Registration</a>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <span>{{ footerEmail }}</span>
+          <span>{{ footerPhone }}</span>
+          <span>New York · Antwerp · Surat</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+      <span>© 2026 Aurum &amp; Co. All rights reserved.</span>
+      <span>GIA · IGI · HRD Certified Partners</span>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    mode: 'login', showError: false, errorMessage: '', submitting: false, resetEmail: '', resetCode: '',
+    showDiamonds: true, showJewelry: true, showGemstones: true,
+    settings: { whatsapp: '15551234567', inquiryEmail: 'sales@aurumandco.com', lineId: '@aurumandco', skypeId: 'live:.cid.aurumandco' },
+  };
+  loginEmailRef = React.createRef();
+  loginPasswordRef = React.createRef();
+  resetEmailRef = React.createRef();
+  otpCodeRef = React.createRef();
+  newPasswordRef = React.createRef();
+  confirmPasswordRef = React.createRef();
+
+  async componentDidMount() {
+    const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
+    fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
+    import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
+    const { fetchCustomerSession } = await import('./utils/customerAuth.js');
+    const me = await fetchCustomerSession();
+    if (me) window.location.href = 'Dashboard.dc.html';
+  }
+
+  async postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body || {}),
+    });
+    let json = {};
+    try { json = await res.json(); } catch { /* no body */ }
+    if (!res.ok) throw new Error((json && json.error) || 'Something went wrong. Please try again.');
+    return json.data;
+  }
+
+  fail(message) {
+    this.setState({ submitting: false, showError: true, errorMessage: message });
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+    const email = this.loginEmailRef.current ? this.loginEmailRef.current.value.trim() : '';
+    const password = this.loginPasswordRef.current ? this.loginPasswordRef.current.value : '';
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/auth/login', { email, password })
+      .then(async () => {
+        const { setSessionHint } = await import('./utils/customerAuth.js');
+        setSessionHint();
+        window.location.href = 'Dashboard.dc.html';
+      })
+      .catch(err => this.fail(err.message));
+  }
+
+  handleSendOtp(e) {
+    e.preventDefault();
+    const email = (this.resetEmailRef.current ? this.resetEmailRef.current.value.trim() : '') || this.state.resetEmail;
+    if (!email) return this.fail('Enter your account email first.');
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/auth/forgot', { email })
+      .then(() => this.setState({ mode: 'forgotOtp', resetEmail: email, submitting: false, showError: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  handleVerifyOtp(e) {
+    e.preventDefault();
+    const code = this.otpCodeRef.current ? this.otpCodeRef.current.value.trim() : '';
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/auth/forgot/verify', { email: this.state.resetEmail, code })
+      .then(() => this.setState({ mode: 'forgotReset', resetCode: code, submitting: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  handleResetDone(e) {
+    e.preventDefault();
+    const newPassword = this.newPasswordRef.current ? this.newPasswordRef.current.value : '';
+    const confirm = this.confirmPasswordRef.current ? this.confirmPasswordRef.current.value : '';
+    if (newPassword !== confirm) return this.fail('Passwords do not match.');
+    if (newPassword.length < 8) return this.fail('Password must be at least 8 characters.');
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/auth/reset', { email: this.state.resetEmail, code: this.state.resetCode, newPassword })
+      .then(() => this.setState({ mode: 'forgotDone', submitting: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  renderVals() {
+    const mode = this.state.mode;
+    const labelByMode = {
+      login: 'Log In', forgotEmail: 'Send Verification Code', forgotOtp: 'Verify Code', forgotReset: 'Reset Password',
+    };
+    return {
+      isLogin: mode === 'login', isForgotEmail: mode === 'forgotEmail', isForgotOtp: mode === 'forgotOtp',
+      isForgotReset: mode === 'forgotReset', isForgotDone: mode === 'forgotDone',
+      showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
+      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@aurumandco.com',
+      footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
+      showError: this.state.showError,
+      errorMessage: this.state.errorMessage,
+      submitting: this.state.submitting,
+      submitLabel: this.state.submitting ? 'Please wait…' : (labelByMode[mode] || 'Continue'),
+      resetEmail: this.state.resetEmail || 'your email',
+      loginEmailRef: this.loginEmailRef, loginPasswordRef: this.loginPasswordRef,
+      resetEmailRef: this.resetEmailRef, otpCodeRef: this.otpCodeRef,
+      newPasswordRef: this.newPasswordRef, confirmPasswordRef: this.confirmPasswordRef,
+      handleSubmit: e => this.handleSubmit(e),
+      goForgotEmail: e => { e.preventDefault(); this.setState({ mode: 'forgotEmail', showError: false }); },
+      goLogin: e => { e.preventDefault(); this.setState({ mode: 'login', showError: false }); },
+      handleSendOtp: e => this.handleSendOtp(e),
+      handleVerifyOtp: e => this.handleVerifyOtp(e),
+      handleResetDone: e => this.handleResetDone(e),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

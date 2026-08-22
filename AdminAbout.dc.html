@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item active">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+      <div><h6 style="color:var(--color-accent-700);">Content</h6><h1 style="font-size:28px;margin-top:6px;">About Page</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-top:-16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <h4>Page Text</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">The intro, "Our Story", Mission and Vision blocks.</p>
+    <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
+      <sc-for list="{{ blockCards }}" as="b" hint-placeholder-count="4">
+        <div data-block-key="{{ b.key }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:center;min-width:0;">
+            <sc-if value="{{ b.showThumb }}" hint-placeholder-val="{{ false }}">
+              <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ b.hasImage }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ b.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                </sc-if>
+              </div>
+            </sc-if>
+            <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;">{{ b.label }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.title }}</div></div>
+          </div>
+          <button onClick="{{ b.edit }}" class="btn btn-ghost" style="flex:none;">Edit</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <h4>Our Team</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">Drag to reorder.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:16px 0 36px;">
+      <sc-for list="{{ teamCards }}" as="m" hint-placeholder-count="4">
+        <div data-team-id="{{ m.id }}" onPointerDown="{{ m.dragStart }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px;cursor:grab;user-select:none;position:relative;transform:{{ m.tileTransform }};box-shadow:{{ m.tileShadow }};opacity:{{ m.tileOpacity }};z-index:{{ m.tileZ }};transition:transform .12s ease,box-shadow .12s ease;">
+          <div style="display:flex;gap:12px;align-items:center;">
+            <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+              <sc-if value="{{ m.hasPhoto }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ m.photoUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+              </sc-if>
+            </div>
+            <div style="min-width:0;"><div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ m.name }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ m.role }}</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button onClick="{{ m.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+            <button onClick="{{ m.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+          </div>
+        </div>
+      </sc-for>
+      <button onClick="{{ openAddTeam }}" class="btn btn-secondary" style="width:fit-content;height:fit-content;align-self:start;">+ Add Team Member</button>
+    </div>
+
+    <h4>Timeline / Milestones</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">Drag to reorder.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0 36px;">
+      <sc-for list="{{ timelineCards }}" as="t" hint-placeholder-count="5">
+        <div data-timeline-id="{{ t.id }}" onPointerDown="{{ t.dragStart }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:grab;user-select:none;position:relative;transform:{{ t.tileTransform }};box-shadow:{{ t.tileShadow }};opacity:{{ t.tileOpacity }};z-index:{{ t.tileZ }};transition:transform .12s ease,box-shadow .12s ease;">
+          <div style="min-width:0;display:flex;gap:16px;align-items:baseline;">
+            <div style="font-family:var(--font-heading);font-weight:600;color:var(--color-accent-700);flex:none;">{{ t.year }}</div>
+            <div style="min-width:0;"><div style="font-weight:600;font-size:14px;">{{ t.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ t.description }}</div></div>
+          </div>
+          <div style="display:flex;gap:8px;flex:none;">
+            <button onClick="{{ t.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+            <button onClick="{{ t.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+          </div>
+        </div>
+      </sc-for>
+      <button onClick="{{ openAddTimeline }}" class="btn btn-secondary" style="width:fit-content;">+ Add Milestone</button>
+    </div>
+
+    <h4>Certifications</h4>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:16px 0 36px;">
+      <sc-for list="{{ certCards }}" as="c" hint-placeholder-count="4">
+        <div data-cert-id="{{ c.id }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px;text-align:center;">
+          <div style="width:52px;height:52px;border-radius:8px;overflow:hidden;background:rgba(127,127,127,.08);margin:0 auto 10px;">
+            <sc-if value="{{ c.hasLogo }}" hint-placeholder-val="{{ false }}">
+              <img src="{{ c.logoUrl }}" alt="" style="width:100%;height:100%;object-fit:contain;display:block;"/>
+            </sc-if>
+          </div>
+          <div style="font-weight:600;font-size:13px;">{{ c.name }}</div>
+          <div style="display:flex;gap:8px;margin-top:10px;justify-content:center;">
+            <button onClick="{{ c.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+            <button onClick="{{ c.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+          </div>
+        </div>
+      </sc-for>
+      <button onClick="{{ openAddCert }}" class="btn btn-secondary" style="width:fit-content;height:fit-content;align-self:start;">+ Add Certification</button>
+    </div>
+
+    <h4>Factory &amp; Manufacturing Gallery</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">Drag to reorder. The first photo/video is shown as the large featured tile.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px;">
+      <sc-for list="{{ galleryTiles }}" as="g" hint-placeholder-count="4">
+        <div data-gallery-id="{{ g.id }}" onPointerDown="{{ g.dragStart }}" style="position:relative;aspect-ratio:1;border:1px solid var(--color-divider);border-radius:8px;overflow:hidden;background:var(--color-surface);cursor:grab;user-select:none;transform:{{ g.tileTransform }};box-shadow:{{ g.tileShadow }};z-index:{{ g.tileZ }};opacity:{{ g.tileOpacity }};transition:transform .12s ease,box-shadow .12s ease;">
+          <sc-if value="{{ g.isImage }}" hint-placeholder-val="{{ true }}">
+            <img src="{{ g.url }}" alt="" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"/>
+          </sc-if>
+          <sc-if value="{{ g.isVideo }}" hint-placeholder-val="{{ false }}">
+            <video src="{{ g.url }}" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video>
+          </sc-if>
+          <sc-if value="{{ g.isFeatured }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;top:4px;left:4px;background:rgba(32,31,29,.75);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;pointer-events:none;">Featured</span>
+          </sc-if>
+          <button onClick="{{ g.remove }}" title="Remove" style="position:absolute;top:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">×</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin:14px 0 36px;">
+      <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;">
+        + Add Photos / Videos
+        <input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ handleGallerySelect }}" style="display:none;"/>
+      </label>
+      <sc-if value="{{ galleryUploading }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size:12px;opacity:.65;margin-left:10px;">Uploading…</span>
+      </sc-if>
+    </div>
+
+    <h4>Why Choose Us</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">Drag to reorder.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0 36px;">
+      <sc-for list="{{ whyUsCards }}" as="w" hint-placeholder-count="4">
+        <div data-whyus-id="{{ w.id }}" onPointerDown="{{ w.dragStart }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:grab;user-select:none;position:relative;transform:{{ w.tileTransform }};box-shadow:{{ w.tileShadow }};opacity:{{ w.tileOpacity }};z-index:{{ w.tileZ }};transition:transform .12s ease,box-shadow .12s ease;">
+          <div style="min-width:0;"><div style="font-weight:600;font-size:14px;">{{ w.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ w.description }}</div></div>
+          <div style="display:flex;gap:8px;flex:none;">
+            <button onClick="{{ w.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+            <button onClick="{{ w.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+          </div>
+        </div>
+      </sc-for>
+      <button onClick="{{ openAddWhyUs }}" class="btn btn-secondary" style="width:fit-content;">+ Add Bullet</button>
+    </div>
+
+    <!-- Text block dialog: hero / story / mission / vision -->
+    <sc-if value="{{ blockDialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeBlockDialog }}">
+        <div class="dialog" style="max-width:560px;max-height:88vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ blockDialogTitle }}</div>
+          <sc-if value="{{ blockCanUploadImage }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;align-items:center;margin-top:12px;">
+              <div style="width:120px;height:80px;border-radius:8px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ blockHasCurrentImage }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ blockCurrentImageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                </sc-if>
+              </div>
+              <div>
+                <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;">
+                  {{ blockUploadLabel }}
+                  <input type="file" accept="image/*" onChange="{{ handleBlockImageSelect }}" style="display:none;"/>
+                </label>
+                <sc-if value="{{ blockImageUploading }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <div class="field" style="margin-top:14px;"><label>Kicker / Label</label><input class="input" value="{{ blockForm.kicker }}" onChange="{{ blockFh.kicker }}"/></div>
+          <div class="field"><label>Title</label><input class="input" value="{{ blockForm.title }}" onChange="{{ blockFh.title }}"/></div>
+          <div class="field"><label>Body Text</label><textarea class="input" rows="4" value="{{ blockForm.body }}" onChange="{{ blockFh.body }}"></textarea></div>
+          <sc-if value="{{ blockDialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ blockDialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeBlockDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveBlock }}" class="btn btn-primary" disabled="{{ blockSaving }}">{{ blockSaveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Team member dialog -->
+    <sc-if value="{{ teamDialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeTeamDialog }}">
+        <div class="dialog" style="max-width:440px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ teamDialogTitle }}</div>
+          <sc-if value="{{ teamCanUploadPhoto }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;align-items:center;margin-top:12px;">
+              <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ teamHasCurrentPhoto }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ teamCurrentPhotoUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                </sc-if>
+              </div>
+              <div>
+                <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;">
+                  {{ teamUploadLabel }}
+                  <input type="file" accept="image/*" onChange="{{ handleTeamPhotoSelect }}" style="display:none;"/>
+                </label>
+                <sc-if value="{{ teamPhotoUploading }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ teamCannotUploadPhoto }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:12px;opacity:.6;margin-top:10px;">Save this team member first, then reopen to add a photo.</p>
+          </sc-if>
+          <div class="field" style="margin-top:12px;"><label>Name</label><input class="input" value="{{ teamForm.name }}" onChange="{{ teamFh.name }}"/></div>
+          <div class="field"><label>Role</label><input class="input" value="{{ teamForm.role }}" onChange="{{ teamFh.role }}"/></div>
+          <sc-if value="{{ teamDialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ teamDialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <sc-if value="{{ teamIsEditing }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ removeTeam }}" class="btn btn-ghost" style="margin-right:auto;color:var(--color-accent-700);">Delete</button>
+            </sc-if>
+            <button onClick="{{ closeTeamDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveTeam }}" class="btn btn-primary" disabled="{{ teamSaving }}">{{ teamSaveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Timeline dialog -->
+    <sc-if value="{{ timelineDialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeTimelineDialog }}">
+        <div class="dialog" style="max-width:440px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ timelineDialogTitle }}</div>
+          <div class="field" style="margin-top:12px;"><label>Year</label><input class="input" value="{{ timelineForm.year }}" onChange="{{ timelineFh.year }}"/></div>
+          <div class="field"><label>Title</label><input class="input" value="{{ timelineForm.title }}" onChange="{{ timelineFh.title }}"/></div>
+          <div class="field"><label>Description</label><textarea class="input" rows="3" value="{{ timelineForm.description }}" onChange="{{ timelineFh.description }}"></textarea></div>
+          <sc-if value="{{ timelineDialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ timelineDialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeTimelineDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveTimeline }}" class="btn btn-primary" disabled="{{ timelineSaving }}">{{ timelineSaveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Certification dialog -->
+    <sc-if value="{{ certDialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeCertDialog }}">
+        <div class="dialog" style="max-width:400px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ certDialogTitle }}</div>
+          <sc-if value="{{ certCanUploadLogo }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;align-items:center;margin-top:12px;">
+              <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ certHasCurrentLogo }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ certCurrentLogoUrl }}" alt="" style="width:100%;height:100%;object-fit:contain;display:block;"/>
+                </sc-if>
+              </div>
+              <div>
+                <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;">
+                  {{ certUploadLabel }}
+                  <input type="file" accept="image/*" onChange="{{ handleCertLogoSelect }}" style="display:none;"/>
+                </label>
+                <sc-if value="{{ certLogoUploading }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ certCannotUploadLogo }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:12px;opacity:.6;margin-top:10px;">Save this certification first, then reopen to add a logo.</p>
+          </sc-if>
+          <div class="field" style="margin-top:12px;"><label>Name</label><input class="input" value="{{ certForm.name }}" onChange="{{ certFh.name }}"/></div>
+          <sc-if value="{{ certDialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ certDialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <sc-if value="{{ certIsEditing }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ removeCert }}" class="btn btn-ghost" style="margin-right:auto;color:var(--color-accent-700);">Delete</button>
+            </sc-if>
+            <button onClick="{{ closeCertDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveCert }}" class="btn btn-primary" disabled="{{ certSaving }}">{{ certSaveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Why Us dialog -->
+    <sc-if value="{{ whyUsDialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeWhyUsDialog }}">
+        <div class="dialog" style="max-width:440px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ whyUsDialogTitle }}</div>
+          <div class="field" style="margin-top:12px;"><label>Title</label><input class="input" value="{{ whyUsForm.title }}" onChange="{{ whyUsFh.title }}"/></div>
+          <div class="field"><label>Description</label><textarea class="input" rows="3" value="{{ whyUsForm.description }}" onChange="{{ whyUsFh.description }}"></textarea></div>
+          <sc-if value="{{ whyUsDialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ whyUsDialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeWhyUsDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveWhyUs }}" class="btn btn-primary" disabled="{{ whyUsSaving }}">{{ whyUsSaveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  BLOCK_LABELS = { hero: 'Page Intro', story: 'Our Story', mission: 'Mission', vision: 'Vision' };
+  emptyBlockForm = { kicker: '', title: '', body: '' };
+  emptyTeamForm = { name: '', role: '' };
+  emptyTimelineForm = { year: '', title: '', description: '' };
+  emptyCertForm = { name: '' };
+  emptyWhyUsForm = { title: '', description: '' };
+
+  state = {
+    admin: null, errorMessage: '',
+    blocks: [], team: [], timeline: [], certs: [], gallery: [], whyUs: [],
+
+    blockDialogOpen: false, editingBlockKey: null, blockForm: this.emptyBlockForm, blockDialogError: '', blockSaving: false,
+    blockCurrentImageUrl: '', blockImageUploading: false,
+
+    teamDialogOpen: false, editingTeamId: null, teamForm: this.emptyTeamForm, teamDialogError: '', teamSaving: false,
+    teamCurrentPhotoUrl: '', teamPhotoUploading: false, draggingTeamId: null,
+
+    timelineDialogOpen: false, editingTimelineId: null, timelineForm: this.emptyTimelineForm, timelineDialogError: '', timelineSaving: false, draggingTimelineId: null,
+
+    certDialogOpen: false, editingCertId: null, certForm: this.emptyCertForm, certDialogError: '', certSaving: false,
+    certCurrentLogoUrl: '', certLogoUploading: false,
+
+    galleryUploading: false, draggingGalleryId: null,
+
+    whyUsDialogOpen: false, whyUsEditingId: null, whyUsForm: this.emptyWhyUsForm, whyUsDialogError: '', whyUsSaving: false, draggingWhyUsId: null,
+    newContactCount: 0,
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    this.loadAll();
+  }
+
+  async loadAll() {
+    try {
+      const res = await fetch('/api/admin/about', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load About page content.');
+      this.setState({
+        blocks: json.data.blocks || [], team: json.data.team || [], timeline: json.data.timeline || [],
+        certs: json.data.certs || [], gallery: json.data.gallery || [], whyUs: json.data.whyUs || [],
+        errorMessage: '',
+      });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  // ── Generic pointer-based drag-reorder, shared by team / timeline / gallery / why-us ──
+  // (see AdminProducts.dc.html for the original single-purpose version this generalizes)
+  beginDrag(cfg, id, e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('button')) return;
+    e.preventDefault();
+    this._drag = { ...cfg, id, changed: false };
+    this.setState({ [cfg.draggingKey]: id });
+    this._dragMove = (ev) => this.onDragMove(ev);
+    this._dragUp = () => this.endDrag();
+    window.addEventListener('pointermove', this._dragMove);
+    window.addEventListener('pointerup', this._dragUp);
+    window.addEventListener('pointercancel', this._dragUp);
+  }
+  onDragMove(e) {
+    const d = this._drag;
+    if (!d) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const tile = el && el.closest(`[data-${d.attr}]`);
+    if (!tile) return;
+    const overId = Number(tile.getAttribute(`data-${d.attr}`));
+    if (!Number.isFinite(overId) || overId === d.id) return;
+    const items = [...this.state[d.stateKey]];
+    const fromIdx = items.findIndex((x) => x.id === d.id);
+    const toIdx = items.findIndex((x) => x.id === overId);
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+    const [moved] = items.splice(fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+    d.changed = true;
+    this.setState({ [d.stateKey]: items });
+  }
+  async endDrag() {
+    window.removeEventListener('pointermove', this._dragMove);
+    window.removeEventListener('pointerup', this._dragUp);
+    window.removeEventListener('pointercancel', this._dragUp);
+    const d = this._drag;
+    this._drag = null;
+    if (!d) return;
+    this.setState({ [d.draggingKey]: null });
+    if (!d.changed) return;
+    try {
+      const res = await fetch(d.reorderUrl, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ order: this.state[d.stateKey].map((x) => x.id) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to reorder.');
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+      this.loadAll();
+    }
+  }
+
+  // ── Text blocks ──
+  openEditBlock(b) {
+    this.setState({
+      blockDialogOpen: true, editingBlockKey: b.key,
+      blockForm: { kicker: b.kicker || '', title: b.title || '', body: b.body || '' },
+      blockDialogError: '', blockCurrentImageUrl: b.imageUrl || '',
+    });
+  }
+  setBlockField(key, val) { this.setState({ blockForm: { ...this.state.blockForm, [key]: val } }); }
+  closeBlockDialog() { this.setState({ blockDialogOpen: false }); }
+  async saveBlock() {
+    const { editingBlockKey, blockForm } = this.state;
+    this.setState({ blockSaving: true, blockDialogError: '' });
+    try {
+      const res = await fetch(`/api/admin/about/blocks/${editingBlockKey}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(blockForm),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ blockDialogOpen: false, blockSaving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ blockSaving: false, blockDialogError: err.message });
+    }
+  }
+  async handleBlockImageSelect(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    this.setState({ blockImageUploading: true });
+    try {
+      const { openCropper } = await import('./utils/imageCropper.js');
+      const cropped = await openCropper(file, { title: 'Crop Image' });
+      if (!cropped) { this.setState({ blockImageUploading: false }); return; }
+      const fd = new FormData();
+      fd.append('image', cropped, cropped instanceof File ? cropped.name : 'image.webp');
+      const res = await fetch(`/api/admin/about/blocks/${this.state.editingBlockKey}/image`, { method: 'POST', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed.');
+      this.setState({ blockImageUploading: false, blockCurrentImageUrl: json.data.imageUrl });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ blockImageUploading: false, blockDialogError: err.message });
+    }
+  }
+
+  // ── Team ──
+  openAddTeam() { this.setState({ teamDialogOpen: true, editingTeamId: null, teamForm: { ...this.emptyTeamForm }, teamDialogError: '', teamCurrentPhotoUrl: '' }); }
+  openEditTeam(m) { this.setState({ teamDialogOpen: true, editingTeamId: m.id, teamForm: { name: m.name, role: m.role || '' }, teamDialogError: '', teamCurrentPhotoUrl: m.photoUrl || '' }); }
+  setTeamField(key, val) { this.setState({ teamForm: { ...this.state.teamForm, [key]: val } }); }
+  closeTeamDialog() { this.setState({ teamDialogOpen: false }); }
+  async saveTeam() {
+    const { editingTeamId, teamForm } = this.state;
+    if (!teamForm.name.trim()) { this.setState({ teamDialogError: 'Name is required.' }); return; }
+    this.setState({ teamSaving: true, teamDialogError: '' });
+    try {
+      const url = editingTeamId ? `/api/admin/about/team/${editingTeamId}` : '/api/admin/about/team';
+      const method = editingTeamId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(teamForm) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ teamDialogOpen: false, teamSaving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ teamSaving: false, teamDialogError: err.message });
+    }
+  }
+  async removeTeam() {
+    if (!this.state.editingTeamId) return;
+    if (!window.confirm('Remove this team member?')) return;
+    try {
+      const res = await fetch(`/api/admin/about/team/${this.state.editingTeamId}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.setState({ teamDialogOpen: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ teamDialogError: err.message });
+    }
+  }
+  async removeTeamById(id) {
+    try {
+      const res = await fetch(`/api/admin/about/team/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+  async handleTeamPhotoSelect(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !this.state.editingTeamId) return;
+    this.setState({ teamPhotoUploading: true });
+    try {
+      const { openCropper } = await import('./utils/imageCropper.js');
+      const cropped = await openCropper(file, { title: 'Crop Photo' });
+      if (!cropped) { this.setState({ teamPhotoUploading: false }); return; }
+      const fd = new FormData();
+      fd.append('photo', cropped, cropped instanceof File ? cropped.name : 'photo.webp');
+      const res = await fetch(`/api/admin/about/team/${this.state.editingTeamId}/photo`, { method: 'POST', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed.');
+      this.setState({ teamPhotoUploading: false, teamCurrentPhotoUrl: json.data.photoUrl });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ teamPhotoUploading: false, teamDialogError: err.message });
+    }
+  }
+
+  // ── Timeline ──
+  openAddTimeline() { this.setState({ timelineDialogOpen: true, editingTimelineId: null, timelineForm: { ...this.emptyTimelineForm }, timelineDialogError: '' }); }
+  openEditTimeline(t) { this.setState({ timelineDialogOpen: true, editingTimelineId: t.id, timelineForm: { year: t.year, title: t.title || '', description: t.description || '' }, timelineDialogError: '' }); }
+  setTimelineField(key, val) { this.setState({ timelineForm: { ...this.state.timelineForm, [key]: val } }); }
+  closeTimelineDialog() { this.setState({ timelineDialogOpen: false }); }
+  async saveTimeline() {
+    const { editingTimelineId, timelineForm } = this.state;
+    if (!timelineForm.year.trim()) { this.setState({ timelineDialogError: 'Year is required.' }); return; }
+    this.setState({ timelineSaving: true, timelineDialogError: '' });
+    try {
+      const url = editingTimelineId ? `/api/admin/about/timeline/${editingTimelineId}` : '/api/admin/about/timeline';
+      const method = editingTimelineId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(timelineForm) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ timelineDialogOpen: false, timelineSaving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ timelineSaving: false, timelineDialogError: err.message });
+    }
+  }
+  async removeTimeline(id) {
+    if (!window.confirm('Remove this milestone?')) return;
+    try {
+      const res = await fetch(`/api/admin/about/timeline/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  // ── Certifications ──
+  openAddCert() { this.setState({ certDialogOpen: true, editingCertId: null, certForm: { ...this.emptyCertForm }, certDialogError: '', certCurrentLogoUrl: '' }); }
+  openEditCert(c) { this.setState({ certDialogOpen: true, editingCertId: c.id, certForm: { name: c.name }, certDialogError: '', certCurrentLogoUrl: c.logoUrl || '' }); }
+  setCertField(key, val) { this.setState({ certForm: { ...this.state.certForm, [key]: val } }); }
+  closeCertDialog() { this.setState({ certDialogOpen: false }); }
+  async saveCert() {
+    const { editingCertId, certForm } = this.state;
+    if (!certForm.name.trim()) { this.setState({ certDialogError: 'Name is required.' }); return; }
+    this.setState({ certSaving: true, certDialogError: '' });
+    try {
+      const url = editingCertId ? `/api/admin/about/certs/${editingCertId}` : '/api/admin/about/certs';
+      const method = editingCertId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(certForm) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ certDialogOpen: false, certSaving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ certSaving: false, certDialogError: err.message });
+    }
+  }
+  async removeCert() {
+    if (!this.state.editingCertId) return;
+    if (!window.confirm('Remove this certification?')) return;
+    try {
+      const res = await fetch(`/api/admin/about/certs/${this.state.editingCertId}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.setState({ certDialogOpen: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ certDialogError: err.message });
+    }
+  }
+  async removeCertById(id) {
+    try {
+      const res = await fetch(`/api/admin/about/certs/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+  async handleCertLogoSelect(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !this.state.editingCertId) return;
+    this.setState({ certLogoUploading: true });
+    try {
+      const { openCropper } = await import('./utils/imageCropper.js');
+      const cropped = await openCropper(file, { title: 'Crop Logo' });
+      if (!cropped) { this.setState({ certLogoUploading: false }); return; }
+      const fd = new FormData();
+      fd.append('logo', cropped, cropped instanceof File ? cropped.name : 'logo.webp');
+      const res = await fetch(`/api/admin/about/certs/${this.state.editingCertId}/logo`, { method: 'POST', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed.');
+      this.setState({ certLogoUploading: false, certCurrentLogoUrl: json.data.logoUrl });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ certLogoUploading: false, certDialogError: err.message });
+    }
+  }
+
+  // ── Gallery ──
+  async handleGallerySelect(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length) return;
+    this.setState({ galleryUploading: true });
+    try {
+      const { openCropper } = await import('./utils/imageCropper.js');
+      const fd = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        if (f.type.startsWith('image/')) {
+          const cropped = await openCropper(f, { title: files.length > 1 ? `Crop Photo (${i + 1} of ${files.length})` : 'Crop Photo' });
+          if (!cropped) continue;
+          const base = (f.name || 'photo').replace(/\.[^.]+$/, '');
+          fd.append('files', cropped, cropped instanceof File ? cropped.name : `${base}.webp`);
+        } else {
+          fd.append('files', f);
+        }
+      }
+      if (!fd.has('files')) { this.setState({ galleryUploading: false }); return; }
+      const res = await fetch('/api/admin/about/gallery', { method: 'POST', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed.');
+      this.setState({ galleryUploading: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ galleryUploading: false, errorMessage: err.message });
+    }
+  }
+  async removeGalleryItem(id) {
+    if (!window.confirm('Remove this file?')) return;
+    try {
+      const res = await fetch(`/api/admin/about/gallery/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  // ── Why Us ──
+  openAddWhyUs() { this.setState({ whyUsDialogOpen: true, whyUsEditingId: null, whyUsForm: { ...this.emptyWhyUsForm }, whyUsDialogError: '' }); }
+  openEditWhyUs(w) { this.setState({ whyUsDialogOpen: true, whyUsEditingId: w.id, whyUsForm: { title: w.title, description: w.description || '' }, whyUsDialogError: '' }); }
+  setWhyUsField(key, val) { this.setState({ whyUsForm: { ...this.state.whyUsForm, [key]: val } }); }
+  closeWhyUsDialog() { this.setState({ whyUsDialogOpen: false }); }
+  async saveWhyUs() {
+    const { whyUsEditingId, whyUsForm } = this.state;
+    if (!whyUsForm.title.trim()) { this.setState({ whyUsDialogError: 'Title is required.' }); return; }
+    this.setState({ whyUsSaving: true, whyUsDialogError: '' });
+    try {
+      const url = whyUsEditingId ? `/api/admin/about/why-us/${whyUsEditingId}` : '/api/admin/about/why-us';
+      const method = whyUsEditingId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(whyUsForm) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ whyUsDialogOpen: false, whyUsSaving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ whyUsSaving: false, whyUsDialogError: err.message });
+    }
+  }
+  async removeWhyUs(id) {
+    if (!window.confirm('Remove this bullet?')) return;
+    try {
+      const res = await fetch(`/api/admin/about/why-us/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  renderVals() {
+    const blockCards = this.state.blocks.map((b) => ({
+      ...b, label: this.BLOCK_LABELS[b.key] || b.key, hasImage: !!b.imageUrl, showThumb: b.key === 'story',
+      edit: () => this.openEditBlock(b),
+    }));
+
+    const draggingTeamId = this.state.draggingTeamId;
+    const teamCards = this.state.team.map((m) => ({
+      ...m, hasPhoto: !!m.photoUrl,
+      edit: () => this.openEditTeam(m),
+      remove: () => { if (window.confirm(`Remove ${m.name}?`)) this.removeTeamById(m.id); },
+      dragStart: (e) => this.beginDrag({ stateKey: 'team', draggingKey: 'draggingTeamId', attr: 'team-id', reorderUrl: '/api/admin/about/team/reorder' }, m.id, e),
+      tileTransform: m.id === draggingTeamId ? 'scale(1.03)' : 'none',
+      tileShadow: m.id === draggingTeamId ? '0 10px 24px rgba(0,0,0,.2)' : 'none',
+      tileOpacity: m.id === draggingTeamId ? 0.9 : 1,
+      tileZ: m.id === draggingTeamId ? 5 : 1,
+    }));
+
+    const draggingTimelineId = this.state.draggingTimelineId;
+    const timelineCards = this.state.timeline.map((t) => ({
+      ...t,
+      edit: () => this.openEditTimeline(t),
+      remove: () => this.removeTimeline(t.id),
+      dragStart: (e) => this.beginDrag({ stateKey: 'timeline', draggingKey: 'draggingTimelineId', attr: 'timeline-id', reorderUrl: '/api/admin/about/timeline/reorder' }, t.id, e),
+      tileTransform: t.id === draggingTimelineId ? 'scale(1.02)' : 'none',
+      tileShadow: t.id === draggingTimelineId ? '0 10px 24px rgba(0,0,0,.16)' : 'none',
+      tileOpacity: t.id === draggingTimelineId ? 0.9 : 1,
+      tileZ: t.id === draggingTimelineId ? 5 : 1,
+    }));
+
+    const certCards = this.state.certs.map((c) => ({
+      ...c, hasLogo: !!c.logoUrl, edit: () => this.openEditCert(c),
+      remove: () => { if (window.confirm(`Remove ${c.name}?`)) this.removeCertById(c.id); },
+    }));
+
+    const draggingGalleryId = this.state.draggingGalleryId;
+    const galleryTiles = this.state.gallery.map((g, i) => ({
+      ...g, isImage: g.kind === 'image', isVideo: g.kind === 'video', isFeatured: i === 0,
+      remove: () => this.removeGalleryItem(g.id),
+      dragStart: (e) => this.beginDrag({ stateKey: 'gallery', draggingKey: 'draggingGalleryId', attr: 'gallery-id', reorderUrl: '/api/admin/about/gallery/reorder' }, g.id, e),
+      tileTransform: g.id === draggingGalleryId ? 'scale(1.06)' : 'none',
+      tileShadow: g.id === draggingGalleryId ? '0 10px 24px rgba(0,0,0,.28)' : 'none',
+      tileOpacity: g.id === draggingGalleryId ? 0.9 : 1,
+      tileZ: g.id === draggingGalleryId ? 5 : 1,
+    }));
+
+    const draggingWhyUsId = this.state.draggingWhyUsId;
+    const whyUsCards = this.state.whyUs.map((w) => ({
+      ...w,
+      edit: () => this.openEditWhyUs(w),
+      remove: () => this.removeWhyUs(w.id),
+      dragStart: (e) => this.beginDrag({ stateKey: 'whyUs', draggingKey: 'draggingWhyUsId', attr: 'whyus-id', reorderUrl: '/api/admin/about/why-us/reorder' }, w.id, e),
+      tileTransform: w.id === draggingWhyUsId ? 'scale(1.02)' : 'none',
+      tileShadow: w.id === draggingWhyUsId ? '0 10px 24px rgba(0,0,0,.16)' : 'none',
+      tileOpacity: w.id === draggingWhyUsId ? 0.9 : 1,
+      tileZ: w.id === draggingWhyUsId ? 5 : 1,
+    }));
+
+    const blockFh = {};
+    Object.keys(this.emptyBlockForm).forEach((k) => { blockFh[k] = (e) => this.setBlockField(k, e.target.value); });
+    const teamFh = {};
+    Object.keys(this.emptyTeamForm).forEach((k) => { teamFh[k] = (e) => this.setTeamField(k, e.target.value); });
+    const timelineFh = {};
+    Object.keys(this.emptyTimelineForm).forEach((k) => { timelineFh[k] = (e) => this.setTimelineField(k, e.target.value); });
+    const certFh = {};
+    Object.keys(this.emptyCertForm).forEach((k) => { certFh[k] = (e) => this.setCertField(k, e.target.value); });
+    const whyUsFh = {};
+    Object.keys(this.emptyWhyUsForm).forEach((k) => { whyUsFh[k] = (e) => this.setWhyUsField(k, e.target.value); });
+
+    return {
+      blockCards, teamCards, timelineCards, certCards, galleryTiles, whyUsCards,
+      errorMessage: this.state.errorMessage,
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+
+      blockDialogOpen: this.state.blockDialogOpen,
+      blockDialogTitle: 'Edit ' + (this.BLOCK_LABELS[this.state.editingBlockKey] || 'Text'),
+      blockCanUploadImage: this.state.editingBlockKey === 'story',
+      blockHasCurrentImage: !!this.state.blockCurrentImageUrl,
+      blockCurrentImageUrl: this.state.blockCurrentImageUrl,
+      blockUploadLabel: this.state.blockCurrentImageUrl ? 'Replace Photo' : 'Upload Photo',
+      handleBlockImageSelect: (e) => this.handleBlockImageSelect(e),
+      blockImageUploading: this.state.blockImageUploading,
+      closeBlockDialog: () => this.closeBlockDialog(),
+      blockForm: this.state.blockForm, blockFh,
+      saveBlock: () => this.saveBlock(),
+      blockSaving: this.state.blockSaving,
+      blockSaveLabel: this.state.blockSaving ? 'Saving…' : 'Save',
+      blockDialogError: this.state.blockDialogError,
+
+      openAddTeam: () => this.openAddTeam(),
+      teamDialogOpen: this.state.teamDialogOpen,
+      teamDialogTitle: this.state.editingTeamId ? 'Edit Team Member' : 'Add Team Member',
+      teamIsEditing: !!this.state.editingTeamId,
+      teamCanUploadPhoto: !!this.state.editingTeamId,
+      teamCannotUploadPhoto: !this.state.editingTeamId,
+      teamHasCurrentPhoto: !!this.state.teamCurrentPhotoUrl,
+      teamCurrentPhotoUrl: this.state.teamCurrentPhotoUrl,
+      teamUploadLabel: this.state.teamCurrentPhotoUrl ? 'Replace Photo' : 'Upload Photo',
+      handleTeamPhotoSelect: (e) => this.handleTeamPhotoSelect(e),
+      teamPhotoUploading: this.state.teamPhotoUploading,
+      closeTeamDialog: () => this.closeTeamDialog(),
+      teamForm: this.state.teamForm, teamFh,
+      saveTeam: () => this.saveTeam(),
+      removeTeam: () => this.removeTeam(),
+      teamSaving: this.state.teamSaving,
+      teamSaveLabel: this.state.teamSaving ? 'Saving…' : 'Save',
+      teamDialogError: this.state.teamDialogError,
+
+      openAddTimeline: () => this.openAddTimeline(),
+      timelineDialogOpen: this.state.timelineDialogOpen,
+      timelineDialogTitle: this.state.editingTimelineId ? 'Edit Milestone' : 'Add Milestone',
+      closeTimelineDialog: () => this.closeTimelineDialog(),
+      timelineForm: this.state.timelineForm, timelineFh,
+      saveTimeline: () => this.saveTimeline(),
+      timelineSaving: this.state.timelineSaving,
+      timelineSaveLabel: this.state.timelineSaving ? 'Saving…' : 'Save',
+      timelineDialogError: this.state.timelineDialogError,
+
+      openAddCert: () => this.openAddCert(),
+      certDialogOpen: this.state.certDialogOpen,
+      certDialogTitle: this.state.editingCertId ? 'Edit Certification' : 'Add Certification',
+      certIsEditing: !!this.state.editingCertId,
+      certCanUploadLogo: !!this.state.editingCertId,
+      certCannotUploadLogo: !this.state.editingCertId,
+      certHasCurrentLogo: !!this.state.certCurrentLogoUrl,
+      certCurrentLogoUrl: this.state.certCurrentLogoUrl,
+      certUploadLabel: this.state.certCurrentLogoUrl ? 'Replace Logo' : 'Upload Logo',
+      handleCertLogoSelect: (e) => this.handleCertLogoSelect(e),
+      certLogoUploading: this.state.certLogoUploading,
+      closeCertDialog: () => this.closeCertDialog(),
+      certForm: this.state.certForm, certFh,
+      saveCert: () => this.saveCert(),
+      removeCert: () => this.removeCert(),
+      certSaving: this.state.certSaving,
+      certSaveLabel: this.state.certSaving ? 'Saving…' : 'Save',
+      certDialogError: this.state.certDialogError,
+
+      handleGallerySelect: (e) => this.handleGallerySelect(e),
+      galleryUploading: this.state.galleryUploading,
+
+      openAddWhyUs: () => this.openAddWhyUs(),
+      whyUsDialogOpen: this.state.whyUsDialogOpen,
+      whyUsDialogTitle: this.state.whyUsEditingId ? 'Edit Bullet' : 'Add Bullet',
+      closeWhyUsDialog: () => this.closeWhyUsDialog(),
+      whyUsForm: this.state.whyUsForm, whyUsFh,
+      saveWhyUs: () => this.saveWhyUs(),
+      whyUsSaving: this.state.whyUsSaving,
+      whyUsSaveLabel: this.state.whyUsSaving ? 'Saving…' : 'Save',
+      whyUsDialogError: this.state.whyUsDialogError,
+
+      stop: (e) => e.stopPropagation(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

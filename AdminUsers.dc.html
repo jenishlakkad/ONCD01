@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item active">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+      <div><h6 style="color:var(--color-accent-700);">People</h6><h1 style="font-size:28px;margin-top:6px;">User Approval</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+
+    <p style="opacity:.65;font-size:13px;margin-top:-16px;">New registrations start Pending. Approve to grant login and pricing access, Suspend to revoke it.</p>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-top:16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <div class="tbl-wrap"><table class="table" style="margin-top:20px;">
+      <thead><tr><th class="adm-th">Name</th><th class="adm-th">Company</th><th class="adm-th">Country</th><th class="adm-th">Status</th><th class="adm-th">Actions</th></tr></thead>
+      <tbody>
+        <sc-for list="{{ users }}" as="u" hint-placeholder-count="6">
+          <tr>
+            <td class="adm-td">{{ u.name }}<div style="font-size:11px;opacity:.55;">{{ u.email }}</div></td>
+            <td class="adm-td">{{ u.company }}</td>
+            <td class="adm-td">{{ u.country }}</td>
+            <td class="adm-td"><span class="tag {{ u.tagClass }}">{{ u.status }}</span></td>
+            <td class="adm-td">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button onClick="{{ u.details }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Details</button>
+                <sc-if value="{{ u.canApprove }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ u.approve }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Approve</button>
+                </sc-if>
+                <sc-if value="{{ u.canReject }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ u.reject }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Reject</button>
+                </sc-if>
+                <sc-if value="{{ u.canSuspend }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ u.suspend }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Suspend</button>
+                </sc-if>
+                <sc-if value="{{ u.canReactivate }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ u.reactivate }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Reactivate</button>
+                </sc-if>
+              </div>
+            </td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+
+    <sc-if value="{{ detailOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDetails }}">
+        <div class="dialog" style="max-width:640px;max-height:88vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ detail.name }}</div>
+          <p style="font-size:12px;opacity:.6;margin-top:-6px;">{{ detail.email }} · Registered {{ detail.registeredDate }} · <span class="tag {{ detail.tagClass }}">{{ detail.status }}</span></p>
+
+          <h5 style="margin-top:20px;color:var(--color-accent-700);">Registration Info</h5>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;font-size:13px;margin-top:10px;">
+            <div><span style="opacity:.6;">Mobile</span><div>{{ detail.mobile }}</div></div>
+            <div><span style="opacity:.6;">Country</span><div>{{ detail.country }}</div></div>
+            <div><span style="opacity:.6;">State</span><div>{{ detail.state }}</div></div>
+            <div><span style="opacity:.6;">City</span><div>{{ detail.city }}</div></div>
+            <div><span style="opacity:.6;">Company</span><div>{{ detail.company }}</div></div>
+            <div><span style="opacity:.6;">Business Type</span><div>{{ detail.businessType }}</div></div>
+            <div><span style="opacity:.6;">Website</span><div>{{ detail.website }}</div></div>
+          </div>
+          <sc-if value="{{ detail.hasMessage }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;font-size:13px;"><span style="opacity:.6;">Message at registration</span><p style="margin-top:4px;opacity:.85;">{{ detail.message }}</p></div>
+          </sc-if>
+
+          <h5 style="margin-top:24px;color:var(--color-accent-700);">Current Cart ({{ cartCount }})</h5>
+          <sc-if value="{{ detailLoading }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:12px;opacity:.6;margin-top:8px;">Loading…</p>
+          </sc-if>
+          <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ false }}">
+            <div class="tbl-wrap"><table class="table" style="margin-top:8px;">
+              <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Name</th><th class="adm-th">Qty</th><th class="adm-th">Price</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ cartRows }}" as="c" hint-placeholder-count="3">
+                  <tr><td class="adm-td">{{ c.sku }}</td><td class="adm-td">{{ c.name }}</td><td class="adm-td">{{ c.qty }}</td><td class="adm-td">{{ c.priceLabel }}</td></tr>
+                </sc-for>
+              </tbody>
+            </table></div>
+          </sc-if>
+          <sc-if value="{{ hasNoCart }}" hint-placeholder-val="{{ true }}">
+            <p style="font-size:12px;opacity:.6;margin-top:8px;">Cart is empty.</p>
+          </sc-if>
+
+          <h5 style="margin-top:24px;color:var(--color-accent-700);">Saved Items ({{ savedCount }})</h5>
+          <sc-if value="{{ hasSaved }}" hint-placeholder-val="{{ false }}">
+            <div class="tbl-wrap"><table class="table" style="margin-top:8px;">
+              <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Name</th><th class="adm-th">Price</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ savedRows }}" as="s" hint-placeholder-count="2">
+                  <tr><td class="adm-td">{{ s.sku }}</td><td class="adm-td">{{ s.name }}</td><td class="adm-td">{{ s.priceLabel }}</td></tr>
+                </sc-for>
+              </tbody>
+            </table></div>
+          </sc-if>
+          <sc-if value="{{ hasNoSaved }}" hint-placeholder-val="{{ true }}">
+            <p style="font-size:12px;opacity:.6;margin-top:8px;">No saved items.</p>
+          </sc-if>
+
+          <h5 style="margin-top:24px;color:var(--color-accent-700);">Inquiry History ({{ inquiryCount }} sent, {{ inquiryItemsTotal }} products total)</h5>
+          <sc-if value="{{ hasInquiries }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+              <sc-for list="{{ inquiryRows }}" as="inq" hint-placeholder-count="2">
+                <div style="border:1px solid var(--color-divider);border-radius:8px;padding:10px 12px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;opacity:.7;">
+                    <span>{{ inq.date }} · {{ inq.channelLabel }}</span>
+                    <span class="tag {{ inq.tagClass }}">{{ inq.status }}</span>
+                  </div>
+                  <div style="margin-top:6px;font-size:13px;">
+                    <sc-for list="{{ inq.items }}" as="it" hint-placeholder-count="2">
+                      <div>{{ it.sku }} — {{ it.name }} (Qty {{ it.qty }})</div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasNoInquiries }}" hint-placeholder-val="{{ true }}">
+            <p style="font-size:12px;opacity:.6;margin-top:8px;">No inquiries sent yet.</p>
+          </sc-if>
+
+          <sc-if value="{{ detailError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:14px;">{{ detailError }}</p>
+          </sc-if>
+
+          <div class="dialog-actions">
+            <button onClick="{{ closeDetails }}" class="btn btn-primary">Close</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    admin: null, users: [], errorMessage: '', newContactCount: 0,
+    detailOpen: false, detailCustomer: null, cart: [], inquiries: [], savedItems: [], detailLoading: false, detailError: '',
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    this.loadUsers();
+  }
+
+  async loadUsers() {
+    try {
+      const res = await fetch('/api/admin/customers', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load users.');
+      this.setState({ users: json.data, errorMessage: '' });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  openDetails(u) {
+    this.setState({ detailOpen: true, detailCustomer: u, cart: [], inquiries: [], savedItems: [], detailLoading: true, detailError: '' });
+    Promise.all([
+      fetch(`/api/admin/customers/${u.id}/cart`, { credentials: 'same-origin' }).then((r) => r.json()),
+      fetch(`/api/admin/customers/${u.id}/inquiries`, { credentials: 'same-origin' }).then((r) => r.json()),
+      fetch(`/api/admin/customers/${u.id}/saved-items`, { credentials: 'same-origin' }).then((r) => r.json()),
+    ]).then(([cartJson, inqJson, savedJson]) => {
+      this.setState({ cart: cartJson.data || [], inquiries: inqJson.data || [], savedItems: savedJson.data || [], detailLoading: false });
+    }).catch((err) => {
+      this.setState({ detailLoading: false, detailError: err.message || 'Failed to load details.' });
+    });
+  }
+
+  closeDetails() { this.setState({ detailOpen: false }); }
+
+  async setStatus(id, action) {
+    try {
+      const res = await fetch(`/api/admin/customers/${id}/${action}`, { method: 'POST', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Action failed.');
+      this.loadUsers();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  renderVals() {
+    const statusLabel = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const tagClassFor = (s) => s === 'approved' ? 'tag-accent' : s === 'suspended' ? 'tag-outline' : 'tag-neutral';
+    const fmtDate = (d) => {
+      if (!d) return '—';
+      const dt = new Date((d || '').replace(' ', 'T'));
+      return isNaN(dt) ? d : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+    const users = this.state.users.map((u) => ({
+      name: u.full_name, email: u.email, company: u.company_name || '—', country: u.country || '—',
+      status: statusLabel(u.status),
+      tagClass: tagClassFor(u.status),
+      canApprove: u.status === 'pending' || u.status === 'rejected',
+      canReject: u.status === 'pending',
+      canSuspend: u.status === 'approved',
+      canReactivate: u.status === 'suspended',
+      approve: () => this.setStatus(u.id, 'approve'),
+      reject: () => this.setStatus(u.id, 'reject'),
+      suspend: () => this.setStatus(u.id, 'suspend'),
+      reactivate: () => this.setStatus(u.id, 'reactivate'),
+      details: () => this.openDetails(u),
+    }));
+
+    const dc = this.state.detailCustomer;
+    const detail = dc ? {
+      name: dc.full_name, email: dc.email, mobile: dc.mobile || '—',
+      country: dc.country || '—', state: dc.state || '—', city: dc.city || '—',
+      company: dc.company_name || '—', businessType: dc.business_type || '—', website: dc.website || '—',
+      status: statusLabel(dc.status), tagClass: tagClassFor(dc.status), registeredDate: fmtDate(dc.created_at),
+      message: dc.message || '', hasMessage: !!dc.message,
+    } : { name: '', email: '', mobile: '', country: '', state: '', city: '', company: '', businessType: '', website: '', status: '', tagClass: '', registeredDate: '', message: '', hasMessage: false };
+
+    const channelLabels = { whatsapp: 'WhatsApp', email: 'Email', line: 'LINE', skype: 'Skype' };
+    const cartRows = this.state.cart;
+    const inquiryRows = this.state.inquiries.map((inq) => ({
+      date: fmtDate(inq.createdAt), channelLabel: channelLabels[inq.channel] || inq.channel,
+      status: statusLabel(inq.status), tagClass: inq.status === 'replied' ? 'tag-accent' : 'tag-neutral',
+      items: inq.items,
+    }));
+    const inquiryItemsTotal = this.state.inquiries.reduce((sum, inq) => sum + (inq.items ? inq.items.length : 0), 0);
+
+    return {
+      users,
+      errorMessage: this.state.errorMessage,
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+      detailOpen: this.state.detailOpen,
+      detail,
+      detailLoading: this.state.detailLoading,
+      detailError: this.state.detailError,
+      closeDetails: () => this.closeDetails(),
+      stop: (e) => e.stopPropagation(),
+      cartRows, cartCount: cartRows.length, hasCart: cartRows.length > 0, hasNoCart: cartRows.length === 0,
+      savedRows: this.state.savedItems, savedCount: this.state.savedItems.length,
+      hasSaved: this.state.savedItems.length > 0, hasNoSaved: this.state.savedItems.length === 0,
+      inquiryRows, inquiryCount: inquiryRows.length, inquiryItemsTotal,
+      hasInquiries: inquiryRows.length > 0, hasNoInquiries: inquiryRows.length === 0,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

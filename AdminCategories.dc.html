@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+.drag-handle{cursor:grab;opacity:.4;font-size:14px;user-select:none;touch-action:none;}
+.drag-handle[data-disabled="true"]{cursor:default;opacity:.15;}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item active">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><h6 style="color:var(--color-accent-700);">Catalog</h6><h1 style="font-size:28px;margin-top:6px;">Categories</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+    <p style="opacity:.65;font-size:13px;margin-top:-16px;margin-bottom:20px;">Categories and subcategories drive both the product form dropdowns and the storefront filter pills — changes here reflect on the site immediately.</p>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-bottom:16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div class="seg">
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isDiamondTab }}" onChange="{{ selectDiamondTab }}"/>Diamonds ({{ diamondCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isJewelryTab }}" onChange="{{ selectJewelryTab }}"/>Jewelry ({{ jewelryCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isGemstoneTab }}" onChange="{{ selectGemstoneTab }}"/>Gemstones ({{ gemstoneCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isSubcategoryTab }}" onChange="{{ selectSubcategoryTab }}"/>Subcategories ({{ subcategoryCount }})</label>
+      </div>
+      <button onClick="{{ openAdd }}" class="btn btn-primary">+ Add {{ addLabel }}</button>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="position:relative;flex:1;min-width:220px;max-width:360px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="input" value="{{ search }}" onChange="{{ handleSearch }}" placeholder="Search by name…" style="padding-left:34px;width:100%;box-sizing:border-box;"/>
+      </div>
+      <sc-if value="{{ isGemstoneTab }}" hint-placeholder-val="{{ false }}">
+        <div class="seg">
+          <label class="seg-opt"><input type="radio" name="origin" checked="{{ isGemAll }}" onChange="{{ selectGemAll }}"/>All</label>
+          <label class="seg-opt"><input type="radio" name="origin" checked="{{ isGemNatural }}" onChange="{{ selectGemNatural }}"/>Natural</label>
+          <label class="seg-opt"><input type="radio" name="origin" checked="{{ isGemLab }}" onChange="{{ selectGemLab }}"/>Lab Created</label>
+        </div>
+      </sc-if>
+      <span style="font-size:12px;opacity:.6;margin-left:auto;">{{ visibleRows.length }} of {{ totalForTab }}</span>
+    </div>
+
+    <sc-if value="{{ reorderHint }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:11.5px;opacity:.55;margin:-4px 0 12px;">{{ reorderHint }}</p>
+    </sc-if>
+
+    <div class="tbl-wrap"><table class="table">
+      <thead><tr><th class="adm-th" style="width:30px;"></th><th class="adm-th">Name</th><th class="adm-th">Products</th><th class="adm-th">Status</th><th class="adm-th">Actions</th></tr></thead>
+      <tbody>
+        <sc-for list="{{ visibleRows }}" as="r" hint-placeholder-count="6">
+          <tr data-row-id="{{ r.id }}" style="opacity:{{ r.rowOpacity }};transform:{{ r.rowTransform }};transition:transform .12s ease;">
+            <td class="adm-td">
+              <span class="drag-handle" data-disabled="{{ r.dragDisabled }}" onPointerDown="{{ r.dragStart }}" title="Drag to reorder">⠿</span>
+            </td>
+            <td class="adm-td">{{ r.name }}</td>
+            <td class="adm-td">{{ r.productCount }}</td>
+            <td class="adm-td"><span class="tag {{ r.statusTagClass }}">{{ r.statusLabel }}</span></td>
+            <td class="adm-td">
+              <div style="display:flex;gap:6px;">
+                <button onClick="{{ r.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+                <button onClick="{{ r.toggle }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">{{ r.toggleLabel }}</button>
+                <button onClick="{{ r.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+
+    <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDialog }}">
+        <div class="dialog" style="max-width:420px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ dialogTitle }}</div>
+          <div class="field" style="margin-top:10px;">
+            <label>Name</label>
+            <input class="input" value="{{ form.name }}" onChange="{{ setFormName }}" placeholder="e.g. Rings"/>
+          </div>
+          <sc-if value="{{ showOriginChoice }}" hint-placeholder-val="{{ false }}">
+            <div class="field" style="margin-top:10px;">
+              <label>Origin</label>
+              <select class="input" value="{{ form.groupKey }}" onChange="{{ setFormGroup }}">
+                <option value="natural">Natural</option>
+                <option value="lab">Lab Created</option>
+              </select>
+            </div>
+          </sc-if>
+          <sc-if value="{{ dialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:12px;">{{ dialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveForm }}" class="btn btn-primary" disabled="{{ saving }}">{{ saveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    admin: null, errorMessage: '', newContactCount: 0,
+    activeType: 'diamond', gemOrigin: 'natural', search: '',
+    categories: [], subcategories: [],
+    dialogOpen: false, editingId: null, editingKind: null,
+    form: { name: '', groupKey: 'natural' }, dialogError: '', saving: false,
+    draggingId: null,
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    this.filters = await import('./utils/filters.js');
+    this.loadAll();
+  }
+
+  async loadAll() {
+    try {
+      const [catRes, subRes] = await Promise.all([
+        fetch('/api/admin/categories', { credentials: 'same-origin' }),
+        fetch('/api/admin/categories/subcategories', { credentials: 'same-origin' }),
+      ]);
+      const catJson = await catRes.json();
+      const subJson = await subRes.json();
+      if (!catRes.ok) throw new Error(catJson.error || 'Failed to load categories.');
+      if (!subRes.ok) throw new Error(subJson.error || 'Failed to load subcategories.');
+      this.setState({ categories: catJson.data, subcategories: subJson.data, errorMessage: '' });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  canReorder() {
+    if (this.state.search.trim()) return false;
+    if (this.state.activeType === 'gemstone' && this.state.gemOrigin === 'all') return false;
+    return true;
+  }
+
+  handleSearch(e) { this.setState({ search: e.target.value }); }
+
+  openAdd() {
+    if (this.state.activeType === 'subcategory') {
+      this.setState({ dialogOpen: true, editingId: null, editingKind: 'subcategory', form: { name: '', groupKey: 'natural' }, dialogError: '' });
+      return;
+    }
+    const groupKey = this.state.activeType === 'gemstone' ? (this.state.gemOrigin === 'lab' ? 'lab' : 'natural') : null;
+    this.setState({ dialogOpen: true, editingId: null, editingKind: 'category', form: { name: '', groupKey }, dialogError: '' });
+  }
+
+  openEditCategory(c) {
+    this.setState({ dialogOpen: true, editingId: c.id, editingKind: 'category', form: { name: c.name, groupKey: c.groupKey || null }, dialogError: '' });
+  }
+  openEditSubcategory(s) {
+    this.setState({ dialogOpen: true, editingId: s.id, editingKind: 'subcategory', form: { name: s.name, groupKey: null }, dialogError: '' });
+  }
+  closeDialog() { this.setState({ dialogOpen: false }); }
+  setFormName(e) { this.setState({ form: { ...this.state.form, name: e.target.value } }); }
+  setFormGroup(e) { this.setState({ form: { ...this.state.form, groupKey: e.target.value } }); }
+
+  async saveForm() {
+    const name = (this.state.form.name || '').trim();
+    if (!name) { this.setState({ dialogError: 'Name is required.' }); return; }
+    this.setState({ saving: true, dialogError: '' });
+    try {
+      const { editingId, editingKind, form } = this.state;
+      let url, method, body;
+      if (editingKind === 'subcategory') {
+        url = editingId ? `/api/admin/categories/subcategories/${editingId}` : '/api/admin/categories/subcategories';
+        method = editingId ? 'PUT' : 'POST';
+        body = { name };
+      } else if (editingId) {
+        url = `/api/admin/categories/${editingId}`;
+        method = 'PUT';
+        body = { name };
+      } else {
+        url = '/api/admin/categories';
+        method = 'POST';
+        body = { productType: this.state.activeType, groupKey: form.groupKey || null, name };
+      }
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ dialogOpen: false, saving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ saving: false, dialogError: err.message });
+    }
+  }
+
+  async toggleEnabled(row, kind) {
+    const base = kind === 'subcategory' ? '/api/admin/categories/subcategories' : '/api/admin/categories';
+    try {
+      const res = await fetch(`${base}/${row.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ enabled: !row.enabled }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  async removeCategory(c) {
+    if (!window.confirm(`Delete "${c.name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/categories/${c.id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+  async removeSubcategory(s) {
+    if (!window.confirm(`Delete "${s.name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/categories/subcategories/${s.id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  // Pointer-based reorder (see AdminProducts.dc.html media tiles / AdminAbout.dc.html
+  // for the same pattern) — generalized here to work against either the `categories`
+  // or `subcategories` state array, whichever tab is active.
+  beginRowDrag(listKey, id, e) {
+    if (!this.canReorder()) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    this._dragListKey = listKey;
+    this._dragId = id;
+    this._dragOrderChanged = false;
+    this.setState({ draggingId: id });
+    this._rowDragMove = (ev) => this.handleRowDragMove(ev);
+    this._rowDragUp = () => this.finishRowDrag();
+    window.addEventListener('pointermove', this._rowDragMove);
+    window.addEventListener('pointerup', this._rowDragUp);
+    window.addEventListener('pointercancel', this._rowDragUp);
+  }
+
+  handleRowDragMove(e) {
+    if (this._dragId == null) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const row = el && el.closest('[data-row-id]');
+    if (!row) return;
+    const overId = Number(row.getAttribute('data-row-id'));
+    if (!Number.isFinite(overId) || overId === this._dragId) return;
+    const key = this._dragListKey;
+    const items = [...this.state[key]];
+    const fromIdx = items.findIndex((x) => x.id === this._dragId);
+    const toIdx = items.findIndex((x) => x.id === overId);
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+    const [moved] = items.splice(fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+    this._dragOrderChanged = true;
+    this.setState({ [key]: items });
+  }
+
+  async finishRowDrag() {
+    window.removeEventListener('pointermove', this._rowDragMove);
+    window.removeEventListener('pointerup', this._rowDragUp);
+    window.removeEventListener('pointercancel', this._rowDragUp);
+    const listKey = this._dragListKey;
+    const changed = this._dragOrderChanged;
+    this._dragId = null; this._dragListKey = null;
+    this.setState({ draggingId: null });
+    if (!changed) return;
+    try {
+      if (listKey === 'subcategories') {
+        const order = this.state.subcategories.map((s) => s.id);
+        const res = await fetch('/api/admin/categories/subcategories/reorder', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ order }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to reorder.');
+      } else {
+        const activeType = this.state.activeType;
+        const groupKey = activeType === 'gemstone' ? (this.state.gemOrigin === 'lab' ? 'lab' : 'natural') : null;
+        const order = this.state.categories.filter((c) => c.productType === activeType && (c.groupKey || null) === groupKey).map((c) => c.id);
+        const res = await fetch('/api/admin/categories/reorder', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ productType: activeType, groupKey, order }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to reorder.');
+      }
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+      this.loadAll();
+    }
+  }
+
+  renderVals() {
+    const activeType = this.state.activeType;
+    const isSubTab = activeType === 'subcategory';
+    const typeLabel = { diamond: 'Diamond', jewelry: 'Jewelry', gemstone: 'Gemstone', subcategory: 'Subcategory' }[activeType];
+
+    let rows;
+    if (isSubTab) {
+      rows = this.state.subcategories;
+    } else {
+      rows = this.state.categories.filter((c) => c.productType === activeType);
+      if (activeType === 'gemstone' && this.state.gemOrigin !== 'all') {
+        rows = rows.filter((c) => (c.groupKey || null) === this.state.gemOrigin);
+      }
+    }
+    const totalForTab = rows.length;
+    const filteredRows = rows.filter((r) => !this.filters || this.filters.searchMatch(r, this.state.search, [(x) => x.name]));
+    const canReorder = this.canReorder();
+    const draggingId = this.state.draggingId;
+    const visibleRows = filteredRows.map((r) => ({
+      id: r.id, name: r.name, productCount: r.productCount || 0,
+      enabled: !!r.enabled,
+      statusLabel: r.enabled ? 'Enabled' : 'Disabled',
+      statusTagClass: r.enabled ? 'tag-accent' : 'tag-neutral',
+      edit: () => (isSubTab ? this.openEditSubcategory(r) : this.openEditCategory(r)),
+      toggle: () => this.toggleEnabled(r, isSubTab ? 'subcategory' : 'category'),
+      toggleLabel: r.enabled ? 'Disable' : 'Enable',
+      remove: () => (isSubTab ? this.removeSubcategory(r) : this.removeCategory(r)),
+      dragStart: (e) => this.beginRowDrag(isSubTab ? 'subcategories' : 'categories', r.id, e),
+      dragDisabled: !canReorder,
+      rowOpacity: r.id === draggingId ? 0.6 : 1,
+      rowTransform: r.id === draggingId ? 'scale(1.01)' : 'none',
+    }));
+
+    let reorderHint = '';
+    if (!canReorder) {
+      if (this.state.search.trim()) reorderHint = 'Clear the search box to drag-reorder.';
+      else if (activeType === 'gemstone' && this.state.gemOrigin === 'all') reorderHint = 'Select Natural or Lab Created to drag-reorder (reordering needs one list at a time).';
+    }
+
+    return {
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+      errorMessage: this.state.errorMessage,
+
+      isDiamondTab: activeType === 'diamond', isJewelryTab: activeType === 'jewelry',
+      isGemstoneTab: activeType === 'gemstone', isSubcategoryTab: isSubTab,
+      selectDiamondTab: () => this.setState({ activeType: 'diamond', search: '' }),
+      selectJewelryTab: () => this.setState({ activeType: 'jewelry', search: '' }),
+      selectGemstoneTab: () => this.setState({ activeType: 'gemstone', gemOrigin: 'natural', search: '' }),
+      selectSubcategoryTab: () => this.setState({ activeType: 'subcategory', search: '' }),
+      diamondCount: this.state.categories.filter((c) => c.productType === 'diamond').length,
+      jewelryCount: this.state.categories.filter((c) => c.productType === 'jewelry').length,
+      gemstoneCount: this.state.categories.filter((c) => c.productType === 'gemstone').length,
+      subcategoryCount: this.state.subcategories.length,
+
+      isGemAll: this.state.gemOrigin === 'all', isGemNatural: this.state.gemOrigin === 'natural', isGemLab: this.state.gemOrigin === 'lab',
+      selectGemAll: () => this.setState({ gemOrigin: 'all' }),
+      selectGemNatural: () => this.setState({ gemOrigin: 'natural' }),
+      selectGemLab: () => this.setState({ gemOrigin: 'lab' }),
+
+      search: this.state.search,
+      handleSearch: (e) => this.handleSearch(e),
+      totalForTab, visibleRows, reorderHint,
+
+      addLabel: isSubTab ? 'Subcategory' : typeLabel + ' Category',
+      openAdd: () => this.openAdd(),
+
+      dialogOpen: this.state.dialogOpen,
+      dialogTitle: (this.state.editingId ? 'Edit ' : 'Add ') + (this.state.editingKind === 'subcategory' ? 'Subcategory' : typeLabel + ' Category'),
+      closeDialog: () => this.closeDialog(),
+      stop: (e) => e.stopPropagation(),
+      form: this.state.form,
+      setFormName: (e) => this.setFormName(e),
+      setFormGroup: (e) => this.setFormGroup(e),
+      showOriginChoice: !this.state.editingId && this.state.editingKind === 'category' && this.state.activeType === 'gemstone',
+      dialogError: this.state.dialogError,
+      saving: this.state.saving,
+      saveLabel: this.state.saving ? 'Saving…' : 'Save',
+      saveForm: () => this.saveForm(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

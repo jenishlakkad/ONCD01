@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-link{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-md);font-size:14px;color:var(--color-text);}
+.side-link.active{background:var(--color-accent-100);color:var(--color-accent-800);}
+.account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
+.account-menu-link:hover{background:var(--color-accent-100);}
+</style>
+</helmet>
+
+<div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
+
+  <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
+    <div class="nav-brand" style="letter-spacing:.1em;">AURUM &amp; CO.</div>
+    <input type="checkbox" class="nav-check" id="navCheck" hidden>
+    <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <a href="Home.dc.html">Home</a>
+    <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+      <a href="Diamonds.dc.html">Diamonds</a>
+    </sc-if>
+    <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+      <a href="Jewelry.dc.html">Jewelry</a>
+    </sc-if>
+    <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+      <a href="Gemstones.dc.html">Gemstones</a>
+    </sc-if>
+    <a href="About.dc.html">About</a>
+    <a href="Contact.dc.html">Contact</a>
+    <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
+      <div style="position:relative;">
+        <button onClick="{{ toggleAccountMenu }}" aria-label="Account menu" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:var(--color-accent-100);color:var(--color-accent-800);border:none;cursor:pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+        </button>
+        <sc-if value="{{ accountMenuOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeAccountMenu }}" style="position:fixed;inset:0;z-index:60;"></div>
+          <div style="position:absolute;top:calc(100% + 10px);right:0;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);width:224px;z-index:61;overflow:hidden;">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--color-divider);">
+              <div style="font-size:13px;font-weight:600;">{{ accountName }}</div>
+              <div style="font-size:11px;opacity:.6;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ accountEmail }}</div>
+            </div>
+            <a href="Dashboard.dc.html?tab=overview" class="account-menu-link">Overview</a>
+            <a href="Dashboard.dc.html?tab=inquiries" class="account-menu-link">Inquiry History</a>
+            <a href="Dashboard.dc.html?tab=saved" class="account-menu-link">Saved Items</a>
+            <a href="Dashboard.dc.html?tab=profile" class="account-menu-link">Company Profile</a>
+            <a href="Dashboard.dc.html?tab=settings" class="account-menu-link">Account Settings</a>
+            <a href="#" onClick="{{ handleLogout }}" class="account-menu-link" style="border-top:1px solid var(--color-divider);color:var(--color-accent-700);">Log Out</a>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </nav>
+
+  <sc-if value="{{ isPending }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--color-accent-100);color:var(--color-accent-800);padding:14px clamp(20px,6vw,56px);font-size:13px;text-align:center;">
+      Your account is <strong>pending admin approval</strong>. Browsing is open now — pricing and inquiry history unlock once approved.
+    </div>
+  </sc-if>
+  <sc-if value="{{ isSuspended }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#f5cd96;color:#3a270d;padding:14px clamp(20px,6vw,56px);font-size:13px;text-align:center;">
+      Your account has been <strong>suspended</strong>. Contact <a href="Contact.dc.html" style="color:#3a270d;text-decoration:underline;">our sales desk</a> for assistance.
+    </div>
+  </sc-if>
+  <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+    <p style="text-align:center;font-size:13px;color:var(--color-accent-700);padding:12px;">{{ errorMessage }}</p>
+  </sc-if>
+
+  <section class="filter-shell" style="gap:40px;padding:40px clamp(20px,6vw,56px) 96px;">
+    <aside style="display:flex;flex-direction:column;gap:4px;">
+      <a href="Dashboard.dc.html?tab=overview" class="side-link {{ tabOverviewActive }}">Overview</a>
+      <a href="Dashboard.dc.html?tab=inquiries" class="side-link {{ tabInquiriesActive }}">Inquiry History</a>
+      <a href="Dashboard.dc.html?tab=saved" class="side-link {{ tabSavedActive }}">Saved Items</a>
+      <a href="Dashboard.dc.html?tab=profile" class="side-link {{ tabProfileActive }}">Company Profile</a>
+      <a href="Dashboard.dc.html?tab=settings" class="side-link {{ tabSettingsActive }}">Account Settings</a>
+    </aside>
+
+    <div>
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <h1 style="font-size:30px;">Welcome back, {{ firstName }}</h1>
+        <p style="opacity:.7;font-size:14px;">{{ companyLine }} · Account status: <strong>{{ statusLabel }}</strong></p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-top:32px;">
+          <div class="card"><div class="card-kicker">Account Status</div><div class="card-title" style="margin-top:6px;">{{ statusLabel }}</div></div>
+          <div class="card"><div class="card-kicker">Open Inquiries</div><div class="card-title" style="margin-top:6px;">{{ inquiryCount }}</div></div>
+          <div class="card"><div class="card-kicker">Saved Items</div><div class="card-title" style="margin-top:6px;">{{ savedItemsCount }}</div></div>
+        </div>
+
+        <h3 style="margin-top:40px;">Recent Inquiries</h3>
+        <sc-if value="{{ hasInquiries }}" hint-placeholder-val="{{ true }}">
+          <div class="tbl-wrap"><table class="table" style="margin-top:12px;">
+            <thead><tr><th>SKU</th><th>Item</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ recentInquiries }}" as="i" hint-placeholder-count="4">
+                <tr>
+                  <td>{{ i.sku }}</td>
+                  <td>{{ i.name }}</td>
+                  <td>{{ i.date }}</td>
+                  <td><span class="tag {{ i.tagClass }}">{{ i.status }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table></div>
+          <p style="margin-top:10px;"><a href="Dashboard.dc.html?tab=inquiries" style="font-size:12px;">View all inquiries →</a></p>
+        </sc-if>
+        <sc-if value="{{ hasNoInquiries }}" hint-placeholder-val="{{ false }}">
+          <p style="opacity:.6;font-size:13px;margin-top:12px;">No inquiries yet — add items to your cart from any product page and send an inquiry.</p>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isInquiries }}" hint-placeholder-val="{{ false }}">
+        <h1 style="font-size:26px;">Inquiry History</h1>
+        <p style="opacity:.7;font-size:14px;">{{ inquiryCount }} open of {{ totalInquiryCount }} total inquiries.</p>
+        <sc-if value="{{ hasInquiries }}" hint-placeholder-val="{{ true }}">
+          <div class="tbl-wrap"><table class="table" style="margin-top:20px;">
+            <thead><tr><th>SKU</th><th>Item</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ allInquiries }}" as="i" hint-placeholder-count="6">
+                <tr>
+                  <td>{{ i.sku }}</td>
+                  <td>{{ i.name }}</td>
+                  <td>{{ i.date }}</td>
+                  <td><span class="tag {{ i.tagClass }}">{{ i.status }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table></div>
+        </sc-if>
+        <sc-if value="{{ hasNoInquiries }}" hint-placeholder-val="{{ false }}">
+          <p style="opacity:.6;font-size:13px;margin-top:12px;">No inquiries yet — add items to your cart from any product page and send an inquiry.</p>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isSaved }}" hint-placeholder-val="{{ false }}">
+        <h1 style="font-size:26px;">Saved Items</h1>
+        <p style="opacity:.7;font-size:14px;">{{ savedItemsCount }} items saved for later.</p>
+        <sc-if value="{{ hasSavedItems }}" hint-placeholder-val="{{ false }}">
+          <div class="tbl-wrap"><table class="table" style="margin-top:20px;">
+            <thead><tr><th>SKU</th><th>Item</th><th>Price</th><th></th></tr></thead>
+            <tbody>
+              <sc-for list="{{ savedRows }}" as="s" hint-placeholder-count="3">
+                <tr>
+                  <td>{{ s.sku }}</td>
+                  <td>{{ s.name }}</td>
+                  <td>{{ s.priceLabel }}</td>
+                  <td style="text-align:right;"><button onClick="{{ s.remove }}" class="btn btn-ghost" style="padding:4px 10px;font-size:12px;">Remove</button></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table></div>
+        </sc-if>
+        <sc-if value="{{ hasNoSavedItems }}" hint-placeholder-val="{{ true }}">
+          <p style="opacity:.6;font-size:13px;margin-top:12px;">No saved items yet — tap the heart icon on any product to save it here.</p>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+        <h1 style="font-size:26px;">Company Profile</h1>
+        <p style="opacity:.7;font-size:14px;">Keep your registration details up to date.</p>
+        <form onSubmit="{{ saveProfile }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:24px;margin-top:20px;max-width:680px;">
+          <sc-if value="{{ profileError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-bottom:12px;">{{ profileError }}</p>
+          </sc-if>
+          <sc-if value="{{ profileSuccess }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-bottom:12px;">{{ profileSuccess }}</p>
+          </sc-if>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+            <div class="field"><label>Email</label><input class="input" defaultValue="{{ accountEmail }}" disabled=""/></div>
+            <div class="field"><label>Full Name *</label><input class="input" defaultValue="{{ pFullName }}" ref="{{ pFullNameRef }}" required=""/></div>
+            <div class="field"><label>Mobile *</label><input class="input" defaultValue="{{ pMobile }}" ref="{{ pMobileRef }}" required=""/></div>
+            <div class="field"><label>Country *</label><input class="input" defaultValue="{{ pCountry }}" ref="{{ pCountryRef }}" required=""/></div>
+            <div class="field"><label>State *</label><input class="input" defaultValue="{{ pState }}" ref="{{ pStateRef }}" required=""/></div>
+            <div class="field"><label>City *</label><input class="input" defaultValue="{{ pCity }}" ref="{{ pCityRef }}" required=""/></div>
+            <div class="field"><label>Company Name</label><input class="input" defaultValue="{{ pCompany }}" ref="{{ pCompanyRef }}"/></div>
+            <div class="field"><label>Business Type</label><input class="input" defaultValue="{{ pBusinessType }}" ref="{{ pBusinessTypeRef }}"/></div>
+            <div class="field"><label>Website</label><input class="input" defaultValue="{{ pWebsite }}" ref="{{ pWebsiteRef }}"/></div>
+            <div class="field" style="grid-column:1/-1;"><label>Message</label><textarea class="input" rows="3" defaultValue="{{ pMessage }}" ref="{{ pMessageRef }}"></textarea></div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top:20px;" disabled="{{ profileSaving }}">{{ profileSaveLabel }}</button>
+        </form>
+      </sc-if>
+
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <h1 style="font-size:26px;">Account Settings</h1>
+        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:24px;margin-top:20px;max-width:420px;">
+          <div style="font-size:13px;opacity:.7;">Signed in as</div>
+          <div style="font-size:15px;font-weight:600;margin-top:4px;">{{ accountEmail }}</div>
+
+          <h4 style="margin-top:28px;">Change Password</h4>
+          <sc-if value="{{ pwError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:8px;">{{ pwError }}</p>
+          </sc-if>
+
+          <sc-if value="{{ isPwIdle }}" hint-placeholder-val="{{ true }}">
+            <p style="font-size:13px;opacity:.7;margin-top:8px;">We'll email a verification code to {{ accountEmail }} to confirm it's you.</p>
+            <button onClick="{{ sendPasswordCode }}" class="btn btn-primary" style="margin-top:12px;" disabled="{{ pwSending }}">{{ pwSendLabel }}</button>
+          </sc-if>
+
+          <sc-if value="{{ isPwSent }}" hint-placeholder-val="{{ false }}">
+            <form onSubmit="{{ submitPasswordChange }}" style="margin-top:12px;display:flex;flex-direction:column;gap:14px;">
+              <div class="field"><label>Verification Code</label><input class="input" ref="{{ pwCodeRef }}" maxlength="6" required=""/></div>
+              <div class="field"><label>New Password</label><input class="input" type="password" ref="{{ pwNewRef }}" required=""/></div>
+              <div class="field"><label>Confirm New Password</label><input class="input" type="password" ref="{{ pwConfirmRef }}" required=""/></div>
+              <button type="submit" class="btn btn-primary" disabled="{{ pwVerifying }}">{{ pwVerifyLabel }}</button>
+              <a href="#" onClick="{{ sendPasswordCode }}" style="font-size:12px;text-align:center;">Resend code</a>
+            </form>
+          </sc-if>
+
+          <sc-if value="{{ isPwDone }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:12px;">Password changed successfully.</p>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </section>
+
+  <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">AURUM &amp; CO.</div>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+            <a href="Diamonds.dc.html" style="color:var(--color-neutral-300);">Diamonds</a>
+          </sc-if>
+          <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+            <a href="Jewelry.dc.html" style="color:var(--color-neutral-300);">Jewelry</a>
+          </sc-if>
+          <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+            <a href="Gemstones.dc.html" style="color:var(--color-neutral-300);">Gemstones</a>
+          </sc-if>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Company</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <a href="About.dc.html" style="color:var(--color-neutral-300);">About Us</a>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Contact</a>
+          <a href="Register.dc.html" style="color:var(--color-neutral-300);">Trade Registration</a>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <span>{{ footerEmail }}</span>
+          <span>{{ footerPhone }}</span>
+          <span>New York · Antwerp · Surat</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+      <span>© 2026 Aurum &amp; Co. All rights reserved.</span>
+      <span>GIA · IGI · HRD Certified Partners</span>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;accountStatus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;approved&quot;,&quot;tsType&quot;:&quot;'pending'|'approved'|'suspended'&quot;,&quot;options&quot;:[&quot;pending&quot;,&quot;approved&quot;,&quot;suspended&quot;],&quot;section&quot;:&quot;Account&quot;}}">
+class Component extends DCLogic {
+  state = {
+    me: null, inquiries: [], savedItems: [], errorMessage: '',
+    showDiamonds: true, showJewelry: true, showGemstones: true,
+    settings: { whatsapp: '15551234567', inquiryEmail: 'sales@aurumandco.com', lineId: '@aurumandco', skypeId: 'live:.cid.aurumandco' },
+    accountMenuOpen: false,
+    activeTab: 'overview',
+    profileSaving: false, profileError: '', profileSuccess: '',
+    pwStep: 'idle', pwSending: false, pwVerifying: false, pwError: '',
+  };
+
+  pFullNameRef = React.createRef(); pMobileRef = React.createRef(); pCountryRef = React.createRef();
+  pStateRef = React.createRef(); pCityRef = React.createRef(); pCompanyRef = React.createRef();
+  pBusinessTypeRef = React.createRef(); pWebsiteRef = React.createRef(); pMessageRef = React.createRef();
+  pwCodeRef = React.createRef(); pwNewRef = React.createRef(); pwConfirmRef = React.createRef();
+
+  async componentDidMount() {
+    const validTabs = ['overview', 'inquiries', 'saved', 'profile', 'settings'];
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab && validTabs.includes(tab)) this.setState({ activeTab: tab });
+
+    const { fetchCustomerSession, logoutCustomer } = await import('./utils/customerAuth.js');
+    this.logoutCustomer = logoutCustomer;
+    const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
+    fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
+    import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
+
+    const me = await fetchCustomerSession();
+    if (!me) { window.location.href = 'Login.dc.html'; return; }
+    this.setState({ me });
+
+    try {
+      const res = await fetch('/api/inquiries/mine', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load inquiries.');
+      this.setState({ inquiries: json.data });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+
+    const { getSavedItems } = await import('./utils/savedItems.js');
+    getSavedItems().then((items) => this.setState({ savedItems: items }));
+  }
+
+  async requestJson(method, url, body) {
+    const res = await fetch(url, {
+      method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify(body || {}),
+    });
+    let json = {};
+    try { json = await res.json(); } catch { /* no body */ }
+    if (!res.ok) throw new Error((json && json.error) || 'Something went wrong. Please try again.');
+    return json.data;
+  }
+
+  saveProfile(e) {
+    e.preventDefault();
+    const v = (ref) => (ref.current ? ref.current.value.trim() : '');
+    const payload = {
+      fullName: v(this.pFullNameRef), mobile: v(this.pMobileRef), country: v(this.pCountryRef),
+      state: v(this.pStateRef), city: v(this.pCityRef), companyName: v(this.pCompanyRef),
+      businessType: v(this.pBusinessTypeRef), website: v(this.pWebsiteRef), message: v(this.pMessageRef),
+    };
+    this.setState({ profileSaving: true, profileError: '', profileSuccess: '' });
+    this.requestJson('PUT', '/api/auth/profile', payload)
+      .then((updated) => this.setState({ me: updated, profileSaving: false, profileSuccess: 'Profile updated.' }))
+      .catch((err) => this.setState({ profileSaving: false, profileError: err.message }));
+  }
+
+  sendPasswordCode(e) {
+    e.preventDefault();
+    this.setState({ pwSending: true, pwError: '' });
+    this.requestJson('POST', '/api/auth/change-password/request', {})
+      .then(() => this.setState({ pwStep: 'sent', pwSending: false }))
+      .catch((err) => this.setState({ pwSending: false, pwError: err.message }));
+  }
+
+  submitPasswordChange(e) {
+    e.preventDefault();
+    const code = this.pwCodeRef.current ? this.pwCodeRef.current.value.trim() : '';
+    const newPassword = this.pwNewRef.current ? this.pwNewRef.current.value : '';
+    const confirm = this.pwConfirmRef.current ? this.pwConfirmRef.current.value : '';
+    if (newPassword !== confirm) return this.setState({ pwError: 'Passwords do not match.' });
+    if (newPassword.length < 8) return this.setState({ pwError: 'Password must be at least 8 characters.' });
+    this.setState({ pwVerifying: true, pwError: '' });
+    this.requestJson('POST', '/api/auth/change-password/verify', { code, newPassword })
+      .then(() => this.setState({ pwStep: 'done', pwVerifying: false }))
+      .catch((err) => this.setState({ pwVerifying: false, pwError: err.message }));
+  }
+
+  removeSavedItem(sku) {
+    import('./utils/savedItems.js').then(async (m) => {
+      await m.unsaveItem(sku);
+      const items = await m.getSavedItems();
+      this.setState({ savedItems: items });
+    });
+  }
+
+  renderVals() {
+    const me = this.state.me;
+    const footerVals = {
+      showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
+      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@aurumandco.com',
+      footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
+    };
+    const menuVals = {
+      accountMenuOpen: this.state.accountMenuOpen,
+      toggleAccountMenu: (e) => { e.preventDefault(); e.stopPropagation(); this.setState({ accountMenuOpen: !this.state.accountMenuOpen }); },
+      closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
+      accountName: (me && me.full_name) || '',
+      accountEmail: (me && me.email) || '',
+      handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },
+    };
+    const tab = this.state.activeTab;
+    const tabVals = {
+      tabOverviewActive: tab === 'overview' ? 'active' : '',
+      tabInquiriesActive: tab === 'inquiries' ? 'active' : '',
+      tabSavedActive: tab === 'saved' ? 'active' : '',
+      tabProfileActive: tab === 'profile' ? 'active' : '',
+      tabSettingsActive: tab === 'settings' ? 'active' : '',
+      isOverview: tab === 'overview', isInquiries: tab === 'inquiries', isSaved: tab === 'saved',
+      isProfile: tab === 'profile', isSettings: tab === 'settings',
+    };
+
+    if (!me) {
+      return {
+        isPending: false, isSuspended: false, statusLabel: '', inquiries: [], recentInquiries: [], allInquiries: [],
+        hasInquiries: false, hasNoInquiries: false, savedRows: [], hasSavedItems: false, hasNoSavedItems: true,
+        pFullName: '', pMobile: '', pCountry: '', pState: '', pCity: '', pCompany: '', pBusinessType: '', pWebsite: '', pMessage: '',
+        pFullNameRef: this.pFullNameRef, pMobileRef: this.pMobileRef, pCountryRef: this.pCountryRef,
+        pStateRef: this.pStateRef, pCityRef: this.pCityRef, pCompanyRef: this.pCompanyRef,
+        pBusinessTypeRef: this.pBusinessTypeRef, pWebsiteRef: this.pWebsiteRef, pMessageRef: this.pMessageRef,
+        saveProfile: (e) => e.preventDefault(), profileSaving: false, profileError: '', profileSuccess: '', profileSaveLabel: 'Save Changes',
+        isPwIdle: true, isPwSent: false, isPwDone: false, pwError: '', pwSending: false, pwVerifying: false,
+        pwSendLabel: 'Send Verification Code', pwVerifyLabel: 'Change Password',
+        sendPasswordCode: (e) => e.preventDefault(), submitPasswordChange: (e) => e.preventDefault(),
+        pwCodeRef: this.pwCodeRef, pwNewRef: this.pwNewRef, pwConfirmRef: this.pwConfirmRef,
+        ...footerVals, ...menuVals, ...tabVals,
+      };
+    }
+
+    const tagClass = (s) => (s === 'replied' ? 'tag-accent' : 'tag-neutral');
+    const fmtDate = (d) => {
+      const dt = new Date((d || '').replace(' ', 'T'));
+      return isNaN(dt) ? '—' : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+    const allInquiries = this.state.inquiries.map((inq) => {
+      const first = (inq.items && inq.items[0]) || {};
+      const extra = inq.items && inq.items.length > 1 ? ` +${inq.items.length - 1} more` : '';
+      return {
+        sku: first.sku || '—', name: (first.name || '—') + extra,
+        date: fmtDate(inq.createdAt || inq.created_at), status: inq.status.charAt(0).toUpperCase() + inq.status.slice(1),
+        tagClass: tagClass(inq.status),
+      };
+    });
+
+    const savedRows = this.state.savedItems.map((s) => ({
+      sku: s.sku, name: s.name || s.sku, priceLabel: s.priceLabel || '—',
+      remove: () => this.removeSavedItem(s.sku),
+    }));
+
+    return {
+      isPending: me.status === 'pending',
+      isSuspended: me.status === 'suspended',
+      errorMessage: this.state.errorMessage,
+      fullName: me.full_name,
+      firstName: (me.full_name || '').split(' ')[0] || me.full_name,
+      companyLine: [me.company_name, me.business_type].filter(Boolean).join(' · ') || 'Individual Account',
+      statusLabel: me.status.charAt(0).toUpperCase() + me.status.slice(1),
+      inquiryCount: this.state.inquiries.filter((i) => i.status !== 'closed').length,
+      totalInquiryCount: this.state.inquiries.length,
+      savedItemsCount: this.state.savedItems.length,
+      hasInquiries: allInquiries.length > 0,
+      hasNoInquiries: allInquiries.length === 0,
+      recentInquiries: allInquiries.slice(0, 5),
+      allInquiries,
+      savedRows,
+      hasSavedItems: savedRows.length > 0,
+      hasNoSavedItems: savedRows.length === 0,
+
+      pFullName: me.full_name || '', pMobile: me.mobile || '', pCountry: me.country || '', pState: me.state || '',
+      pCity: me.city || '', pCompany: me.company_name || '', pBusinessType: me.business_type || '',
+      pWebsite: me.website || '', pMessage: me.message || '',
+      pFullNameRef: this.pFullNameRef, pMobileRef: this.pMobileRef, pCountryRef: this.pCountryRef,
+      pStateRef: this.pStateRef, pCityRef: this.pCityRef, pCompanyRef: this.pCompanyRef,
+      pBusinessTypeRef: this.pBusinessTypeRef, pWebsiteRef: this.pWebsiteRef, pMessageRef: this.pMessageRef,
+      saveProfile: (e) => this.saveProfile(e),
+      profileSaving: this.state.profileSaving, profileError: this.state.profileError, profileSuccess: this.state.profileSuccess,
+      profileSaveLabel: this.state.profileSaving ? 'Saving…' : 'Save Changes',
+
+      isPwIdle: this.state.pwStep === 'idle', isPwSent: this.state.pwStep === 'sent', isPwDone: this.state.pwStep === 'done',
+      pwError: this.state.pwError, pwSending: this.state.pwSending, pwVerifying: this.state.pwVerifying,
+      pwSendLabel: this.state.pwSending ? 'Sending…' : 'Send Verification Code',
+      pwVerifyLabel: this.state.pwVerifying ? 'Please wait…' : 'Change Password',
+      sendPasswordCode: (e) => this.sendPasswordCode(e),
+      submitPasswordChange: (e) => this.submitPasswordChange(e),
+      pwCodeRef: this.pwCodeRef, pwNewRef: this.pwNewRef, pwConfirmRef: this.pwConfirmRef,
+
+      ...footerVals, ...menuVals, ...tabVals,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

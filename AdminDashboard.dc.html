@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item active">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+      <div><h6 style="color:var(--color-accent-700);">Overview</h6><h1 style="font-size:28px;margin-top:6px;">Dashboard</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-top:-16px;margin-bottom:16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;">
+      <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+        <div class="card elev-sm"><div class="card-kicker">{{ s.label }}</div><div class="card-title" style="font-size:26px;margin-top:6px;">{{ s.value }}</div></div>
+      </sc-for>
+    </div>
+
+    <h3 style="margin-top:40px;">Pending User Approvals</h3>
+    <div class="tbl-wrap"><table class="table" style="margin-top:12px;">
+      <thead><tr><th class="adm-th">Name</th><th class="adm-th">Company</th><th class="adm-th">Country</th><th class="adm-th">Status</th></tr></thead>
+      <tbody>
+        <sc-for list="{{ pendingUsers }}" as="u" hint-placeholder-count="3">
+          <tr><td class="adm-td">{{ u.name }}</td><td class="adm-td">{{ u.company }}</td><td class="adm-td">{{ u.country }}</td><td class="adm-td"><span class="tag tag-neutral">Pending</span></td></tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin-top:40px;">Recent Inquiries</h3>
+    <div class="tbl-wrap"><table class="table" style="margin-top:12px;">
+      <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Customer</th><th class="adm-th">Channel</th><th class="adm-th">Date</th></tr></thead>
+      <tbody>
+        <sc-for list="{{ recentInquiries }}" as="i" hint-placeholder-count="4">
+          <tr><td class="adm-td">{{ i.sku }}</td><td class="adm-td">{{ i.customer }}</td><td class="adm-td">{{ i.channel }}</td><td class="adm-td">{{ i.date }}</td></tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:40px;">
+      <h3 style="margin:0;">Recent Audit Activity</h3>
+      <a href="AdminAudit.dc.html" style="font-size:13px;">View full audit log & reports →</a>
+    </div>
+    <div class="tbl-wrap"><table class="table" style="margin-top:12px;">
+      <thead><tr><th class="adm-th">Date</th><th class="adm-th">Actor</th><th class="adm-th">Action</th><th class="adm-th">Target</th><th class="adm-th">Module</th></tr></thead>
+      <tbody>
+        <sc-for list="{{ recentAudits }}" as="a" hint-placeholder-count="8">
+          <tr><td class="adm-td">{{ a.date }}</td><td class="adm-td">{{ a.actor }}</td><td class="adm-td">{{ a.action }}</td><td class="adm-td">{{ a.target }}</td><td class="adm-td"><span class="tag tag-neutral">{{ a.module }}</span></td></tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { admin: null, errorMessage: '', stats: [], pendingUsers: [], recentInquiries: [], recentAudits: [], newContactCount: 0 };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    try {
+      const res = await fetch('/api/admin/dashboard/stats', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load dashboard.');
+      this.setState(json.data);
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  renderVals() {
+    const fmtDate = (d) => {
+      if (!d) return '—';
+      const dt = new Date(d.replace(' ', 'T'));
+      return isNaN(dt) ? d : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+    const channelLabels = { whatsapp: 'WhatsApp', email: 'Email', line: 'LINE', skype: 'Skype' };
+    const recentInquiries = this.state.recentInquiries.map((i) => ({ ...i, channel: channelLabels[i.channel] || i.channel, date: fmtDate(i.date) }));
+    return {
+      stats: this.state.stats,
+      pendingUsers: this.state.pendingUsers,
+      recentInquiries,
+      recentAudits: this.state.recentAudits,
+      errorMessage: this.state.errorMessage,
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>body{margin:0}a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-700)}</style>
+</helmet>
+
+<div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
+
+  <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
+    <div class="nav-brand" style="letter-spacing:.1em;">AURUM &amp; CO.</div>
+    <input type="checkbox" class="nav-check" id="navCheck" hidden>
+    <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <a href="Home.dc.html">Home</a>
+    <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+      <a href="Diamonds.dc.html">Diamonds</a>
+    </sc-if>
+    <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+      <a href="Jewelry.dc.html">Jewelry</a>
+    </sc-if>
+    <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+      <a href="Gemstones.dc.html">Gemstones</a>
+    </sc-if>
+    <a href="About.dc.html">About</a>
+    <a href="Contact.dc.html">Contact</a>
+    <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
+      <a href="Login.dc.html" class="btn btn-secondary">Login</a>
+      <a href="Register.dc.html" class="btn btn-primary" aria-current="page">Register</a>
+    </div>
+  </nav>
+
+  <section style="display:flex;justify-content:center;padding:clamp(20px,6vw,56px) 24px 96px;">
+
+    <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:480px;text-align:center;padding:64px 40px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="margin:0 auto 20px;"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
+        <h2>Application Received</h2>
+        <p style="opacity:.75;">Your email is verified and your registration is <strong>pending review</strong>. Our team verifies every trade account before granting access to pricing — you'll receive an email once approved.</p>
+        <a href="Login.dc.html" class="btn btn-primary" style="margin-top:12px;">Go to Login</a>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isOtp }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleVerify }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;text-align:center;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="margin:0 auto 16px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        <h2>Verify Your Email</h2>
+        <p style="opacity:.7;font-size:13px;margin-top:8px;">We sent a 6-digit code to <strong>{{ pendingEmail }}</strong>. Enter it below to complete registration.</p>
+        <div class="field" style="margin-top:24px;text-align:left;">
+          <label>Verification Code</label>
+          <input class="input" style="text-align:center;letter-spacing:.4em;font-size:20px;" maxlength="6" placeholder="••••••" ref="{{ otpCodeRef }}" required=""/>
+        </div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <p style="font-size:12px;margin-top:16px;opacity:.7;">Didn't get a code? <a href="#" onClick="{{ resendOtp }}">Resend</a></p>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+      <form onSubmit="{{ handleSubmit }}" style="width:100%;max-width:620px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;">
+        <h6 style="color:var(--color-accent-700);">Trade &amp; Retail Account</h6>
+        <h2 style="margin-top:8px;">Create Your Account</h2>
+        <p style="opacity:.7;font-size:13px;margin-bottom:28px;">We'll email a verification code before your application is submitted for admin review.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+          <div class="field"><label>Full Name *</label><input class="input" ref="{{ fullNameRef }}" required=""/></div>
+          <div class="field"><label>Mobile Number *</label><input class="input" ref="{{ mobileRef }}" required=""/></div>
+          <div class="field" style="grid-column:1/-1;"><label>Email *</label><input class="input" type="email" ref="{{ emailRef }}" required=""/></div>
+          <div class="field"><label>Country *</label><input class="input" ref="{{ countryRef }}" required=""/></div>
+          <div class="field"><label>State *</label><input class="input" ref="{{ stateRef }}" required=""/></div>
+          <div class="field" style="grid-column:1/-1;"><label>City *</label><input class="input" ref="{{ cityRef }}" required=""/></div>
+          <div class="field" style="grid-column:1/-1;"><label>Company Name</label><input class="input" ref="{{ companyRef }}"/></div>
+          <div class="field"><label>Business Type</label><input class="input" ref="{{ businessTypeRef }}" placeholder="Retailer, Wholesaler..."/></div>
+          <div class="field"><label>Website</label><input class="input" ref="{{ websiteRef }}" placeholder="https://"/></div>
+          <div class="field" style="grid-column:1/-1;"><label>Message</label><textarea class="input" rows="3" ref="{{ messageRef }}"></textarea></div>
+          <div class="field" style="grid-column:1/-1;"><label>Password *</label><input class="input" type="password" ref="{{ passwordRef }}" required=""/></div>
+        </div>
+
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:14px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:24px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <p style="font-size:12px;text-align:center;margin-top:16px;opacity:.7;">Already have an account? <a href="Login.dc.html">Log in</a></p>
+      </form>
+    </sc-if>
+  </section>
+
+  <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">AURUM &amp; CO.</div>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+            <a href="Diamonds.dc.html" style="color:var(--color-neutral-300);">Diamonds</a>
+          </sc-if>
+          <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+            <a href="Jewelry.dc.html" style="color:var(--color-neutral-300);">Jewelry</a>
+          </sc-if>
+          <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+            <a href="Gemstones.dc.html" style="color:var(--color-neutral-300);">Gemstones</a>
+          </sc-if>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Company</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <a href="About.dc.html" style="color:var(--color-neutral-300);">About Us</a>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Contact</a>
+          <a href="Register.dc.html" style="color:var(--color-neutral-300);">Trade Registration</a>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <span>{{ footerEmail }}</span>
+          <span>{{ footerPhone }}</span>
+          <span>New York · Antwerp · Surat</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+      <span>© 2026 Aurum &amp; Co. All rights reserved.</span>
+      <span>GIA · IGI · HRD Certified Partners</span>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    step: 'form', pendingEmail: '', submitting: false, showError: false, errorMessage: '',
+    showDiamonds: true, showJewelry: true, showGemstones: true,
+    settings: { whatsapp: '15551234567', inquiryEmail: 'sales@aurumandco.com', lineId: '@aurumandco', skypeId: 'live:.cid.aurumandco' },
+  };
+  fullNameRef = React.createRef(); mobileRef = React.createRef(); emailRef = React.createRef();
+  countryRef = React.createRef(); stateRef = React.createRef(); cityRef = React.createRef();
+  companyRef = React.createRef(); businessTypeRef = React.createRef(); websiteRef = React.createRef();
+  messageRef = React.createRef(); passwordRef = React.createRef(); otpCodeRef = React.createRef();
+
+  async componentDidMount() {
+    const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
+    fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
+    import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
+    const { fetchCustomerSession } = await import('./utils/customerAuth.js');
+    const me = await fetchCustomerSession();
+    if (me) window.location.href = 'Dashboard.dc.html';
+  }
+
+  async postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body || {}),
+    });
+    let json = {};
+    try { json = await res.json(); } catch { /* no body */ }
+    if (!res.ok) throw new Error((json && json.error) || 'Something went wrong. Please try again.');
+    return json.data;
+  }
+
+  fail(message) {
+    this.setState({ submitting: false, showError: true, errorMessage: message });
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+    const v = r => (r.current ? r.current.value.trim() : '');
+    const payload = {
+      fullName: v(this.fullNameRef), mobile: v(this.mobileRef), email: v(this.emailRef),
+      country: v(this.countryRef), state: v(this.stateRef), city: v(this.cityRef),
+      companyName: v(this.companyRef), businessType: v(this.businessTypeRef), website: v(this.websiteRef),
+      message: this.messageRef.current ? this.messageRef.current.value.trim() : '',
+      password: this.passwordRef.current ? this.passwordRef.current.value : '',
+    };
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/auth/register', payload)
+      .then(() => this.setState({ step: 'otp', pendingEmail: payload.email, submitting: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  handleVerify(e) {
+    e.preventDefault();
+    const code = this.otpCodeRef.current ? this.otpCodeRef.current.value.trim() : '';
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/auth/register/verify', { email: this.state.pendingEmail, code })
+      .then(() => this.setState({ step: 'done', submitting: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  resendOtp(e) {
+    e.preventDefault();
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/auth/register/resend', { email: this.state.pendingEmail })
+      .then(() => this.setState({ submitting: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  renderVals() {
+    const step = this.state.step;
+    const labelByStep = { form: 'Continue to Verification', otp: 'Verify & Complete Registration' };
+    return {
+      isForm: step === 'form', isOtp: step === 'otp', isDone: step === 'done',
+      showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
+      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@aurumandco.com',
+      footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
+      pendingEmail: this.state.pendingEmail || 'your email',
+      submitting: this.state.submitting,
+      submitLabel: this.state.submitting ? 'Please wait…' : (labelByStep[step] || 'Continue'),
+      showError: this.state.showError, errorMessage: this.state.errorMessage,
+      fullNameRef: this.fullNameRef, mobileRef: this.mobileRef, emailRef: this.emailRef,
+      countryRef: this.countryRef, stateRef: this.stateRef, cityRef: this.cityRef,
+      companyRef: this.companyRef, businessTypeRef: this.businessTypeRef, websiteRef: this.websiteRef,
+      messageRef: this.messageRef, passwordRef: this.passwordRef, otpCodeRef: this.otpCodeRef,
+      handleSubmit: e => this.handleSubmit(e),
+      handleVerify: e => this.handleVerify(e),
+      resendOtp: e => this.resendOtp(e),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

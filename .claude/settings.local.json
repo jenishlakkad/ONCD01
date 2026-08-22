@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(\\(Get-Command python -ErrorAction SilentlyContinue\\).Source; \\(Get-Command node -ErrorAction SilentlyContinue\\).Source; \\(Get-Command npx -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell(Get-Command chromium-cli -ErrorAction SilentlyContinue)",
+      "PowerShell(npx --yes playwright --version 2>&1)",
+      "PowerShell(python -c \"import playwright; print\\('py-playwright ok'\\)\" 2>&1)",
+      "PowerShell(pip install playwright --quiet 2>&1)",
+      "PowerShell(Start-Process \"http://localhost:8843/Home.dc.html\")",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\Jenish\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Jenish-New-Web-with-Claude\\\\d8d294b4-4486-430c-a79d-9c5d7e06a3e5\\\\tasks\\\\bio0qzga6.output\" -Tail 5 | ForEach-Object { $_.Substring\\(0, [Math]::Min\\(300,$_.Length\\)\\) })",
+      "PowerShell(npm start)",
+      "PowerShell(Start-Sleep -Seconds 2; Invoke-WebRequest -Uri http://localhost:8843/ -UseBasicParsing | Select-Object StatusCode, @{n='Len';e={$_.RawContentLength}})",
+      "PowerShell(Invoke-WebRequest -Uri http://localhost:8843/api/products -UseBasicParsing | Select-Object StatusCode; \\(Invoke-WebRequest -Uri http://localhost:8843/ -UseBasicParsing\\).Content.Substring\\(0,200\\))",
+      "PowerShell(Get-Command npx -ErrorAction SilentlyContinue)",
+      "PowerShell(npx --version 2>$null)"
+    ]
+  }
+}

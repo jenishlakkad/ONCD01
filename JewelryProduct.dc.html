@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<script src="./product-media.js"></script>
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;}
+.spec-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:14px;}
+.account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
+.account-menu-link:hover{background:var(--color-accent-100);}
+</style>
+</helmet>
+
+<div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
+
+  <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
+    <div class="nav-brand" style="letter-spacing:.1em;">AURUM &amp; CO.</div>
+    <input type="checkbox" class="nav-check" id="navCheck" hidden>
+    <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <a href="Home.dc.html">Home</a>
+    <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+      <a href="Diamonds.dc.html">Diamonds</a>
+    </sc-if>
+    <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+      <a href="Jewelry.dc.html" aria-current="page">Jewelry</a>
+    </sc-if>
+    <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+      <a href="Gemstones.dc.html">Gemstones</a>
+    </sc-if>
+    <a href="About.dc.html">About</a>
+    <a href="Contact.dc.html">Contact</a>
+    <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
+      <button onClick="{{ toggleCart }}" style="position:relative;background:none;border:none;cursor:pointer;color:var(--color-text);display:flex;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
+          <span style="position:absolute;top:-8px;right:-10px;background:var(--color-accent);color:#fff;font-size:10px;border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;">{{ cartCount }}</span>
+        </sc-if>
+      </button>
+      <sc-if value="{{ isLoggedIn }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;">
+          <button onClick="{{ toggleAccountMenu }}" aria-label="Account menu" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:var(--color-accent-100);color:var(--color-accent-800);border:none;cursor:pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+          </button>
+          <sc-if value="{{ accountMenuOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closeAccountMenu }}" style="position:fixed;inset:0;z-index:60;"></div>
+            <div style="position:absolute;top:calc(100% + 10px);right:0;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);width:224px;z-index:61;overflow:hidden;">
+              <div style="padding:14px 16px;border-bottom:1px solid var(--color-divider);">
+                <div style="font-size:13px;font-weight:600;">{{ accountName }}</div>
+                <div style="font-size:11px;opacity:.6;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ accountEmail }}</div>
+              </div>
+              <a href="Dashboard.dc.html?tab=overview" class="account-menu-link">Overview</a>
+              <a href="Dashboard.dc.html?tab=inquiries" class="account-menu-link">Inquiry History</a>
+              <a href="Dashboard.dc.html?tab=saved" class="account-menu-link">Saved Items</a>
+              <a href="Dashboard.dc.html?tab=profile" class="account-menu-link">Company Profile</a>
+              <a href="Dashboard.dc.html?tab=settings" class="account-menu-link">Account Settings</a>
+              <a href="#" onClick="{{ handleLogout }}" class="account-menu-link" style="border-top:1px solid var(--color-divider);color:var(--color-accent-700);">Log Out</a>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ !isLoggedIn }}" hint-placeholder-val="{{ true }}">
+        <a href="Login.dc.html" class="btn btn-secondary">Login</a>
+        <a href="Register.dc.html" class="btn btn-primary">Register</a>
+      </sc-if>
+    </div>
+  </nav>
+
+  <div style="padding:20px clamp(20px,6vw,56px) 0;font-size:12px;opacity:.6;">
+    <a href="Home.dc.html" style="color:inherit;">Home</a> / <a href="Jewelry.dc.html" style="color:inherit;">Jewelry</a> / {{ sku }}
+  </div>
+
+  <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+    <p style="padding:64px clamp(20px,6vw,56px);opacity:.65;">Loading…</p>
+  </sc-if>
+  <sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:64px clamp(20px,6vw,56px);">
+      <h2>Piece Not Found</h2>
+      <p style="opacity:.7;">This piece is no longer available. <a href="Jewelry.dc.html">Back to Jewelry</a></p>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ loaded }}" hint-placeholder-val="{{ false }}">
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:clamp(20px,6vw,56px);padding:32px clamp(20px,6vw,56px) 80px;">
+    <div>
+      <div class="plate" style="aspect-ratio:1;margin:0;">
+        <product-media media="{{ media }}" active-index="{{ activeIndex }}" zoom shape="rect" placeholder="{{ title }}, studio shot" style="width:100%;height:100%;"></product-media>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:10px;margin-top:12px;">
+        <sc-for list="{{ thumbs }}" as="t" hint-placeholder-count="0">
+          <div class="thumb" onClick="{{ t.select }}" style="aspect-ratio:1;position:relative;cursor:pointer;overflow:hidden;border-radius:6px;outline:2px solid {{ t.outlineColor }};outline-offset:-2px;">
+            <sc-if value="{{ t.isImage }}" hint-placeholder-val="{{ true }}">
+              <img src="{{ t.url }}" alt="{{ t.placeholder }}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+            </sc-if>
+            <sc-if value="{{ t.isVideo }}" hint-placeholder-val="{{ false }}">
+              <video src="{{ t.url }}" muted="" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(32,31,29,.25);pointer-events:none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#f8f4f4"><path d="M8 5v14l11-7Z"/></svg>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div>
+      <h6 style="color:var(--color-accent-700);">SKU {{ sku }}</h6>
+      <h1 style="font-size:34px;margin-top:6px;">{{ title }}</h1>
+      <p style="opacity:.7;font-size:14px;margin-top:6px;">{{ subtitle }}</p>
+
+      <h5 style="margin-top:28px;color:var(--color-accent-700);">Jewelry Details</h5>
+      <div style="margin:12px 0;">
+        <sc-if value="{{ hasSubcategory }}" hint-placeholder-val="{{ false }}">
+          <div class="spec-row"><span style="opacity:.6;">Piece Type</span><span>{{ subcategoryName }}</span></div>
+        </sc-if>
+        <div class="spec-row"><span style="opacity:.6;">Metal</span><span>{{ metal }}</span></div>
+        <div class="spec-row"><span style="opacity:.6;">Gold Purity</span><span>{{ goldPurity }}</span></div>
+        <div class="spec-row"><span style="opacity:.6;">Gold Color</span><span>{{ goldColor }}</span></div>
+        <div class="spec-row"><span style="opacity:.6;">Gold Weight</span><span>{{ goldWeight }}</span></div>
+        <div class="spec-row">
+          <span style="opacity:.6;">Jewelry Certificate</span>
+          <span>{{ jewelryCertLabel }}
+            <sc-if value="{{ hasJewelryCertLink }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ certLinkJewelry }}" target="_blank" style="margin-left:6px;">View →</a>
+            </sc-if>
+          </span>
+        </div>
+      </div>
+
+      <h5 style="margin-top:24px;color:var(--color-accent-700);">Center Stone Details</h5>
+      <div style="margin:12px 0;">
+        <div class="spec-row"><span style="opacity:.6;">Weight</span><span>{{ stoneWeight }}</span></div>
+        <div class="spec-row"><span style="opacity:.6;">Color</span><span>{{ stoneColor }}</span></div>
+        <div class="spec-row"><span style="opacity:.6;">Shape</span><span>{{ stoneShape }}</span></div>
+        <div class="spec-row"><span style="opacity:.6;">Clarity</span><span>{{ stoneClarity }}</span></div>
+        <div class="spec-row"><span style="opacity:.6;">Measurements</span><span>{{ stoneMeasurements }}</span></div>
+      </div>
+
+      <sc-if value="{{ priceVisible }}" hint-placeholder-val="{{ false }}">
+        <div class="spec-row"><span style="opacity:.6;">Total Price</span><span>{{ totalPriceLabel }}</span></div>
+      </sc-if>
+      <sc-if value="{{ pricesLocked }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:12px;background:var(--color-surface);margin-top:12px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
+          <div style="font-size:13px;">
+            <sc-if value="{{ isPriceCtaLogin }}" hint-placeholder-val="{{ false }}">
+              <strong>{{ priceLabel }}</strong> — <a href="Login.dc.html">Log in</a> or <a href="Register.dc.html">register</a> to view pricing.
+            </sc-if>
+            <sc-if value="{{ isPriceCtaPending }}" hint-placeholder-val="{{ false }}">
+              <strong>{{ priceLabel }}</strong> — your account doesn't currently have pricing access. <a href="Contact.dc.html">Contact us</a> if you believe this is a mistake.
+            </sc-if>
+            <sc-if value="{{ isPriceCtaContact }}" hint-placeholder-val="{{ false }}">
+              <strong>{{ priceLabel }}</strong> — <a href="Contact.dc.html">contact our sales team</a> for current pricing.
+            </sc-if>
+            <sc-if value="{{ isPriceCtaNone }}" hint-placeholder-val="{{ true }}">
+              <strong>{{ priceLabel }}</strong>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;gap:14px;margin-top:24px;">
+        <button onClick="{{ addToCartFn }}" class="btn {{ cartBtnClass }}" style="padding:14px 28px;">{{ cartBtnLabel }}</button>
+        <button onClick="{{ openInquireNowFn }}" class="btn btn-primary" style="padding:14px 28px;">Inquire Now</button>
+        <button onClick="{{ toggleSaveFn }}" class="btn btn-ghost" style="{{ saveStyle }}padding:14px 16px;" aria-label="Save item" title="Save for later">♥</button>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:0 clamp(20px,6vw,56px) 96px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px;">
+      <h2 style="font-size:26px;margin:0;">You May Also Like</h2>
+      <div style="display:flex;gap:10px;">
+        <button onClick="{{ relPrev }}" class="btn btn-secondary btn-icon" style="border-radius:50%;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button onClick="{{ relNext }}" class="btn btn-secondary btn-icon" style="border-radius:50%;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+    <div ref="{{ relRef }}" style="display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;">
+      <sc-for list="{{ related }}" as="p" hint-placeholder-count="4">
+        <a href="{{ p.href }}" class="card elev-sm product-card" style="flex:0 0 260px;scroll-snap-align:start;padding:0;overflow:hidden;text-decoration:none;color:inherit;display:block;">
+          <div class="plate" style="aspect-ratio:1;margin:0;border-width:0;position:relative;">
+            <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
+            <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+          </div>
+          <div style="padding:16px;">
+            <div class="card-kicker">{{ p.sku }}</div>
+            <div class="card-title" style="margin-top:4px;">{{ p.title }}</div>
+            <div style="font-size:13px;font-family:var(--font-heading);font-weight:600;color:var(--color-accent-700);margin-top:10px;">{{ p.priceLabel }}</div>
+          </div>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+  </sc-if>
+
+  <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">AURUM &amp; CO.</div>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+            <a href="Diamonds.dc.html" style="color:var(--color-neutral-300);">Diamonds</a>
+          </sc-if>
+          <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+            <a href="Jewelry.dc.html" style="color:var(--color-neutral-300);">Jewelry</a>
+          </sc-if>
+          <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+            <a href="Gemstones.dc.html" style="color:var(--color-neutral-300);">Gemstones</a>
+          </sc-if>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Company</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <a href="About.dc.html" style="color:var(--color-neutral-300);">About Us</a>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Contact</a>
+          <a href="Register.dc.html" style="color:var(--color-neutral-300);">Trade Registration</a>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <span>{{ footerEmail }}</span>
+          <span>{{ footerPhone }}</span>
+          <span>New York · Antwerp · Surat</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+      <span>© 2026 Aurum &amp; Co. All rights reserved.</span>
+      <span>GIA · IGI · HRD Certified Partners</span>
+    </div>
+  </footer>
+
+  <sc-if value="{{ cartOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(45,43,43,.5);z-index:100;display:flex;justify-content:flex-end;" onClick="{{ closeCartBg }}">
+      <div style="background:var(--color-bg);width:min(420px,100%);height:100%;padding:28px;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);" onClick="{{ stop }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <h3 style="margin:0;">Inquiry Cart</h3>
+          <button onClick="{{ toggleCart }}" style="background:none;border:none;cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </div>
+        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:16px;">
+            <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="0">
+              <div style="display:flex;gap:12px;border-bottom:1px solid var(--color-divider);padding-bottom:14px;">
+                <div style="flex:1;">
+                  <div style="font-size:11px;opacity:.6;">{{ it.sku }}</div>
+                  <div style="font-size:14px;font-family:var(--font-heading);font-weight:600;">{{ it.name }}</div>
+                  <div style="font-size:12px;opacity:.7;margin-top:4px;">Qty {{ it.qty }} · {{ it.priceLabel }}</div>
+                </div>
+                <button onClick="{{ it.remove }}" style="background:none;border:none;cursor:pointer;color:var(--color-text);opacity:.5;height:fit-content;">×</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border-top:1px solid var(--color-divider);padding-top:16px;margin-top:16px;">
+            <p style="font-size:12px;opacity:.7;margin:0 0 12px;">Send this inquiry to our sales desk via:</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <a href="{{ waLink }}" target="_blank" class="btn btn-secondary" onClick="{{ submitWa }}">WhatsApp</a>
+              <a href="{{ emailLink }}" class="btn btn-secondary" onClick="{{ submitEmail }}">Email</a>
+              <a href="{{ lineLink }}" target="_blank" class="btn btn-secondary" onClick="{{ submitLine }}">LINE</a>
+              <a href="{{ skypeLink }}" class="btn btn-secondary" onClick="{{ submitSkype }}">Skype</a>
+            </div>
+            <button onClick="{{ clearCartFn }}" class="btn btn-ghost btn-block">Clear Cart</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ inquiryOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="z-index:200;" onClick="{{ closeInquiry }}">
+      <div class="dialog" style="max-width:520px;" onClick="{{ stopInquiry }}">
+        <div class="dialog-title">Inquire About This Item</div>
+        <div style="display:flex;gap:14px;margin:14px 0;">
+          <div style="width:88px;height:88px;flex-shrink:0;border-radius:8px;overflow:hidden;">
+            <product-media media="{{ inquiryMedia }}" shape="rect" placeholder="{{ inquiryTitle }}" style="width:100%;height:100%;"></product-media>
+          </div>
+          <div>
+            <div style="font-size:11px;opacity:.6;">{{ inquirySku }}</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:15px;">{{ inquiryTitle }}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--color-accent-700);margin-top:4px;">{{ inquiryPriceLabel }}</div>
+          </div>
+        </div>
+        <div style="margin:4px 0 14px;">
+          <sc-for list="{{ inquirySpecRows }}" as="row" hint-placeholder-count="3">
+            <div class="spec-row"><span style="opacity:.6;">{{ row.label }}</span><span>{{ row.value }}</span></div>
+          </sc-for>
+        </div>
+        <div class="field">
+          <label>Add a message (optional)</label>
+          <textarea class="input" rows="3" value="{{ inquiryNote }}" onChange="{{ handleInquiryNote }}" placeholder="Any specific questions about this item…"></textarea>
+        </div>
+        <p style="font-size:12px;opacity:.65;margin:16px 0 8px;">Send this inquiry via:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <a href="{{ inquiryEmailLink }}" class="btn btn-secondary" onClick="{{ inquirySubmitEmail }}">Email</a>
+          <a href="{{ inquiryWaLink }}" target="_blank" class="btn btn-secondary {{ inquiryGateClass }}" onClick="{{ inquirySubmitWa }}">WhatsApp</a>
+          <a href="{{ inquiryLineLink }}" target="_blank" class="btn btn-secondary {{ inquiryGateClass }}" onClick="{{ inquirySubmitLine }}">LINE</a>
+          <a href="{{ inquirySkypeLink }}" class="btn btn-secondary {{ inquiryGateClass }}" onClick="{{ inquirySubmitSkype }}">Skype</a>
+        </div>
+        <sc-if value="{{ inquiryShowGateNote }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:11.5px;opacity:.6;margin-top:10px;">WhatsApp, LINE and Skype are reserved for approved trade accounts — <a href="Login.dc.html">sign in</a> or <a href="Register.dc.html">register</a> to unlock direct chat. Email is always open.</p>
+        </sc-if>
+        <div class="dialog-actions">
+          <button onClick="{{ closeInquiry }}" class="btn btn-ghost">Close</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    cartOpen: false, cartItems: [], loading: true, notFound: false, product: null, activeIndex: 0,
+    showDiamonds: true, showJewelry: true, showGemstones: true,
+    customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(), savedSkus: new Set(),
+    accountMenuOpen: false,
+    settings: { whatsapp: '15551234567', inquiryEmail: 'sales@aurumandco.com', lineId: '@aurumandco', skypeId: 'live:.cid.aurumandco' },
+    inquiryOpen: false, inquiryProduct: null, inquiryNote: '',
+  };
+  relRef = React.createRef();
+  relScroll(dir) { const el = this.relRef.current; if (el) el.scrollBy({ left: dir * 290, behavior: 'smooth' }); }
+
+  async componentDidMount() {
+    const cartMod = await import('./utils/cart.js');
+    this.cart = cartMod;
+    this.refreshCart();
+    this.certificateLink = (await import('./utils/certificateLink.js')).certificateLink;
+    this._onChange = () => this.refreshCart();
+    window.addEventListener('aurum-cart-change', this._onChange);
+    window.addEventListener('storage', this._onChange);
+
+    const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
+    fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
+    import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
+    import('./utils/customerAuth.js').then((m) => {
+      this.logoutCustomer = m.logoutCustomer;
+      m.fetchCustomerSession().then((me) => this.setState({ customer: me }));
+    });
+    import('./utils/savedItems.js').then((m) => m.getSavedSkus()).then((skus) => this.setState({ savedSkus: skus }));
+    this.inquiryHelpers = await import('./utils/inquiryItem.js');
+
+    const sku = new URLSearchParams(location.search).get('sku') || 'AC-J2201';
+    try {
+      const res = await fetch(`/api/products/${encodeURIComponent(sku)}`, { credentials: 'same-origin' });
+      if (res.status === 404) { this.setState({ loading: false, notFound: true }); return; }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load.');
+      this.setState({ loading: false, product: json.data });
+    } catch {
+      this.setState({ loading: false, notFound: true });
+    }
+  }
+  componentWillUnmount() {
+    window.removeEventListener('aurum-cart-change', this._onChange);
+    window.removeEventListener('storage', this._onChange);
+  }
+  refreshCart() {
+    const items = this.cart.getCart().map((it) => ({ ...it, remove: () => { this.cart.removeFromCart(it.sku); this.refreshCart(); } }));
+    this.setState({ cartItems: items });
+  }
+  toggleSaveSku(sku, name, priceLabel, productType) {
+    if (!this.state.customer) { window.location.href = 'Login.dc.html'; return; }
+    import('./utils/savedItems.js').then(async (m) => {
+      const saved = new Set(this.state.savedSkus);
+      if (saved.has(sku)) { await m.unsaveItem(sku); saved.delete(sku); }
+      else { await m.saveItem({ sku, name, priceLabel, productType }); saved.add(sku); }
+      this.setState({ savedSkus: saved });
+    });
+  }
+  openInquiry(p) { this.setState({ inquiryOpen: true, inquiryProduct: p, inquiryNote: '' }); }
+  closeInquiry() { this.setState({ inquiryOpen: false }); }
+
+  renderVals() {
+    const cart = this.cart;
+    const items = this.state.cartItems;
+    const message = cart ? cart.buildMessage(items, {}) : '';
+    const p = this.state.product;
+    const base = {
+      loading: this.state.loading, notFound: this.state.notFound, loaded: !this.state.loading && !this.state.notFound && !!p,
+      showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
+      isLoggedIn: !!this.state.customer,
+      handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },
+      accountMenuOpen: this.state.accountMenuOpen,
+      toggleAccountMenu: (e) => { e.preventDefault(); e.stopPropagation(); this.setState({ accountMenuOpen: !this.state.accountMenuOpen }); },
+      closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
+      accountName: (this.state.customer && this.state.customer.full_name) || '',
+      accountEmail: (this.state.customer && this.state.customer.email) || '',
+      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@aurumandco.com',
+      footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
+      cartOpen: this.state.cartOpen,
+      cartItems: items,
+      hasCartItems: items.length > 0,
+      cartCount: items.reduce((n, i) => n + i.qty, 0),
+      toggleCart: () => this.setState((s) => ({ cartOpen: !s.cartOpen })),
+      closeCartBg: () => this.setState({ cartOpen: false }),
+      stop: (e) => e.stopPropagation(),
+      clearCartFn: () => { cart && cart.clearCart(); this.refreshCart(); },
+      waLink: cart ? cart.channelLink('whatsapp', message, this.state.settings) : '#',
+      emailLink: cart ? cart.channelLink('email', message, this.state.settings) : '#',
+      lineLink: cart ? cart.channelLink('line', message, this.state.settings) : '#',
+      skypeLink: cart ? cart.channelLink('skype', message, this.state.settings) : '#',
+      submitWa: () => cart && cart.submitInquiry(items, 'whatsapp'),
+      submitEmail: () => cart && cart.submitInquiry(items, 'email'),
+      submitLine: () => cart && cart.submitInquiry(items, 'line'),
+      submitSkype: () => cart && cart.submitInquiry(items, 'skype'),
+      ...this.buildInquiryVals(cart),
+    };
+    if (!p) return base;
+
+    const media = p.media || [];
+    const activeIndex = Math.max(0, Math.min(this.state.activeIndex, Math.max(media.length - 1, 0)));
+    const thumbs = media.map((m, i) => ({
+      url: m.url, isImage: m.kind === 'image', isVideo: m.kind === 'video',
+      placeholder: p.title || p.sku,
+      outlineColor: i === activeIndex ? 'var(--color-accent-700)' : 'transparent',
+      select: () => this.setState({ activeIndex: i }),
+    }));
+    const title = p.category ? `${p.category.name.replace(/s$/, '')}` : p.sku;
+    const related = (p.related || []).map((r) => {
+      const rTitle = r.category ? r.category.name : r.sku;
+      const priceLabel = r.priceVisible ? '$' + Number(r.totalPrice).toLocaleString() : r.priceLabel;
+      return {
+        sku: r.sku, title: rTitle, priceLabel,
+        media: JSON.stringify(r.media || []),
+        placeholder: `${r.metal || 'Jewelry'} product shot`,
+        href: `JewelryProduct.dc.html?sku=${encodeURIComponent(r.sku)}`,
+        savedClass: this.state.savedSkus.has(r.sku) ? 'saved' : '',
+        heartGlyph: this.state.savedSkus.has(r.sku) ? '♥' : '♡',
+        toggleSave: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleSaveSku(r.sku, rTitle, priceLabel, 'jewelry'); },
+      };
+    });
+
+    return {
+      ...base,
+      sku: p.sku,
+      title,
+      subtitle: [p.goldPurity && `${p.goldPurity} ${p.goldColor || ''} Gold`.trim(), p.stoneName].filter(Boolean).join(' · '),
+      hasSubcategory: !!(p.subcategory && p.subcategory.name), subcategoryName: p.subcategory ? p.subcategory.name : '',
+      metal: p.metal || '—', goldPurity: p.goldPurity || '—', goldColor: p.goldColor || '—',
+      goldWeight: p.goldWeightGrams ? `${p.goldWeightGrams} g` : '—',
+      jewelryCertLabel: [p.certificateAuthority, p.certificateNumber].filter(Boolean).join(' ') || '—',
+      certLinkJewelry: (this.certificateLink && this.certificateLink(p.certificateWebsite, p.certificateNumber)) || '#',
+      hasJewelryCertLink: !!p.certificateWebsite,
+      stoneWeight: p.weightCarat ? `${p.weightCarat} ct` : '—',
+      stoneColor: p.color || '—', stoneShape: p.shape || '—', stoneClarity: p.clarity || '—',
+      stoneMeasurements: p.measurements || '—',
+      media: JSON.stringify(media),
+      activeIndex,
+      thumbs,
+      priceVisible: p.priceVisible,
+      pricesLocked: !p.priceVisible,
+      priceLabel: p.priceLabel || 'Total Jewelry Price is available on request',
+      isPriceCtaLogin: p.priceCta === 'login',
+      isPriceCtaPending: p.priceCta === 'pending',
+      isPriceCtaContact: p.priceCta === 'contact',
+      isPriceCtaNone: !p.priceCta,
+      totalPriceLabel: p.totalPrice != null ? '$' + Number(p.totalPrice).toLocaleString() : '—',
+      related,
+      relRef: this.relRef,
+      relPrev: () => this.relScroll(-1),
+      relNext: () => this.relScroll(1),
+      addToCartFn: () => {
+        if (!cart) return;
+        if (cart.getCart().some((i) => i.sku === p.sku)) {
+          cart.removeFromCart(p.sku);
+          this.refreshCart();
+        } else {
+          cart.addToCart({ sku: p.sku, name: title, priceLabel: p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : p.priceLabel, qty: 1 });
+          this.refreshCart();
+          this.setState({ cartOpen: true });
+        }
+      },
+      cartBtnClass: this.state.cartItems.some((i) => i.sku === p.sku) ? 'btn-added' : 'btn-secondary',
+      cartBtnLabel: this.state.cartItems.some((i) => i.sku === p.sku) ? '✓ In Cart' : 'Add to Cart',
+      saveStyle: this.state.savedSkus.has(p.sku) ? 'color:#b3273e;' : 'color:var(--color-text);opacity:.5;',
+      toggleSaveFn: () => this.toggleSaveSku(
+        p.sku, title, p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : p.priceLabel, 'jewelry'
+      ),
+      openInquireNowFn: () => this.openInquiry(p),
+    };
+  }
+
+  buildInquiryVals(cart) {
+    const ih = this.inquiryHelpers;
+    const iq = this.state.inquiryProduct;
+    const iqApproved = !!(this.state.customer && this.state.customer.status === 'approved');
+    const iqTitle = iq && ih ? ih.inquiryTitle(iq) : (iq ? iq.sku : '');
+    const iqPriceLabel = iq && ih ? ih.inquiryPriceLabel(iq) : '';
+    const iqSpecRows = iq && ih ? ih.inquirySpecRows(iq) : [];
+    const iqMsg = iq && ih ? ih.inquiryMessage(iq, this.state.inquiryNote) : '';
+    const iqItems = iq ? [{ sku: iq.sku, name: iqTitle, qty: 1, priceLabel: iqPriceLabel }] : [];
+    return {
+      inquiryOpen: this.state.inquiryOpen,
+      inquirySku: iq ? iq.sku : '',
+      inquiryTitle: iqTitle,
+      inquiryPriceLabel: iqPriceLabel,
+      inquiryMedia: iq ? JSON.stringify(iq.media || []) : '[]',
+      inquirySpecRows: iqSpecRows,
+      inquiryNote: this.state.inquiryNote,
+      handleInquiryNote: (e) => this.setState({ inquiryNote: e.target.value }),
+      closeInquiry: () => this.closeInquiry(),
+      stopInquiry: (e) => e.stopPropagation(),
+      inquiryEmailLink: cart ? cart.channelLink('email', iqMsg, this.state.settings) : '#',
+      inquiryWaLink: iqApproved && cart ? cart.channelLink('whatsapp', iqMsg, this.state.settings) : '#',
+      inquiryLineLink: iqApproved && cart ? cart.channelLink('line', iqMsg, this.state.settings) : '#',
+      inquirySkypeLink: iqApproved && cart ? cart.channelLink('skype', iqMsg, this.state.settings) : '#',
+      inquiryGateClass: iqApproved ? '' : 'inquire-disabled',
+      inquiryShowGateNote: !!iq && !iqApproved,
+      inquirySubmitEmail: () => cart && cart.submitInquiry(iqItems, 'email'),
+      inquirySubmitWa: (e) => { if (!iqApproved) { e.preventDefault(); return; } cart && cart.submitInquiry(iqItems, 'whatsapp'); },
+      inquirySubmitLine: (e) => { if (!iqApproved) { e.preventDefault(); return; } cart && cart.submitInquiry(iqItems, 'line'); },
+      inquirySubmitSkype: (e) => { if (!iqApproved) { e.preventDefault(); return; } cart && cart.submitInquiry(iqItems, 'skype'); },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

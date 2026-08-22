@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item active">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+      <div><h6 style="color:var(--color-accent-700);">System</h6><h1 style="font-size:28px;margin-top:6px;">Audit Reports</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+    <p style="opacity:.65;font-size:13px;margin-top:-16px;">Export activity logs by month, year or a custom date range — ready to hand to your accountant.</p>
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);">{{ errorMessage }}</p>
+    </sc-if>
+
+    <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:28px;margin:24px 0 36px;">
+      <div class="seg" style="margin-bottom:20px;">
+        <label class="seg-opt"><input type="radio" name="mode" checked="{{ isMonthly }}" onChange="{{ selectMonthly }}"/>Monthly</label>
+        <label class="seg-opt"><input type="radio" name="mode" checked="{{ isYearly }}" onChange="{{ selectYearly }}"/>Yearly</label>
+        <label class="seg-opt"><input type="radio" name="mode" checked="{{ isCustom }}" onChange="{{ selectCustom }}"/>Custom Range</label>
+      </div>
+
+      <sc-if value="{{ isMonthly }}" hint-placeholder-val="{{ true }}">
+        <div class="field" style="max-width:280px;">
+          <label>Month (YYYY-MM)</label>
+          <input class="input" value="{{ month }}" onChange="{{ setMonth }}" placeholder="2026-08"/>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isYearly }}" hint-placeholder-val="{{ false }}">
+        <div class="seg">
+          <label class="seg-opt"><input type="radio" name="year" checked="{{ is2026 }}" onChange="{{ setYear2026 }}"/>2026</label>
+          <label class="seg-opt"><input type="radio" name="year" checked="{{ is2025 }}" onChange="{{ setYear2025 }}"/>2025</label>
+          <label class="seg-opt"><input type="radio" name="year" checked="{{ is2024 }}" onChange="{{ setYear2024 }}"/>2024</label>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isCustom }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div class="field"><label>From (YYYY-MM-DD)</label><input class="input" value="{{ from }}" onChange="{{ setFrom }}" placeholder="2026-01-01"/></div>
+          <div class="field"><label>To (YYYY-MM-DD)</label><input class="input" value="{{ to }}" onChange="{{ setTo }}" placeholder="2026-08-04"/></div>
+        </div>
+      </sc-if>
+
+      <button onClick="{{ generate }}" class="btn btn-primary" style="margin-top:20px;" disabled="{{ generating }}">{{ generateLabel }}</button>
+    </div>
+
+    <sc-if value="{{ hasGenerated }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;">
+        <div>
+          <h3 style="margin:0;">{{ reportLabel }}</h3>
+          <p style="opacity:.65;font-size:13px;margin:4px 0 0;">{{ filteredCount }} logged actions</p>
+        </div>
+        <a href="{{ csvHref }}" download="aurum-audit-report.csv" class="btn btn-secondary">Download CSV</a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;">
+        <sc-for list="{{ moduleBreakdown }}" as="b" hint-placeholder-count="4">
+          <div class="card elev-sm"><div class="card-kicker">{{ b.module }}</div><div class="card-title" style="font-size:22px;margin-top:6px;">{{ b.count }}</div></div>
+        </sc-for>
+      </div>
+
+      <div class="tbl-wrap"><table class="table">
+        <thead><tr><th class="adm-th">Date</th><th class="adm-th">Time</th><th class="adm-th">Actor</th><th class="adm-th">Action</th><th class="adm-th">Target</th><th class="adm-th">Module</th></tr></thead>
+        <tbody>
+          <sc-for list="{{ filteredAudits }}" as="a" hint-placeholder-count="10">
+            <tr>
+              <td class="adm-td">{{ a.date }}</td><td class="adm-td">{{ a.time }}</td><td class="adm-td">{{ a.actor }}</td>
+              <td class="adm-td">{{ a.action }}</td><td class="adm-td">{{ a.target }}</td>
+              <td class="adm-td"><span class="tag tag-neutral">{{ a.module }}</span></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table></div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+
+class Component extends DCLogic {
+  state = {
+    admin: null, errorMessage: '', mode: 'monthly',
+    month: '2026-08', year: '2026', from: '', to: '',
+    hasGenerated: false, generating: false, filteredAudits: [], reportLabel: '',
+    newContactCount: 0,
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+  }
+
+  async runFilter() {
+    const { mode, month, year, from, to } = this.state;
+    const params = new URLSearchParams();
+    let label = '';
+    if (mode === 'monthly') { params.set('month', month); label = `Report — Month ${month}`; }
+    else if (mode === 'yearly') { params.set('year', year); label = `Report — Year ${year}`; }
+    else {
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      label = `Report — ${from || 'Beginning'} to ${to || 'Today'}`;
+    }
+    this.setState({ generating: true, errorMessage: '' });
+    try {
+      const res = await fetch(`/api/admin/audit?${params.toString()}`, { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to generate report.');
+      this.setState({ hasGenerated: true, filteredAudits: json.data, reportLabel: label, generating: false });
+    } catch (err) {
+      this.setState({ generating: false, errorMessage: err.message });
+    }
+  }
+
+  renderVals() {
+    const filtered = this.state.filteredAudits;
+    const moduleCounts = {};
+    filtered.forEach(a => { moduleCounts[a.module] = (moduleCounts[a.module] || 0) + 1; });
+    const moduleBreakdown = Object.entries(moduleCounts).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([module, count]) => ({ module, count }));
+
+    const csvRows = [['Date', 'Time', 'Actor', 'Action', 'Target', 'Module'], ...filtered.map(a => [a.date, a.time, a.actor, a.action, a.target, a.module])];
+    const csv = csvRows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csvHref = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+
+    return {
+      isMonthly: this.state.mode === 'monthly', isYearly: this.state.mode === 'yearly', isCustom: this.state.mode === 'custom',
+      selectMonthly: () => this.setState({ mode: 'monthly' }),
+      selectYearly: () => this.setState({ mode: 'yearly' }),
+      selectCustom: () => this.setState({ mode: 'custom' }),
+      month: this.state.month, from: this.state.from, to: this.state.to,
+      setMonth: e => this.setState({ month: e.target.value }),
+      is2026: this.state.year === '2026', is2025: this.state.year === '2025', is2024: this.state.year === '2024',
+      setYear2026: () => this.setState({ year: '2026' }),
+      setYear2025: () => this.setState({ year: '2025' }),
+      setYear2024: () => this.setState({ year: '2024' }),
+      setFrom: e => this.setState({ from: e.target.value }),
+      setTo: e => this.setState({ to: e.target.value }),
+      generate: () => this.runFilter(),
+      generating: this.state.generating,
+      generateLabel: this.state.generating ? 'Generating…' : 'Generate Report',
+      errorMessage: this.state.errorMessage,
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+      hasGenerated: this.state.hasGenerated,
+      reportLabel: this.state.reportLabel,
+      filteredCount: filtered.length,
+      filteredAudits: filtered,
+      moduleBreakdown, csvHref,
+    };
+  }
+}
+</script>
+</body>
+</html>

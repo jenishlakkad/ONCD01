@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+.drag-handle{cursor:grab;opacity:.4;font-size:14px;user-select:none;touch-action:none;}
+.drag-handle[data-disabled="true"]{cursor:default;opacity:.15;}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item active">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><h6 style="color:var(--color-accent-700);">Catalog</h6><h1 style="font-size:28px;margin-top:6px;">Attributes</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+    <p style="opacity:.65;font-size:13px;margin-top:-16px;margin-bottom:20px;">Shape, Color and Certification are shared across Diamonds, Jewelry and Gemstones — they drive both the product form dropdowns and the storefront filter pills, and changes here reflect on the site immediately.</p>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-bottom:16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div class="seg">
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isShapeTab }}" onChange="{{ selectShapeTab }}"/>Shapes ({{ shapeCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isColorTab }}" onChange="{{ selectColorTab }}"/>Colors ({{ colorCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isCertTab }}" onChange="{{ selectCertTab }}"/>Certifications ({{ certCount }})</label>
+      </div>
+      <button onClick="{{ openAdd }}" class="btn btn-primary">+ Add {{ addLabel }}</button>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="position:relative;flex:1;min-width:220px;max-width:360px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="input" value="{{ search }}" onChange="{{ handleSearch }}" placeholder="Search by name…" style="padding-left:34px;width:100%;box-sizing:border-box;"/>
+      </div>
+      <span style="font-size:12px;opacity:.6;margin-left:auto;">{{ visibleRows.length }} of {{ totalForTab }}</span>
+    </div>
+
+    <sc-if value="{{ reorderHint }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:11.5px;opacity:.55;margin:-4px 0 12px;">{{ reorderHint }}</p>
+    </sc-if>
+
+    <div class="tbl-wrap"><table class="table">
+      <thead><tr><th class="adm-th" style="width:30px;"></th><th class="adm-th">Name</th><th class="adm-th">Products</th><th class="adm-th">Status</th><th class="adm-th">Actions</th></tr></thead>
+      <tbody>
+        <sc-for list="{{ visibleRows }}" as="r" hint-placeholder-count="6">
+          <tr data-row-id="{{ r.id }}" style="opacity:{{ r.rowOpacity }};transform:{{ r.rowTransform }};transition:transform .12s ease;">
+            <td class="adm-td">
+              <span class="drag-handle" data-disabled="{{ r.dragDisabled }}" onPointerDown="{{ r.dragStart }}" title="Drag to reorder">⠿</span>
+            </td>
+            <td class="adm-td">{{ r.name }}</td>
+            <td class="adm-td">{{ r.productCount }}</td>
+            <td class="adm-td"><span class="tag {{ r.statusTagClass }}">{{ r.statusLabel }}</span></td>
+            <td class="adm-td">
+              <div style="display:flex;gap:6px;">
+                <button onClick="{{ r.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+                <button onClick="{{ r.toggle }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">{{ r.toggleLabel }}</button>
+                <button onClick="{{ r.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+
+    <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDialog }}">
+        <div class="dialog" style="max-width:420px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ dialogTitle }}</div>
+          <div class="field" style="margin-top:10px;">
+            <label>Name</label>
+            <input class="input" value="{{ form.name }}" onChange="{{ setFormName }}" placeholder="e.g. Marquise"/>
+          </div>
+          <sc-if value="{{ dialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:12px;">{{ dialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveForm }}" class="btn btn-primary" disabled="{{ saving }}">{{ saveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    admin: null, errorMessage: '', newContactCount: 0,
+    activeType: 'shape', search: '',
+    attributes: [],
+    dialogOpen: false, editingId: null,
+    form: { name: '' }, dialogError: '', saving: false,
+    draggingId: null,
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    this.filters = await import('./utils/filters.js');
+    this.loadAll();
+  }
+
+  async loadAll() {
+    try {
+      const res = await fetch('/api/admin/attributes', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load attributes.');
+      this.setState({ attributes: json.data, errorMessage: '' });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  canReorder() { return !this.state.search.trim(); }
+
+  handleSearch(e) { this.setState({ search: e.target.value }); }
+
+  openAdd() {
+    this.setState({ dialogOpen: true, editingId: null, form: { name: '' }, dialogError: '' });
+  }
+  openEdit(row) {
+    this.setState({ dialogOpen: true, editingId: row.id, form: { name: row.name }, dialogError: '' });
+  }
+  closeDialog() { this.setState({ dialogOpen: false }); }
+  setFormName(e) { this.setState({ form: { ...this.state.form, name: e.target.value } }); }
+
+  async saveForm() {
+    const name = (this.state.form.name || '').trim();
+    if (!name) { this.setState({ dialogError: 'Name is required.' }); return; }
+    this.setState({ saving: true, dialogError: '' });
+    try {
+      const { editingId } = this.state;
+      const url = editingId ? `/api/admin/attributes/${editingId}` : '/api/admin/attributes';
+      const method = editingId ? 'PUT' : 'POST';
+      const body = editingId ? { name } : { attributeType: this.state.activeType, name };
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ dialogOpen: false, saving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ saving: false, dialogError: err.message });
+    }
+  }
+
+  async toggleEnabled(row) {
+    try {
+      const res = await fetch(`/api/admin/attributes/${row.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ enabled: !row.enabled }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  async remove(row) {
+    if (!window.confirm(`Delete "${row.name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/attributes/${row.id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  // Pointer-based reorder — same generalized pattern as AdminCategories.dc.html,
+  // simplified since there's no product-type/group scoping to track here.
+  beginRowDrag(id, e) {
+    if (!this.canReorder()) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    this._dragId = id;
+    this._dragOrderChanged = false;
+    this.setState({ draggingId: id });
+    this._rowDragMove = (ev) => this.handleRowDragMove(ev);
+    this._rowDragUp = () => this.finishRowDrag();
+    window.addEventListener('pointermove', this._rowDragMove);
+    window.addEventListener('pointerup', this._rowDragUp);
+    window.addEventListener('pointercancel', this._rowDragUp);
+  }
+
+  handleRowDragMove(e) {
+    if (this._dragId == null) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const row = el && el.closest('[data-row-id]');
+    if (!row) return;
+    const overId = Number(row.getAttribute('data-row-id'));
+    if (!Number.isFinite(overId) || overId === this._dragId) return;
+    const items = [...this.state.attributes];
+    const fromIdx = items.findIndex((x) => x.id === this._dragId);
+    const toIdx = items.findIndex((x) => x.id === overId);
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+    const [moved] = items.splice(fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+    this._dragOrderChanged = true;
+    this.setState({ attributes: items });
+  }
+
+  async finishRowDrag() {
+    window.removeEventListener('pointermove', this._rowDragMove);
+    window.removeEventListener('pointerup', this._rowDragUp);
+    window.removeEventListener('pointercancel', this._rowDragUp);
+    const changed = this._dragOrderChanged;
+    this._dragId = null;
+    this.setState({ draggingId: null });
+    if (!changed) return;
+    try {
+      const activeType = this.state.activeType;
+      const order = this.state.attributes.filter((a) => a.attributeType === activeType).map((a) => a.id);
+      const res = await fetch('/api/admin/attributes/reorder', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ attributeType: activeType, order }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to reorder.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+      this.loadAll();
+    }
+  }
+
+  renderVals() {
+    const activeType = this.state.activeType;
+    const typeLabel = { shape: 'Shape', color: 'Color', certification: 'Certification' }[activeType];
+
+    const rows = this.state.attributes.filter((a) => a.attributeType === activeType);
+    const totalForTab = rows.length;
+    const filteredRows = rows.filter((r) => !this.filters || this.filters.searchMatch(r, this.state.search, [(x) => x.name]));
+    const canReorder = this.canReorder();
+    const draggingId = this.state.draggingId;
+    const visibleRows = filteredRows.map((r) => ({
+      id: r.id, name: r.name, productCount: r.productCount || 0,
+      enabled: !!r.enabled,
+      statusLabel: r.enabled ? 'Enabled' : 'Disabled',
+      statusTagClass: r.enabled ? 'tag-accent' : 'tag-neutral',
+      edit: () => this.openEdit(r),
+      toggle: () => this.toggleEnabled(r),
+      toggleLabel: r.enabled ? 'Disable' : 'Enable',
+      remove: () => this.remove(r),
+      dragStart: (e) => this.beginRowDrag(r.id, e),
+      dragDisabled: !canReorder,
+      rowOpacity: r.id === draggingId ? 0.6 : 1,
+      rowTransform: r.id === draggingId ? 'scale(1.01)' : 'none',
+    }));
+
+    let reorderHint = '';
+    if (!canReorder && this.state.search.trim()) reorderHint = 'Clear the search box to drag-reorder.';
+
+    return {
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+      errorMessage: this.state.errorMessage,
+
+      isShapeTab: activeType === 'shape', isColorTab: activeType === 'color', isCertTab: activeType === 'certification',
+      selectShapeTab: () => this.setState({ activeType: 'shape', search: '' }),
+      selectColorTab: () => this.setState({ activeType: 'color', search: '' }),
+      selectCertTab: () => this.setState({ activeType: 'certification', search: '' }),
+      shapeCount: this.state.attributes.filter((a) => a.attributeType === 'shape').length,
+      colorCount: this.state.attributes.filter((a) => a.attributeType === 'color').length,
+      certCount: this.state.attributes.filter((a) => a.attributeType === 'certification').length,
+
+      search: this.state.search,
+      handleSearch: (e) => this.handleSearch(e),
+      totalForTab, visibleRows, reorderHint,
+
+      addLabel: typeLabel,
+      openAdd: () => this.openAdd(),
+
+      dialogOpen: this.state.dialogOpen,
+      dialogTitle: (this.state.editingId ? 'Edit ' : 'Add ') + typeLabel,
+      closeDialog: () => this.closeDialog(),
+      stop: (e) => e.stopPropagation(),
+      form: this.state.form,
+      setFormName: (e) => this.setFormName(e),
+      dialogError: this.state.dialogError,
+      saving: this.state.saving,
+      saveLabel: this.state.saving ? 'Saving…' : 'Save',
+      saveForm: () => this.saveForm(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

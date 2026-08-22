@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item active">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+      <div><h6 style="color:var(--color-accent-700);">Content</h6><h1 style="font-size:28px;margin-top:6px;">SEO</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-top:-16px;">{{ errorMessage }}</p>
+    </sc-if>
+    <sc-if value="{{ savedMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-top:-16px;">{{ savedMessage }}</p>
+    </sc-if>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <sc-for list="{{ pages }}" as="p" hint-placeholder-count="4">
+        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:20px;">
+          <div style="font-family:var(--font-heading);font-weight:600;margin-bottom:10px;">{{ p.label }}</div>
+          <div class="field" style="margin-bottom:10px;"><label>Meta Title</label><input class="input" value="{{ p.metaTitle }}" onChange="{{ p.setMetaTitle }}"/></div>
+          <div class="field"><label>Meta Description</label><textarea class="input" rows="2" value="{{ p.metaDescription }}" onChange="{{ p.setMetaDescription }}"></textarea></div>
+        </div>
+      </sc-for>
+      <button onClick="{{ saveAll }}" class="btn btn-primary" style="width:fit-content;" disabled="{{ saving }}">{{ saveLabel }}</button>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { admin: null, errorMessage: '', savedMessage: '', pages: {}, saving: false, newContactCount: 0 };
+  labels = { home: 'Home', diamonds: 'Diamonds', jewelry: 'Jewelry', gemstones: 'Gemstones' };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    this.loadAll();
+  }
+
+  async loadAll() {
+    try {
+      const res = await fetch('/api/admin/seo', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load SEO settings.');
+      const pages = {};
+      for (const row of json.data) pages[row.pageKey] = { metaTitle: row.metaTitle || '', metaDescription: row.metaDescription || '' };
+      this.setState({ pages, errorMessage: '' });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  setField(pageKey, field, val) {
+    this.setState({ pages: { ...this.state.pages, [pageKey]: { ...this.state.pages[pageKey], [field]: val } }, savedMessage: '' });
+  }
+
+  async saveAll() {
+    this.setState({ saving: true, errorMessage: '', savedMessage: '' });
+    try {
+      for (const pageKey of Object.keys(this.labels)) {
+        const p = this.state.pages[pageKey] || { metaTitle: '', metaDescription: '' };
+        const res = await fetch(`/api/admin/seo/${pageKey}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify(p),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || `Failed to save ${pageKey}.`);
+      }
+      this.setState({ saving: false, savedMessage: 'SEO settings saved.' });
+    } catch (err) {
+      this.setState({ saving: false, errorMessage: err.message });
+    }
+  }
+
+  renderVals() {
+    const pages = Object.keys(this.labels).map((key) => {
+      const p = this.state.pages[key] || { metaTitle: '', metaDescription: '' };
+      return {
+        key, label: this.labels[key],
+        metaTitle: p.metaTitle, metaDescription: p.metaDescription,
+        setMetaTitle: (e) => this.setField(key, 'metaTitle', e.target.value),
+        setMetaDescription: (e) => this.setField(key, 'metaDescription', e.target.value),
+      };
+    });
+    return {
+      pages,
+      errorMessage: this.state.errorMessage,
+      savedMessage: this.state.savedMessage,
+      saving: this.state.saving,
+      saveLabel: this.state.saving ? 'Saving…' : 'Save SEO Settings',
+      saveAll: () => this.saveAll(),
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+    };
+  }
+}
+</script>
+</body>
+</html>

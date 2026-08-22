@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
+.account-menu-link:hover{background:var(--color-accent-100);}
+</style>
+</helmet>
+
+<div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
+
+  <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
+    <div class="nav-brand" style="letter-spacing:.1em;">AURUM &amp; CO.</div>
+    <input type="checkbox" class="nav-check" id="navCheck" hidden>
+    <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <a href="Home.dc.html">Home</a>
+    <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+      <a href="Diamonds.dc.html">Diamonds</a>
+    </sc-if>
+    <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+      <a href="Jewelry.dc.html">Jewelry</a>
+    </sc-if>
+    <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+      <a href="Gemstones.dc.html">Gemstones</a>
+    </sc-if>
+    <a href="About.dc.html">About</a>
+    <a href="Contact.dc.html" aria-current="page">Contact</a>
+    <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
+      <sc-if value="{{ isLoggedIn }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;">
+          <button onClick="{{ toggleAccountMenu }}" aria-label="Account menu" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:var(--color-accent-100);color:var(--color-accent-800);border:none;cursor:pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+          </button>
+          <sc-if value="{{ accountMenuOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closeAccountMenu }}" style="position:fixed;inset:0;z-index:60;"></div>
+            <div style="position:absolute;top:calc(100% + 10px);right:0;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);width:224px;z-index:61;overflow:hidden;">
+              <div style="padding:14px 16px;border-bottom:1px solid var(--color-divider);">
+                <div style="font-size:13px;font-weight:600;">{{ accountName }}</div>
+                <div style="font-size:11px;opacity:.6;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ accountEmail }}</div>
+              </div>
+              <a href="Dashboard.dc.html?tab=overview" class="account-menu-link">Overview</a>
+              <a href="Dashboard.dc.html?tab=inquiries" class="account-menu-link">Inquiry History</a>
+              <a href="Dashboard.dc.html?tab=saved" class="account-menu-link">Saved Items</a>
+              <a href="Dashboard.dc.html?tab=profile" class="account-menu-link">Company Profile</a>
+              <a href="Dashboard.dc.html?tab=settings" class="account-menu-link">Account Settings</a>
+              <a href="#" onClick="{{ handleLogout }}" class="account-menu-link" style="border-top:1px solid var(--color-divider);color:var(--color-accent-700);">Log Out</a>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ !isLoggedIn }}" hint-placeholder-val="{{ true }}">
+        <a href="Login.dc.html" class="btn btn-secondary">Login</a>
+        <a href="Register.dc.html" class="btn btn-primary">Register</a>
+      </sc-if>
+    </div>
+  </nav>
+
+  <section style="padding:64px clamp(20px,6vw,56px) 96px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:64px;">
+    <div>
+      <h6 style="color:var(--color-accent-700);">Get in Touch</h6>
+      <h1 style="font-size:38px;margin-top:8px;">Contact Our Sales Desk</h1>
+      <p style="opacity:.75;margin-top:12px;max-width:420px;">Whether you're sourcing for trade or a single piece, our team responds within one business day.</p>
+
+      <div style="margin-top:36px;display:flex;flex-direction:column;gap:20px;">
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          <div><div style="font-size:13px;opacity:.6;">Email</div><div>{{ supportEmail }}</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><path d="M5 4h4l2 5-2.5 2.5a12 12 0 0 0 5 5L16 14l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg>
+          <div><div style="font-size:13px;opacity:.6;">Phone / WhatsApp</div><div>{{ whatsappNumber }}</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <div><div style="font-size:13px;opacity:.6;">Showrooms</div><div>New York · Antwerp · Surat</div></div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <p style="font-size:13px;opacity:.6;margin-bottom:10px;">Or message us directly</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="{{ waHref }}" target="_blank" class="btn btn-secondary">WhatsApp</a>
+        <a href="{{ mailHref }}" class="btn btn-secondary">Email</a>
+        <a href="{{ lineHref }}" target="_blank" class="btn btn-secondary">LINE</a>
+        <a href="{{ skypeHref }}" class="btn btn-secondary">Skype</a>
+      </div>
+    </div>
+
+    <div>
+      <sc-if value="{{ submitted }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;text-align:center;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="2" style="margin:0 auto 16px;"><path d="M5 13l4 4L19 7"/></svg>
+          <h3>Message Sent</h3>
+          <p style="opacity:.75;font-size:14px;">Thank you — our sales desk will reach out shortly.</p>
+        </div>
+      </sc-if>
+      <sc-if value="{{ submitted }}" hint-placeholder-val="{{ true }}">
+      </sc-if>
+      <form onSubmit="{{ handleSubmit }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:32px;display:flex;flex-direction:column;gap:16px;">
+        <p style="font-size:12px;opacity:.6;margin:-6px 0 4px;">All fields are required — this helps us respond only to genuine inquiries.</p>
+        <div class="field"><label>Full Name</label><input class="input" value="{{ form.fullName }}" onChange="{{ fh.fullName }}" required=""/></div>
+        <div class="field"><label>Email</label><input class="input" type="email" value="{{ form.email }}" onChange="{{ fh.email }}" required=""/></div>
+        <div class="field"><label>Phone</label><input class="input" type="tel" value="{{ form.phone }}" onChange="{{ fh.phone }}" required=""/></div>
+        <div class="field"><label>Subject</label><input class="input" value="{{ form.subject }}" onChange="{{ fh.subject }}" required=""/></div>
+        <div class="field"><label>Message</label><textarea class="input" rows="5" value="{{ form.message }}" onChange="{{ fh.message }}" required=""></textarea></div>
+        <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:13px;color:var(--color-accent-700);">{{ formError }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" disabled="{{ submitting }}">{{ submitLabel }}</button>
+      </form>
+    </div>
+  </section>
+
+  <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">AURUM &amp; CO.</div>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
+            <a href="Diamonds.dc.html" style="color:var(--color-neutral-300);">Diamonds</a>
+          </sc-if>
+          <sc-if value="{{ showJewelry }}" hint-placeholder-val="{{ true }}">
+            <a href="Jewelry.dc.html" style="color:var(--color-neutral-300);">Jewelry</a>
+          </sc-if>
+          <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
+            <a href="Gemstones.dc.html" style="color:var(--color-neutral-300);">Gemstones</a>
+          </sc-if>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Company</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <a href="About.dc.html" style="color:var(--color-neutral-300);">About Us</a>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Contact</a>
+          <a href="Register.dc.html" style="color:var(--color-neutral-300);">Trade Registration</a>
+        </div>
+      </div>
+      <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <span>{{ footerEmail }}</span>
+          <span>{{ footerPhone }}</span>
+          <span>New York · Antwerp · Surat</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+      <span>© 2026 Aurum &amp; Co. All rights reserved.</span>
+      <span>GIA · IGI · HRD Certified Partners</span>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  get emptyForm() { return { fullName: '', email: '', phone: '', subject: '', message: '' }; }
+
+  state = {
+    submitted: false, showDiamonds: true, showJewelry: true, showGemstones: true,
+    customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
+    accountMenuOpen: false,
+    settings: { supportEmail: 'sales@aurumandco.com', whatsapp: '+15551234567', inquiryEmail: 'sales@aurumandco.com', lineId: '@aurumandco', skypeId: 'live:.cid.aurumandco' },
+    form: this.emptyForm, formError: '', submitting: false,
+  };
+
+  async componentDidMount() {
+    const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
+    fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
+
+    const { fetchPublicSettings } = await import('./utils/settings.js');
+    fetchPublicSettings().then((s) => this.setState({ settings: s }));
+
+    import('./utils/customerAuth.js').then((m) => {
+      this.logoutCustomer = m.logoutCustomer;
+      m.fetchCustomerSession().then((me) => {
+        if (!me) return;
+        this.setState({ customer: me, form: { ...this.state.form, fullName: me.full_name || '', email: me.email || '' } });
+      });
+    });
+  }
+
+  setFormField(key, val) { this.setState({ form: { ...this.state.form, [key]: val } }); }
+
+  async handleSubmit(e) {
+    e.preventDefault();
+    this.setState({ submitting: true, formError: '' });
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify(this.state.form),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to send message.');
+      this.setState({ submitted: true, submitting: false, form: this.emptyForm });
+    } catch (err) {
+      this.setState({ submitting: false, formError: err.message });
+    }
+  }
+
+  renderVals() {
+    const s = this.state.settings;
+    const fh = {};
+    Object.keys(this.emptyForm).forEach((k) => { fh[k] = (e) => this.setFormField(k, e.target.value); });
+    return {
+      submitted: this.state.submitted,
+      showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
+      isLoggedIn: !!this.state.customer,
+      handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },
+      accountMenuOpen: this.state.accountMenuOpen,
+      toggleAccountMenu: (e) => { e.preventDefault(); e.stopPropagation(); this.setState({ accountMenuOpen: !this.state.accountMenuOpen }); },
+      closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
+      accountName: (this.state.customer && this.state.customer.full_name) || '',
+      accountEmail: (this.state.customer && this.state.customer.email) || '',
+      supportEmail: s.supportEmail || s.inquiryEmail, whatsappNumber: s.whatsapp,
+      footerEmail: s.supportEmail || s.inquiryEmail || 'sales@aurumandco.com',
+      footerPhone: s.whatsapp || '+1 (555) 123-4567',
+      waHref: 'https://wa.me/' + (s.whatsapp || '').replace(/[^\d]/g, ''),
+      mailHref: 'mailto:' + (s.inquiryEmail || s.supportEmail),
+      lineHref: 'https://line.me/R/ti/p/' + (s.lineId || ''),
+      skypeHref: 'skype:' + (s.skypeId || '') + '?chat',
+      form: this.state.form, fh,
+      formError: this.state.formError,
+      submitting: this.state.submitting,
+      submitLabel: this.state.submitting ? 'Sending…' : 'Send Message',
+      handleSubmit: (e) => this.handleSubmit(e),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

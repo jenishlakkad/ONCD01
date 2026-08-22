@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.switch{width:42px;height:23px;border-radius:999px;border:none;cursor:pointer;position:relative;padding:0;flex:none;}
+.switch span{position:absolute;top:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:var(--shadow-sm);}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item active">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+      <div><h6 style="color:var(--color-accent-700);">Content</h6><h1 style="font-size:28px;margin-top:6px;">Homepage</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin-top:-16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <h4>Hero Carousel Slides</h4>
+    <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
+      <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
+        <div data-slide-id="{{ s.id }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:center;min-width:0;">
+            <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+              <sc-if value="{{ s.hasImage }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ s.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+              </sc-if>
+            </div>
+            <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.title }}</div><div style="font-size:12px;opacity:.6;">{{ s.kicker }}</div></div>
+          </div>
+          <button onClick="{{ s.edit }}" class="btn btn-ghost" style="flex:none;">Edit Slide</button>
+        </div>
+      </sc-for>
+      <button onClick="{{ openAddSlide }}" class="btn btn-secondary" style="width:fit-content;">+ Add Slide</button>
+    </div>
+
+    <h4>Homepage Sections</h4>
+    <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden;margin-bottom:36px;">
+      <sc-for list="{{ homeSections }}" as="h" hint-placeholder-count="4">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--color-divider);">
+          <span>{{ h.label }}</span>
+          <button class="switch" onClick="{{ h.toggle }}" style="background:{{ h.bg }};"><span style="left:{{ h.knobLeft }};"></span></button>
+        </div>
+      </sc-for>
+    </div>
+
+    <h4>Marketing Blocks</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">The promo banner, editor's-pick spotlight, and "Our Story" teaser shown on the homepage.</p>
+    <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
+      <sc-for list="{{ blockCards }}" as="b" hint-placeholder-count="3">
+        <div data-block-key="{{ b.key }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:center;min-width:0;">
+            <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+              <sc-if value="{{ b.hasImage }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ b.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+              </sc-if>
+            </div>
+            <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;">{{ b.label }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.title }}</div></div>
+          </div>
+          <button onClick="{{ b.edit }}" class="btn btn-ghost" style="flex:none;">Edit</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <h4>Collections</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">The Diamonds / Jewelry / Gemstones cards on the homepage.</p>
+    <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
+      <sc-for list="{{ collectionCards }}" as="c" hint-placeholder-count="3">
+        <div data-collection-key="{{ c.key }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:center;min-width:0;">
+            <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+              <sc-if value="{{ c.hasImage }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ c.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+              </sc-if>
+            </div>
+            <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;">{{ c.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.description }}</div></div>
+          </div>
+          <button onClick="{{ c.edit }}" class="btn btn-ghost" style="flex:none;">Edit</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <h4>Why Choose Us</h4>
+    <p style="font-size:12px;opacity:.6;margin-top:4px;">Drag to reorder. Shown near the bottom of the homepage.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0 36px;">
+      <sc-for list="{{ whyUsCards }}" as="w" hint-placeholder-count="4">
+        <div data-why-id="{{ w.id }}" onPointerDown="{{ w.dragStart }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:grab;user-select:none;transform:{{ w.tileTransform }};box-shadow:{{ w.tileShadow }};opacity:{{ w.tileOpacity }};z-index:{{ w.tileZ }};position:relative;transition:transform .12s ease,box-shadow .12s ease;">
+          <div style="min-width:0;"><div style="font-weight:600;font-size:14px;">{{ w.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ w.description }}</div></div>
+          <div style="display:flex;gap:8px;flex:none;">
+            <button onClick="{{ w.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+            <button onClick="{{ w.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+          </div>
+        </div>
+      </sc-for>
+      <button onClick="{{ openAddWhyUs }}" class="btn btn-secondary" style="width:fit-content;">+ Add Bullet</button>
+    </div>
+
+    <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDialog }}">
+        <div class="dialog" style="max-width:560px;max-height:88vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ dialogTitle }}</div>
+
+          <sc-if value="{{ canUploadImage }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;align-items:center;margin-top:12px;">
+              <div style="width:120px;height:80px;border-radius:8px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ hasCurrentImage }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ currentImageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                </sc-if>
+              </div>
+              <div>
+                <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;">
+                  {{ uploadLabel }}
+                  <input type="file" accept="image/*" onChange="{{ handleImageSelect }}" style="display:none;"/>
+                </label>
+                <sc-if value="{{ imageUploading }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ cannotUploadImage }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:12px;opacity:.6;margin-top:10px;">Save the slide first, then reopen it to add a photo.</p>
+          </sc-if>
+
+          <sc-if value="{{ isTextBlockDialog }}" hint-placeholder-val="{{ true }}">
+            <div class="field" style="margin-top:14px;"><label>Kicker</label><input class="input" value="{{ form.kicker }}" onChange="{{ fh.kicker }}"/></div>
+            <div class="field"><label>Title</label><input class="input" value="{{ form.title }}" onChange="{{ fh.title }}"/></div>
+            <div class="field"><label>Body Text</label><textarea class="input" rows="3" value="{{ form.sub }}" onChange="{{ fh.sub }}"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="field"><label>Button Label</label><input class="input" value="{{ form.cta }}" onChange="{{ fh.cta }}"/></div>
+              <div class="field"><label>Button Link</label><input class="input" value="{{ form.href }}" onChange="{{ fh.href }}" placeholder="Diamonds.dc.html"/></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isCollectionDialog }}" hint-placeholder-val="{{ false }}">
+            <div class="field" style="margin-top:14px;"><label>Title</label><input class="input" value="{{ form.title }}" onChange="{{ fh.title }}"/></div>
+            <div class="field"><label>Description</label><textarea class="input" rows="3" value="{{ form.description }}" onChange="{{ fh.description }}"></textarea></div>
+            <div class="field"><label>Link</label><input class="input" value="{{ form.href }}" onChange="{{ fh.href }}" placeholder="Diamonds.dc.html"/></div>
+          </sc-if>
+
+          <sc-if value="{{ dialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ dialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <sc-if value="{{ isEditingSlide }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ removeSlide }}" class="btn btn-ghost" style="margin-right:auto;color:var(--color-accent-700);">Remove Slide</button>
+            </sc-if>
+            <button onClick="{{ closeDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveDialog }}" class="btn btn-primary" disabled="{{ saving }}">{{ saveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ whyUsDialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeWhyUsDialog }}">
+        <div class="dialog" style="max-width:440px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ whyUsDialogTitle }}</div>
+          <div class="field" style="margin-top:12px;"><label>Title</label><input class="input" value="{{ whyUsForm.title }}" onChange="{{ whyUsFh.title }}"/></div>
+          <div class="field"><label>Description</label><textarea class="input" rows="3" value="{{ whyUsForm.description }}" onChange="{{ whyUsFh.description }}"></textarea></div>
+          <sc-if value="{{ whyUsDialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ whyUsDialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeWhyUsDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveWhyUs }}" class="btn btn-primary" disabled="{{ whyUsSaving }}">{{ whyUsSaveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  emptyForm = { title: '', kicker: '', sub: '', cta: '', href: '', description: '' };
+  emptyWhyUsForm = { title: '', description: '' };
+  BLOCK_LABELS = { promo: 'Promo Banner', spotlight: "Editor's Pick Spotlight", storyTeaser: 'Our Story Teaser' };
+
+  state = {
+    admin: null, errorMessage: '', slides: [], sections: [], blocks: [], collections: [], whyUs: [],
+    dialogOpen: false, dialogKind: null, editingId: null, editingKey: null,
+    form: this.emptyForm, dialogError: '', saving: false,
+    currentImageUrl: '', imageUploading: false,
+    whyUsDialogOpen: false, whyUsEditingId: null, whyUsForm: this.emptyWhyUsForm, whyUsDialogError: '', whyUsSaving: false,
+    draggingWhyUsId: null, newContactCount: 0,
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    this.loadAll();
+  }
+
+  async loadAll() {
+    try {
+      const res = await fetch('/api/admin/homepage', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load homepage content.');
+      this.setState({
+        slides: json.data.slides, sections: json.data.sections,
+        blocks: json.data.blocks || [], collections: json.data.collections || [], whyUs: json.data.whyUs || [],
+        errorMessage: '',
+      });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  async toggleSection(key, enabled) {
+    try {
+      const res = await fetch(`/api/admin/homepage/sections/${key}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ enabled }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update section.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  openAddSlide() {
+    this.setState({
+      dialogOpen: true, dialogKind: 'slide', editingId: null, editingKey: null,
+      form: { ...this.emptyForm }, dialogError: '', currentImageUrl: '',
+    });
+  }
+  openEditSlide(s) {
+    this.setState({
+      dialogOpen: true, dialogKind: 'slide', editingId: s.id, editingKey: null,
+      form: { ...this.emptyForm, title: s.title, kicker: s.kicker || '', sub: s.sub || '', cta: s.cta || '', href: s.href || '' },
+      dialogError: '', currentImageUrl: s.imageUrl || '',
+    });
+  }
+  openEditBlock(b) {
+    this.setState({
+      dialogOpen: true, dialogKind: 'block', editingId: null, editingKey: b.key,
+      form: { ...this.emptyForm, title: b.title || '', kicker: b.kicker || '', sub: b.body || '', cta: b.cta || '', href: b.href || '' },
+      dialogError: '', currentImageUrl: b.imageUrl || '',
+    });
+  }
+  openEditCollection(c) {
+    this.setState({
+      dialogOpen: true, dialogKind: 'collection', editingId: null, editingKey: c.key,
+      form: { ...this.emptyForm, title: c.title || '', description: c.description || '', href: c.href || '' },
+      dialogError: '', currentImageUrl: c.imageUrl || '',
+    });
+  }
+  setFormField(key, val) { this.setState({ form: { ...this.state.form, [key]: val } }); }
+  closeDialog() { this.setState({ dialogOpen: false }); }
+
+  async saveDialog() {
+    const { dialogKind, editingId, editingKey, form } = this.state;
+    if (!form.title.trim()) { this.setState({ dialogError: 'Title is required.' }); return; }
+    this.setState({ saving: true, dialogError: '' });
+    try {
+      let url, method, body;
+      if (dialogKind === 'slide') {
+        url = editingId ? `/api/admin/homepage/slides/${editingId}` : '/api/admin/homepage/slides';
+        method = editingId ? 'PUT' : 'POST';
+        body = { title: form.title, kicker: form.kicker, sub: form.sub, cta: form.cta, href: form.href };
+      } else if (dialogKind === 'block') {
+        url = `/api/admin/homepage/blocks/${editingKey}`;
+        method = 'PUT';
+        body = { kicker: form.kicker, title: form.title, body: form.sub, cta: form.cta, href: form.href };
+      } else {
+        url = `/api/admin/homepage/collections/${editingKey}`;
+        method = 'PUT';
+        body = { title: form.title, description: form.description, href: form.href };
+      }
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ dialogOpen: false, saving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ saving: false, dialogError: err.message });
+    }
+  }
+
+  async removeSlide() {
+    if (!this.state.editingId) return;
+    if (!window.confirm('Remove this slide?')) return;
+    try {
+      const res = await fetch(`/api/admin/homepage/slides/${this.state.editingId}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove slide.');
+      this.setState({ dialogOpen: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ dialogError: err.message });
+    }
+  }
+
+  async handleImageSelect(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const { dialogKind, editingId, editingKey } = this.state;
+    if (dialogKind === 'slide' && !editingId) return;
+    this.setState({ imageUploading: true });
+    try {
+      const { openCropper } = await import('./utils/imageCropper.js');
+      const cropped = await openCropper(file, { title: 'Crop Image' });
+      if (!cropped) { this.setState({ imageUploading: false }); return; }
+      const fd = new FormData();
+      fd.append('image', cropped, cropped instanceof File ? cropped.name : 'image.webp');
+      let url;
+      if (dialogKind === 'slide') url = `/api/admin/homepage/slides/${editingId}/image`;
+      else if (dialogKind === 'block') url = `/api/admin/homepage/blocks/${editingKey}/image`;
+      else url = `/api/admin/homepage/collections/${editingKey}/image`;
+      const res = await fetch(url, { method: 'POST', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed.');
+      this.setState({ imageUploading: false, currentImageUrl: json.data.imageUrl });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ imageUploading: false, dialogError: err.message });
+    }
+  }
+
+  openAddWhyUs() {
+    this.setState({ whyUsDialogOpen: true, whyUsEditingId: null, whyUsForm: { ...this.emptyWhyUsForm }, whyUsDialogError: '' });
+  }
+  openEditWhyUs(w) {
+    this.setState({ whyUsDialogOpen: true, whyUsEditingId: w.id, whyUsForm: { title: w.title, description: w.description || '' }, whyUsDialogError: '' });
+  }
+  setWhyUsField(key, val) { this.setState({ whyUsForm: { ...this.state.whyUsForm, [key]: val } }); }
+  closeWhyUsDialog() { this.setState({ whyUsDialogOpen: false }); }
+
+  async saveWhyUs() {
+    const { whyUsEditingId, whyUsForm } = this.state;
+    if (!whyUsForm.title.trim()) { this.setState({ whyUsDialogError: 'Title is required.' }); return; }
+    this.setState({ whyUsSaving: true, whyUsDialogError: '' });
+    try {
+      const url = whyUsEditingId ? `/api/admin/homepage/why-us/${whyUsEditingId}` : '/api/admin/homepage/why-us';
+      const method = whyUsEditingId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(whyUsForm) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ whyUsDialogOpen: false, whyUsSaving: false });
+      this.loadAll();
+    } catch (err) {
+      this.setState({ whyUsSaving: false, whyUsDialogError: err.message });
+    }
+  }
+
+  async removeWhyUs(id) {
+    if (!window.confirm('Remove this bullet?')) return;
+    try {
+      const res = await fetch(`/api/admin/homepage/why-us/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  // Pointer-based drag reorder (see AdminProducts.dc.html for the same pattern applied to media tiles).
+  startWhyUsDrag(id, e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('button')) return;
+    e.preventDefault();
+    this._dragWhyUsId = id;
+    this._whyUsOrderChanged = false;
+    this.setState({ draggingWhyUsId: id });
+    this._whyUsDragMove = (ev) => this.handleWhyUsDragMove(ev);
+    this._whyUsDragUp = () => this.finishWhyUsDrag();
+    window.addEventListener('pointermove', this._whyUsDragMove);
+    window.addEventListener('pointerup', this._whyUsDragUp);
+    window.addEventListener('pointercancel', this._whyUsDragUp);
+  }
+
+  handleWhyUsDragMove(e) {
+    if (this._dragWhyUsId == null) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const tile = el && el.closest('[data-why-id]');
+    if (!tile) return;
+    const overId = Number(tile.getAttribute('data-why-id'));
+    if (!Number.isFinite(overId) || overId === this._dragWhyUsId) return;
+    const items = [...this.state.whyUs];
+    const fromIdx = items.findIndex((w) => w.id === this._dragWhyUsId);
+    const toIdx = items.findIndex((w) => w.id === overId);
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+    const [moved] = items.splice(fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+    this._whyUsOrderChanged = true;
+    this.setState({ whyUs: items });
+  }
+
+  async finishWhyUsDrag() {
+    window.removeEventListener('pointermove', this._whyUsDragMove);
+    window.removeEventListener('pointerup', this._whyUsDragUp);
+    window.removeEventListener('pointercancel', this._whyUsDragUp);
+    this._dragWhyUsId = null;
+    this.setState({ draggingWhyUsId: null });
+    if (!this._whyUsOrderChanged) return;
+    try {
+      const res = await fetch('/api/admin/homepage/why-us/reorder', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ order: this.state.whyUs.map((w) => w.id) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to reorder.');
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+      this.loadAll();
+    }
+  }
+
+  renderVals() {
+    const heroSlides = this.state.slides.map((s) => ({ ...s, hasImage: !!s.imageUrl, edit: () => this.openEditSlide(s) }));
+    const homeSections = this.state.sections.map((s) => ({
+      label: s.label,
+      toggle: () => this.toggleSection(s.key, !s.enabled),
+      bg: s.enabled ? 'var(--color-accent)' : 'var(--color-divider)',
+      knobLeft: s.enabled ? '21px' : '2px',
+    }));
+    const blockCards = this.state.blocks.map((b) => ({
+      ...b, label: this.BLOCK_LABELS[b.key] || b.key, hasImage: !!b.imageUrl, edit: () => this.openEditBlock(b),
+    }));
+    const collectionCards = this.state.collections.map((c) => ({
+      ...c, hasImage: !!c.imageUrl, edit: () => this.openEditCollection(c),
+    }));
+    const draggingId = this.state.draggingWhyUsId;
+    const whyUsCards = this.state.whyUs.map((w) => ({
+      ...w,
+      edit: () => this.openEditWhyUs(w),
+      remove: () => this.removeWhyUs(w.id),
+      dragStart: (e) => this.startWhyUsDrag(w.id, e),
+      tileTransform: w.id === draggingId ? 'scale(1.02)' : 'none',
+      tileShadow: w.id === draggingId ? '0 10px 24px rgba(0,0,0,.16)' : 'none',
+      tileOpacity: w.id === draggingId ? 0.9 : 1,
+      tileZ: w.id === draggingId ? 5 : 1,
+    }));
+
+    const fh = {};
+    Object.keys(this.emptyForm).forEach((k) => { fh[k] = (e) => this.setFormField(k, e.target.value); });
+    const whyUsFh = {};
+    Object.keys(this.emptyWhyUsForm).forEach((k) => { whyUsFh[k] = (e) => this.setWhyUsField(k, e.target.value); });
+
+    const dialogKind = this.state.dialogKind;
+    const dialogTitleByKind = {
+      slide: this.state.editingId ? 'Edit Slide' : 'Add Slide',
+      block: 'Edit ' + (this.BLOCK_LABELS[this.state.editingKey] || 'Block'),
+      collection: 'Edit Collection Tile',
+    };
+
+    return {
+      heroSlides, homeSections, blockCards, collectionCards, whyUsCards,
+      errorMessage: this.state.errorMessage,
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+      openAddSlide: () => this.openAddSlide(),
+      openAddWhyUs: () => this.openAddWhyUs(),
+      dialogOpen: this.state.dialogOpen,
+      dialogTitle: dialogTitleByKind[dialogKind] || '',
+      isTextBlockDialog: dialogKind === 'slide' || dialogKind === 'block',
+      isCollectionDialog: dialogKind === 'collection',
+      isEditingSlide: dialogKind === 'slide' && !!this.state.editingId,
+      canUploadImage: dialogKind !== 'slide' || !!this.state.editingId,
+      cannotUploadImage: dialogKind === 'slide' && !this.state.editingId,
+      hasCurrentImage: !!this.state.currentImageUrl,
+      currentImageUrl: this.state.currentImageUrl,
+      uploadLabel: this.state.currentImageUrl ? 'Replace Photo' : 'Upload Photo',
+      handleImageSelect: (e) => this.handleImageSelect(e),
+      imageUploading: this.state.imageUploading,
+      closeDialog: () => this.closeDialog(),
+      stop: (e) => e.stopPropagation(),
+      form: this.state.form, fh,
+      saveDialog: () => this.saveDialog(),
+      removeSlide: () => this.removeSlide(),
+      saving: this.state.saving,
+      saveLabel: this.state.saving ? 'Saving…' : 'Save',
+      dialogError: this.state.dialogError,
+      whyUsDialogOpen: this.state.whyUsDialogOpen,
+      whyUsDialogTitle: this.state.whyUsEditingId ? 'Edit Bullet' : 'Add Bullet',
+      closeWhyUsDialog: () => this.closeWhyUsDialog(),
+      whyUsForm: this.state.whyUsForm, whyUsFh,
+      saveWhyUs: () => this.saveWhyUs(),
+      whyUsSaving: this.state.whyUsSaving,
+      whyUsSaveLabel: this.state.whyUsSaving ? 'Saving…' : 'Save',
+      whyUsDialogError: this.state.whyUsDialogError,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>body{margin:0}a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-700)}</style>
+</helmet>
+
+<div style="background:var(--color-bg);color:var(--color-text);min-height:100%;">
+
+  <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
+    <div class="nav-brand" style="letter-spacing:.1em;">AURUM &amp; CO.</div>
+    <input type="checkbox" class="nav-check" id="navCheck" hidden>
+    <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <a href="Home.dc.html">Home</a>
+    <a href="Diamonds.dc.html">Diamonds</a>
+    <a href="Jewelry.dc.html">Jewelry</a>
+    <a href="Gemstones.dc.html">Gemstones</a>
+    <a href="About.dc.html">About</a>
+    <a href="Contact.dc.html">Contact</a>
+    <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
+      <a href="Login.dc.html" class="btn btn-secondary">Login</a>
+      <a href="Register.dc.html" class="btn btn-primary">Register</a>
+    </div>
+  </nav>
+
+  <section style="display:flex;justify-content:center;padding:96px 24px;">
+
+    <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+      <form onSubmit="{{ handleSubmit }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;">
+        <h6 style="color:var(--color-accent-700);">Staff Access</h6>
+        <h2 style="margin-top:8px;">Admin Sign In</h2>
+        <p style="opacity:.7;font-size:13px;margin-top:8px;">This area is for Aurum &amp; Co. staff only.</p>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px;">
+          <div class="field"><label>Email</label><input class="input" type="email" ref="{{ emailRef }}" required=""/></div>
+          <div class="field"><label>Password</label><input class="input" type="password" ref="{{ passwordRef }}" required=""/></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+          <a href="#" onClick="{{ goForgotEmail }}" style="font-size:12px;">Forgot password?</a>
+        </div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotEmail }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleSendOtp }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;">
+        <h6 style="color:var(--color-accent-700);">Reset Password</h6>
+        <h2 style="margin-top:8px;">Forgot Your Password?</h2>
+        <p style="opacity:.7;font-size:13px;margin-top:8px;">Enter your admin account email — we'll send a one-time verification code.</p>
+        <div class="field" style="margin-top:20px;"><label>Email</label><input class="input" type="email" ref="{{ resetEmailRef }}" required=""/></div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <p style="font-size:12px;text-align:center;margin-top:16px;opacity:.7;"><a href="#" onClick="{{ goLogin }}">Back to login</a></p>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotOtp }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleVerifyOtp }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;text-align:center;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="margin:0 auto 16px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        <h2>Enter Verification Code</h2>
+        <p style="opacity:.7;font-size:13px;margin-top:8px;">We sent a 6-digit code to <strong>{{ resetEmail }}</strong>.</p>
+        <div class="field" style="margin-top:24px;text-align:left;">
+          <label>Verification Code</label>
+          <input class="input" style="text-align:center;letter-spacing:.4em;font-size:20px;" maxlength="6" placeholder="••••••" ref="{{ otpCodeRef }}" required=""/>
+        </div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <p style="font-size:12px;margin-top:16px;opacity:.7;">Didn't get a code? <a href="#" onClick="{{ handleSendOtp }}">Resend</a></p>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotReset }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleResetDone }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;">
+        <h6 style="color:var(--color-accent-700);">Almost Done</h6>
+        <h2 style="margin-top:8px;">Set a New Password</h2>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:20px;">
+          <div class="field"><label>New Password</label><input class="input" type="password" ref="{{ newPasswordRef }}" required=""/></div>
+          <div class="field"><label>Confirm Password</label><input class="input" type="password" ref="{{ confirmPasswordRef }}" required=""/></div>
+        </div>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isForgotDone }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:420px;text-align:center;padding:clamp(20px,6vw,56px) 40px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="2" style="margin:0 auto 16px;"><path d="M5 13l4 4L19 7"/></svg>
+        <h2>Password Updated</h2>
+        <p style="opacity:.75;font-size:14px;">You can now sign in with your new password.</p>
+        <a href="#" onClick="{{ goLogin }}" class="btn btn-primary" style="margin-top:12px;">Back to Sign In</a>
+      </div>
+    </sc-if>
+
+  </section>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { mode: 'login', submitting: false, showError: false, errorMessage: '', resetEmail: '', resetCode: '' };
+  emailRef = React.createRef();
+  passwordRef = React.createRef();
+  resetEmailRef = React.createRef();
+  otpCodeRef = React.createRef();
+  newPasswordRef = React.createRef();
+  confirmPasswordRef = React.createRef();
+
+  async postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body || {}),
+    });
+    let json = {};
+    try { json = await res.json(); } catch { /* no body */ }
+    if (!res.ok) throw new Error((json && json.error) || 'Something went wrong. Please try again.');
+    return json.data;
+  }
+
+  fail(message) {
+    this.setState({ submitting: false, showError: true, errorMessage: message });
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+    const email = this.emailRef.current ? this.emailRef.current.value.trim() : '';
+    const password = this.passwordRef.current ? this.passwordRef.current.value : '';
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/admin/auth/login', { email, password })
+      .then(() => { window.location.href = 'AdminDashboard.dc.html'; })
+      .catch(err => this.fail(err.message));
+  }
+
+  handleSendOtp(e) {
+    e.preventDefault();
+    const email = (this.resetEmailRef.current ? this.resetEmailRef.current.value.trim() : '') || this.state.resetEmail;
+    if (!email) return this.fail('Enter your admin account email first.');
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/admin/auth/forgot', { email })
+      .then(() => this.setState({ mode: 'forgotOtp', resetEmail: email, submitting: false, showError: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  handleVerifyOtp(e) {
+    e.preventDefault();
+    const code = this.otpCodeRef.current ? this.otpCodeRef.current.value.trim() : '';
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/admin/auth/forgot/verify', { email: this.state.resetEmail, code })
+      .then(() => this.setState({ mode: 'forgotReset', resetCode: code, submitting: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  handleResetDone(e) {
+    e.preventDefault();
+    const newPassword = this.newPasswordRef.current ? this.newPasswordRef.current.value : '';
+    const confirm = this.confirmPasswordRef.current ? this.confirmPasswordRef.current.value : '';
+    if (newPassword !== confirm) return this.fail('Passwords do not match.');
+    if (newPassword.length < 8) return this.fail('Password must be at least 8 characters.');
+    this.setState({ submitting: true, showError: false });
+    this.postJson('/api/admin/auth/reset', { email: this.state.resetEmail, code: this.state.resetCode, newPassword })
+      .then(() => this.setState({ mode: 'forgotDone', submitting: false }))
+      .catch(err => this.fail(err.message));
+  }
+
+  renderVals() {
+    const mode = this.state.mode;
+    const labelByMode = { login: 'Sign In', forgotEmail: 'Send Verification Code', forgotOtp: 'Verify Code', forgotReset: 'Reset Password' };
+    return {
+      isLogin: mode === 'login', isForgotEmail: mode === 'forgotEmail', isForgotOtp: mode === 'forgotOtp',
+      isForgotReset: mode === 'forgotReset', isForgotDone: mode === 'forgotDone',
+      submitting: this.state.submitting,
+      submitLabel: this.state.submitting ? 'Please wait…' : (labelByMode[mode] || 'Continue'),
+      showError: this.state.showError,
+      errorMessage: this.state.errorMessage,
+      resetEmail: this.state.resetEmail || 'your email',
+      emailRef: this.emailRef, passwordRef: this.passwordRef,
+      resetEmailRef: this.resetEmailRef, otpCodeRef: this.otpCodeRef,
+      newPasswordRef: this.newPasswordRef, confirmPasswordRef: this.confirmPasswordRef,
+      handleSubmit: e => this.handleSubmit(e),
+      goForgotEmail: e => { e.preventDefault(); this.setState({ mode: 'forgotEmail', showError: false }); },
+      goLogin: e => { e.preventDefault(); this.setState({ mode: 'login', showError: false }); },
+      handleSendOtp: e => this.handleSendOtp(e),
+      handleVerifyOtp: e => this.handleVerifyOtp(e),
+      handleResetDone: e => this.handleResetDone(e),
+    };
+  }
+}
+</script>
+</body>
+</html>

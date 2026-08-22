@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+.vid-drop{border:1px dashed var(--color-divider);border-radius:var(--radius-md);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:color-mix(in srgb, var(--color-text) 55%, transparent);text-align:center;padding:8px;}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item active">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><h6 style="color:var(--color-accent-700);">Catalog</h6><h1 style="font-size:28px;margin-top:6px;">Products</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin:-12px 0 16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div class="seg">
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isDiamondTab }}" onChange="{{ selectDiamondTab }}"/>Diamonds ({{ diamondCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isJewelryTab }}" onChange="{{ selectJewelryTab }}"/>Jewelry ({{ jewelryCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isGemstoneTab }}" onChange="{{ selectGemstoneTab }}"/>Gemstones ({{ gemstoneCount }})</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <a href="{{ templateUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download Template</a>
+        <label class="btn btn-ghost" style="font-size:12px;padding:6px 10px;cursor:pointer;">
+          {{ importButtonLabel }}
+          <input type="file" accept=".xlsx,.xls" onChange="{{ handleImportFile }}" disabled="{{ importBusy }}" style="display:none;"/>
+        </label>
+        <button onClick="{{ openAdd }}" class="btn btn-primary">+ Add {{ activeTypeLabel }}</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="position:relative;flex:1;min-width:220px;max-width:360px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="input" value="{{ search }}" onChange="{{ handleSearch }}" placeholder="Search SKU, category, specs…" style="padding-left:34px;width:100%;box-sizing:border-box;"/>
+      </div>
+      <select class="input" value="{{ statusFilter }}" onChange="{{ handleStatusFilter }}" style="width:auto;">
+        <option value="all">All statuses</option>
+        <option value="active">Active only</option>
+        <option value="hidden">Hidden only</option>
+      </select>
+      <select class="input" value="{{ categoryFilter }}" onChange="{{ handleCategoryFilter }}" style="width:auto;">
+        <option value="All">All categories</option>
+        <sc-for list="{{ categoryFilterOptions }}" as="c" hint-placeholder-count="5">
+          <option value="{{ c }}">{{ c }}</option>
+        </sc-for>
+      </select>
+      <select class="input" value="{{ mediaFilter }}" onChange="{{ handleMediaFilter }}" style="width:auto;">
+        <option value="all">All media</option>
+        <option value="has">Has photo/video</option>
+        <option value="none">Missing photo/video</option>
+      </select>
+      <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ clearFilters }}" class="btn btn-ghost" style="font-size:12px;">Clear</button>
+      </sc-if>
+      <span style="font-size:12px;opacity:.6;margin-left:auto;">{{ filteredCount }} of {{ activeTypeTotal }}</span>
+    </div>
+
+    <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:8px;flex-wrap:wrap;">
+        <strong style="font-size:12.5px;">{{ selectedCount }} selected</strong>
+        <button onClick="{{ bulkActivate }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Make Active</button>
+        <button onClick="{{ bulkHide }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Hide</button>
+        <button onClick="{{ bulkDelete }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;color:var(--color-accent-700);" disabled="{{ bulkBusy }}">Delete</button>
+        <select class="input" value="{{ bulkPriceVisibility }}" onChange="{{ handleBulkPriceVisibility }}" style="width:auto;font-size:12px;padding:5px 8px;">
+          <option value="__unset">Set price visibility…</option>
+          <option value="">Inherit Global Setting</option>
+          <option value="show">Show Price</option>
+          <option value="hide">Hide Price</option>
+          <option value="contact">Contact for Price</option>
+          <option value="approved">Approved Customers Only</option>
+        </select>
+        <button onClick="{{ bulkApplyPriceVisibility }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Apply</button>
+        <button onClick="{{ clearSelection }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;margin-left:auto;">Clear</button>
+      </div>
+    </sc-if>
+
+    <div class="tbl-wrap"><table class="table">
+      <thead><tr>
+        <th class="adm-th" style="width:30px;"><input type="checkbox" checked="{{ allVisibleSelected }}" onChange="{{ toggleSelectAll }}"/></th>
+        <th class="adm-th" style="width:46px;">Media</th>
+        <th class="adm-th">SKU</th><th class="adm-th">Category</th><th class="adm-th">Specs</th><th class="adm-th">Price</th><th class="adm-th">Status</th><th class="adm-th">Actions</th>
+      </tr></thead>
+      <tbody>
+        <sc-for list="{{ visibleProducts }}" as="p" hint-placeholder-count="6">
+          <tr>
+            <td class="adm-td"><input type="checkbox" checked="{{ p.selected }}" onChange="{{ p.toggleSelect }}"/></td>
+            <td class="adm-td">
+              <sc-if value="{{ p.thumbIsImage }}" hint-placeholder-val="{{ true }}">
+                <img src="{{ p.thumbUrl }}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;display:block;"/>
+              </sc-if>
+              <sc-if value="{{ p.thumbIsVideo }}" hint-placeholder-val="{{ false }}">
+                <video src="{{ p.thumbUrl }}" muted preload="metadata" style="width:34px;height:34px;object-fit:cover;border-radius:6px;display:block;"></video>
+              </sc-if>
+              <sc-if value="{{ p.noMedia }}" hint-placeholder-val="{{ false }}">
+                <div title="No photo or video yet" style="width:34px;height:34px;border-radius:6px;border:1px dashed var(--color-divider);display:flex;align-items:center;justify-content:center;opacity:.4;font-size:14px;">—</div>
+              </sc-if>
+            </td>
+            <td class="adm-td">{{ p.sku }}</td>
+            <td class="adm-td">{{ p.category }}</td>
+            <td class="adm-td" style="opacity:.75;">{{ p.specs }}</td>
+            <td class="adm-td">{{ p.price }}</td>
+            <td class="adm-td">
+              <span class="tag {{ p.tagClass }}">{{ p.status }}</span>
+              <sc-if value="{{ p.hasPriceOverride }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:4px;"><span class="tag tag-outline" style="font-size:10px;">{{ p.priceOverrideLabel }}</span></div>
+              </sc-if>
+            </td>
+            <td class="adm-td">
+              <div style="display:flex;gap:6px;">
+                <button onClick="{{ p.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+                <button onClick="{{ p.toggleStatus }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">{{ p.toggleLabel }}</button>
+                <button onClick="{{ p.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+
+    <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDialog }}">
+        <div class="dialog" style="max-width:640px;max-height:88vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ dialogTitle }}</div>
+
+          <sc-if value="{{ hasMedia }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">
+              <sc-for list="{{ mediaItems }}" as="m" hint-placeholder-count="4">
+                <div data-media-id="{{ m.id }}" onPointerDown="{{ m.dragStart }}" style="position:relative;aspect-ratio:1;border:1px solid var(--color-divider);border-radius:8px;overflow:hidden;background:var(--color-surface);cursor:grab;touch-action:none;transition:transform .12s ease,box-shadow .12s ease;transform:{{ m.tileTransform }};box-shadow:{{ m.tileShadow }};z-index:{{ m.tileZ }};opacity:{{ m.tileOpacity }};user-select:none;">
+                  <sc-if value="{{ m.isImage }}" hint-placeholder-val="{{ true }}">
+                    <img src="{{ m.url }}" alt="{{ m.originalName }}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"/>
+                    <button onClick="{{ m.editImage }}" title="Edit photo (crop / zoom)" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">✎ Edit</button>
+                  </sc-if>
+                  <sc-if value="{{ m.isVideo }}" hint-placeholder-val="{{ false }}">
+                    <video src="{{ m.url }}" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video>
+                    <label title="Replace video" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">
+                      ✎ Edit
+                      <input type="file" accept="video/*" onChange="{{ m.replaceVideo }}" style="display:none;"/>
+                    </label>
+                  </sc-if>
+                  <sc-if value="{{ m.isCover }}" hint-placeholder-val="{{ false }}">
+                    <span style="position:absolute;top:4px;left:4px;background:rgba(32,31,29,.75);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;pointer-events:none;">Cover</span>
+                  </sc-if>
+                  <sc-if value="{{ m.notCover }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ m.makeCover }}" title="Set as cover photo" style="position:absolute;bottom:4px;left:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:4px;font-size:10px;padding:2px 6px;cursor:pointer;">Set Cover</button>
+                  </sc-if>
+                  <button onClick="{{ m.remove }}" title="Remove" style="position:absolute;top:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">×</button>
+                </div>
+              </sc-for>
+            </div>
+            <p style="font-size:11px;opacity:.55;margin-top:8px;">Drag any tile to reorder. The first photo is what customers see on listing pages.</p>
+          </sc-if>
+
+          <sc-if value="{{ canUploadMedia }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:10px;">
+              <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;">
+                + Add Photos / Videos
+                <input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ handleMediaSelect }}" style="display:none;"/>
+              </label>
+              <sc-if value="{{ mediaUploading }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:12px;opacity:.65;margin-left:10px;">Uploading…</span>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ cannotUploadMedia }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:12px;opacity:.6;margin-top:10px;">Save the product first, then reopen it to add photos and videos.</p>
+          </sc-if>
+
+          <div class="field" style="margin-top:14px;"><label>SKU</label><input class="input" value="{{ form.sku }}" onChange="{{ fh.sku }}"/></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+            <div class="field">
+              <label>Category</label>
+              <select class="input" value="{{ form.category_id }}" onChange="{{ fh.category_id }}">
+                <option value="">— Select —</option>
+                <sc-for list="{{ categoryOptions }}" as="c" hint-placeholder-count="5">
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <sc-if value="{{ isJewelryForm }}" hint-placeholder-val="{{ false }}">
+              <div class="field">
+                <label>Subcategory</label>
+                <select class="input" value="{{ form.subcategory_id }}" onChange="{{ fh.subcategory_id }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ subcategoryOptions }}" as="s" hint-placeholder-count="5">
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+            </sc-if>
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <label>Price Visibility</label>
+            <select class="input" value="{{ form.price_visibility }}" onChange="{{ fh.price_visibility }}">
+              <option value="">Inherit Global Setting ({{ globalPriceModeLabel }})</option>
+              <option value="show">Show Price</option>
+              <option value="hide">Hide Price</option>
+              <option value="contact">Contact for Price</option>
+              <option value="approved">Approved Customers Only</option>
+            </select>
+            <p style="font-size:11px;opacity:.55;margin-top:4px;">Overrides the site-wide Settings page price mode for this product only.</p>
+          </div>
+
+          <sc-if value="{{ isDiamondForm }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px;">
+              <div class="field"><label>Weight (Carat)</label><input class="input" value="{{ form.weight_carat }}" onChange="{{ fh.weight_carat }}"/></div>
+              <div class="field">
+                <label>Shape</label>
+                <select class="input" value="{{ form.shape }}" onChange="{{ fh.shape }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ shapeOptions }}" as="opt" hint-placeholder-count="5"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field">
+                <label>Color</label>
+                <select class="input" value="{{ form.color }}" onChange="{{ fh.color }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ colorOptions }}" as="opt" hint-placeholder-count="5"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field"><label>Clarity</label><input class="input" value="{{ form.clarity }}" onChange="{{ fh.clarity }}"/></div>
+              <div class="field" style="grid-column:1/-1;"><label>Measurements</label><input class="input" value="{{ form.measurements }}" onChange="{{ fh.measurements }}"/></div>
+              <div class="field">
+                <label>Certificate Authority</label>
+                <select class="input" value="{{ form.certificate_authority }}" onChange="{{ fh.certificate_authority }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ certOptions }}" as="opt" hint-placeholder-count="4"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field"><label>Certificate #</label><input class="input" value="{{ form.certificate_number }}" onChange="{{ fh.certificate_number }}"/></div>
+              <div class="field" style="grid-column:1/-1;">
+                <label>Certificate Website</label>
+                <input class="input" value="{{ form.certificate_website }}" onChange="{{ fh.certificate_website }}" placeholder="https://www.gia.edu/report-check?reportno="/>
+                <p style="font-size:11px;opacity:.6;margin:6px 0 0;">Paste the lab's verify URL ending right where the report number should go — the Certificate # above is appended to it automatically. E.g. GIA: https://www.gia.edu/report-check?reportno= · IGI: https://www.igi.org/Verify-Your-Report/?r=</p>
+              </div>
+              <div class="field"><label>Price / Carat</label><input class="input" value="{{ form.price_per_carat }}" onChange="{{ fh.price_per_carat }}"/></div>
+              <div class="field"><label>Total Price</label><input class="input" value="{{ form.total_price }}" onChange="{{ fh.total_price }}"/></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isJewelryForm }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px;">
+              <div class="field"><label>Metal</label><input class="input" value="{{ form.metal }}" onChange="{{ fh.metal }}"/></div>
+              <div class="field"><label>Gold Purity</label><input class="input" value="{{ form.gold_purity }}" onChange="{{ fh.gold_purity }}"/></div>
+              <div class="field"><label>Gold Color</label><input class="input" value="{{ form.gold_color }}" onChange="{{ fh.gold_color }}"/></div>
+              <div class="field"><label>Gold Weight (g)</label><input class="input" value="{{ form.gold_weight_grams }}" onChange="{{ fh.gold_weight_grams }}"/></div>
+              <div class="field">
+                <label>Jewelry Certificate Authority</label>
+                <select class="input" value="{{ form.certificate_authority }}" onChange="{{ fh.certificate_authority }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ certOptions }}" as="opt" hint-placeholder-count="4"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field"><label>Jewelry Certificate #</label><input class="input" value="{{ form.certificate_number }}" onChange="{{ fh.certificate_number }}"/></div>
+            </div>
+            <h5 style="margin-top:18px;color:var(--color-accent-700);">Center Stone</h5>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+              <div class="field"><label>Stone Weight (ct)</label><input class="input" value="{{ form.weight_carat }}" onChange="{{ fh.weight_carat }}"/></div>
+              <div class="field">
+                <label>Stone Color</label>
+                <select class="input" value="{{ form.color }}" onChange="{{ fh.color }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ colorOptions }}" as="opt" hint-placeholder-count="5"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field">
+                <label>Stone Shape</label>
+                <select class="input" value="{{ form.shape }}" onChange="{{ fh.shape }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ shapeOptions }}" as="opt" hint-placeholder-count="5"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field"><label>Stone Clarity</label><input class="input" value="{{ form.clarity }}" onChange="{{ fh.clarity }}"/></div>
+              <div class="field" style="grid-column:1/-1;"><label>Stone Measurements</label><input class="input" value="{{ form.measurements }}" onChange="{{ fh.measurements }}"/></div>
+              <div class="field" style="grid-column:1/-1;">
+                <label>Stone Certificate Website</label>
+                <input class="input" value="{{ form.certificate_website }}" onChange="{{ fh.certificate_website }}" placeholder="https://www.gia.edu/report-check?reportno="/>
+                <p style="font-size:11px;opacity:.6;margin:6px 0 0;">Paste the lab's verify URL ending right where the report number should go — the Certificate # above is appended to it automatically. E.g. GIA: https://www.gia.edu/report-check?reportno= · IGI: https://www.igi.org/Verify-Your-Report/?r=</p>
+              </div>
+              <div class="field" style="grid-column:1/-1;"><label>Total Price</label><input class="input" value="{{ form.total_price }}" onChange="{{ fh.total_price }}"/></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isGemstoneForm }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px;">
+              <div class="field"><label>Stone Name</label><input class="input" value="{{ form.stone_name }}" onChange="{{ fh.stone_name }}"/></div>
+              <div class="field">
+                <label>Origin</label>
+                <select class="input" value="{{ form.origin }}" onChange="{{ fh.origin }}">
+                  <option value="Natural">Natural</option>
+                  <option value="Lab Created">Lab Created</option>
+                </select>
+              </div>
+              <div class="field"><label>Weight (ct)</label><input class="input" value="{{ form.weight_carat }}" onChange="{{ fh.weight_carat }}"/></div>
+              <div class="field">
+                <label>Color</label>
+                <select class="input" value="{{ form.color }}" onChange="{{ fh.color }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ colorOptions }}" as="opt" hint-placeholder-count="5"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field">
+                <label>Shape / Cut</label>
+                <select class="input" value="{{ form.shape }}" onChange="{{ fh.shape }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ shapeOptions }}" as="opt" hint-placeholder-count="5"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field"><label>Clarity</label><input class="input" value="{{ form.clarity }}" onChange="{{ fh.clarity }}"/></div>
+              <div class="field" style="grid-column:1/-1;"><label>Measurements</label><input class="input" value="{{ form.measurements }}" onChange="{{ fh.measurements }}"/></div>
+              <div class="field">
+                <label>Certificate Authority</label>
+                <select class="input" value="{{ form.certificate_authority }}" onChange="{{ fh.certificate_authority }}">
+                  <option value="">— Select —</option>
+                  <sc-for list="{{ certOptions }}" as="opt" hint-placeholder-count="4"><option value="{{ opt }}">{{ opt }}</option></sc-for>
+                </select>
+              </div>
+              <div class="field"><label>Certificate #</label><input class="input" value="{{ form.certificate_number }}" onChange="{{ fh.certificate_number }}"/></div>
+              <div class="field" style="grid-column:1/-1;">
+                <label>Certificate Website</label>
+                <input class="input" value="{{ form.certificate_website }}" onChange="{{ fh.certificate_website }}" placeholder="https://www.gia.edu/report-check?reportno="/>
+                <p style="font-size:11px;opacity:.6;margin:6px 0 0;">Paste the lab's verify URL ending right where the report number should go — the Certificate # above is appended to it automatically. E.g. GIA: https://www.gia.edu/report-check?reportno= · IGI: https://www.igi.org/Verify-Your-Report/?r=</p>
+              </div>
+              <div class="field"><label>Price / Carat</label><input class="input" value="{{ form.price_per_carat }}" onChange="{{ fh.price_per_carat }}"/></div>
+              <div class="field"><label>Total Price</label><input class="input" value="{{ form.total_price }}" onChange="{{ fh.total_price }}"/></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ dialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:14px;">{{ dialogError }}</p>
+          </sc-if>
+
+          <div class="dialog-actions">
+            <button onClick="{{ closeDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveForm }}" class="btn btn-primary" disabled="{{ saving }}">{{ saveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeImportDialog }}">
+        <div class="dialog" style="max-width:560px;max-height:82vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">Excel Import Results</div>
+          <p style="font-size:13.5px;">{{ importSummary }}</p>
+          <sc-if value="{{ importHasErrors }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:12px;opacity:.65;margin-top:14px;">{{ importErrors.length }} row(s) were skipped:</p>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <sc-for list="{{ importErrors }}" as="e" hint-placeholder-count="3">
+                <div style="border:1px solid var(--color-divider);border-radius:8px;padding:8px 10px;font-size:12.5px;">
+                  <strong>Row {{ e.row }}<sc-if value="{{ e.sku }}" hint-placeholder-val="{{ false }}"> (SKU: {{ e.sku }})</sc-if>:</strong>
+                  <div style="opacity:.75;margin-top:2px;">{{ e.messageText }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeImportDialog }}" class="btn btn-primary">Close</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  get emptyForm() {
+    return {
+      sku: '', category_id: '', subcategory_id: '',
+      weight_carat: '', shape: '', color: '', clarity: '', measurements: '',
+      certificate_authority: '', certificate_number: '', certificate_website: '',
+      metal: '', gold_purity: '', gold_color: '', gold_weight_grams: '',
+      stone_name: '', origin: 'Natural',
+      price_per_carat: '', total_price: '', price_visibility: '',
+    };
+  }
+  get fieldKeys() { return Object.keys(this.emptyForm); }
+
+  state = {
+    admin: null, activeType: 'diamond',
+    products: [], errorMessage: '',
+    search: '', statusFilter: 'all', categoryFilter: 'All', mediaFilter: 'all',
+    selectedIds: new Set(), bulkBusy: false, bulkPriceVisibility: '__unset',
+    dialogOpen: false, editingId: null,
+    form: this.emptyForm, dialogError: '', saving: false,
+    categoryOptions: [], subcategoryOptions: [],
+    shapeOptions: [], colorOptions: [], certOptions: [],
+    mediaItems: [], mediaUploading: false, draggingMediaId: null,
+    importBusy: false, importOpen: false, importResult: null,
+    newContactCount: 0, globalPriceModeLabel: 'Site Default',
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    this.loadGlobalPriceMode();
+    this.filters = await import('./utils/filters.js');
+    this.loadProducts();
+    this.loadSubcategories();
+    this.loadAttributes();
+  }
+
+  async loadAttributes() {
+    try {
+      const res = await fetch('/api/attributes', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) return;
+      const byType = (t) => json.data.filter((a) => a.attributeType === t).map((a) => a.name);
+      this.setState({ shapeOptions: byType('shape'), colorOptions: byType('color'), certOptions: byType('certification') });
+    } catch { /* dropdowns just stay empty; typing a value in the "current" fallback still works */ }
+  }
+
+  async loadGlobalPriceMode() {
+    // Non-blocking: admin roles without Settings access simply keep the generic
+    // "Site Default" label instead of the actual mode name.
+    try {
+      const res = await fetch('/api/admin/settings', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const json = await res.json();
+      const labels = { show: 'Show Price', hide: 'Hide Price', contact: 'Contact for Price', approved: 'Approved Customers Only' };
+      const mode = json.data && json.data.priceMode;
+      if (labels[mode]) this.setState({ globalPriceModeLabel: labels[mode] });
+    } catch { /* keep default label */ }
+  }
+
+  async loadProducts() {
+    try {
+      const res = await fetch('/api/admin/products', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load products.');
+      const liveIds = new Set(json.data.map((p) => p.id));
+      const prunedSelection = new Set([...this.state.selectedIds].filter((id) => liveIds.has(id)));
+      this.setState({ products: json.data, errorMessage: '', selectedIds: prunedSelection });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  async loadCategories(type) {
+    try {
+      const res = await fetch('/api/categories?type=' + encodeURIComponent(type), { credentials: 'same-origin' });
+      const json = await res.json();
+      this.setState({ categoryOptions: res.ok ? json.data : [] });
+    } catch {
+      this.setState({ categoryOptions: [] });
+    }
+  }
+
+  async loadSubcategories() {
+    try {
+      const res = await fetch('/api/categories/subcategories', { credentials: 'same-origin' });
+      const json = await res.json();
+      this.setState({ subcategoryOptions: res.ok ? json.data : [] });
+    } catch {
+      this.setState({ subcategoryOptions: [] });
+    }
+  }
+
+  openAdd() {
+    this.setState({ dialogOpen: true, editingId: null, form: { ...this.emptyForm }, dialogError: '', mediaItems: [] });
+    this.loadCategories(this.state.activeType);
+  }
+
+  openEdit(p) {
+    const form = {
+      sku: p.sku,
+      category_id: p.category ? String(p.category.id) : '',
+      subcategory_id: p.subcategory ? String(p.subcategory.id) : '',
+      weight_carat: p.weightCarat || '', shape: p.shape || '', color: p.color || '', clarity: p.clarity || '', measurements: p.measurements || '',
+      certificate_authority: p.certificateAuthority || '', certificate_number: p.certificateNumber || '', certificate_website: p.certificateWebsite || '',
+      metal: p.metal || '', gold_purity: p.goldPurity || '', gold_color: p.goldColor || '', gold_weight_grams: p.goldWeightGrams || '',
+      stone_name: p.stoneName || '', origin: p.origin || 'Natural',
+      price_per_carat: p.pricePerCarat === null || p.pricePerCarat === undefined ? '' : String(p.pricePerCarat),
+      total_price: p.totalPrice === null || p.totalPrice === undefined ? '' : String(p.totalPrice),
+      price_visibility: p.priceVisibilityOverride || '',
+    };
+    this.setState({ dialogOpen: true, editingId: p.id, form, dialogError: '', mediaItems: p.media || [] });
+    this.loadCategories(p.type);
+  }
+
+  setFormField(key, val) { this.setState({ form: { ...this.state.form, [key]: val } }); }
+
+  async saveForm() {
+    const { editingId, activeType, form } = this.state;
+    if (!form.sku || !form.sku.trim()) { this.setState({ dialogError: 'SKU is required.' }); return; }
+    const body = { ...form };
+    if (!editingId) body.type = activeType;
+    for (const k of Object.keys(body)) if (body[k] === '') body[k] = null;
+
+    this.setState({ saving: true, dialogError: '' });
+    try {
+      const url = editingId ? `/api/admin/products/${editingId}` : '/api/admin/products';
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed.');
+      this.setState({ dialogOpen: false, saving: false });
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ saving: false, dialogError: err.message });
+    }
+  }
+
+  async toggleStatus(p) {
+    try {
+      const res = await fetch(`/api/admin/products/${p.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ status: p.status === 'active' ? 'hidden' : 'active' }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update status.');
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  async removeProduct(p) {
+    try {
+      const res = await fetch(`/api/admin/products/${p.id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete.');
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  toggleSelect(id) {
+    const set = new Set(this.state.selectedIds);
+    if (set.has(id)) set.delete(id); else set.add(id);
+    this.setState({ selectedIds: set });
+  }
+
+  toggleSelectAll(visibleProducts) {
+    const set = new Set(this.state.selectedIds);
+    const allSelected = visibleProducts.length > 0 && visibleProducts.every((p) => set.has(p.id));
+    visibleProducts.forEach((p) => (allSelected ? set.delete(p.id) : set.add(p.id)));
+    this.setState({ selectedIds: set });
+  }
+
+  clearSelection() { this.setState({ selectedIds: new Set() }); }
+
+  async bulkSetStatus(status) {
+    const ids = [...this.state.selectedIds];
+    if (!ids.length) return;
+    this.setState({ bulkBusy: true });
+    const results = await Promise.all(ids.map((id) =>
+      fetch(`/api/admin/products/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ status }) })
+        .then((r) => r.ok).catch(() => false)
+    ));
+    const failed = results.filter((ok) => !ok).length;
+    this.setState({ bulkBusy: false, selectedIds: new Set() });
+    await this.loadProducts();
+    if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to update.` });
+  }
+
+  async bulkDeleteSelected() {
+    const ids = [...this.state.selectedIds];
+    if (!ids.length) return;
+    if (!window.confirm(`Delete ${ids.length} selected product(s)? This cannot be undone.`)) return;
+    this.setState({ bulkBusy: true });
+    const results = await Promise.all(ids.map((id) =>
+      fetch(`/api/admin/products/${id}`, { method: 'DELETE', credentials: 'same-origin' }).then((r) => r.ok).catch(() => false)
+    ));
+    const failed = results.filter((ok) => !ok).length;
+    this.setState({ bulkBusy: false, selectedIds: new Set() });
+    await this.loadProducts();
+    if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to delete.` });
+  }
+
+  async bulkApplyPriceVisibility() {
+    const ids = [...this.state.selectedIds];
+    const value = this.state.bulkPriceVisibility;
+    if (!ids.length || value === '__unset') return;
+    this.setState({ bulkBusy: true });
+    const results = await Promise.all(ids.map((id) =>
+      fetch(`/api/admin/products/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ price_visibility: value }) })
+        .then((r) => r.ok).catch(() => false)
+    ));
+    const failed = results.filter((ok) => !ok).length;
+    this.setState({ bulkBusy: false, selectedIds: new Set(), bulkPriceVisibility: '__unset' });
+    await this.loadProducts();
+    if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to update.` });
+  }
+
+  async handleMediaSelect(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length || !this.state.editingId) return;
+    this.setState({ mediaUploading: true });
+    try {
+      // Upload as-is — cropping (if wanted) happens afterward, per-tile, via the
+      // small Edit button, so bulk-selecting many files doesn't force N crop
+      // dialogs before anything lands on the server.
+      const fd = new FormData();
+      for (const f of files) fd.append('files', f);
+      const res = await fetch(`/api/admin/products/${this.state.editingId}/media`, { method: 'POST', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed.');
+      this.setState({ mediaItems: [...this.state.mediaItems, ...json.data], mediaUploading: false });
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ mediaUploading: false, dialogError: err.message });
+    }
+  }
+
+  async editImageMedia(m) {
+    if (!this.state.editingId) return;
+    try {
+      const blob = await fetch(m.url, { credentials: 'same-origin' }).then((r) => r.blob());
+      const file = new File([blob], m.originalName || 'photo.jpg', { type: blob.type || 'image/jpeg' });
+      const { openCropper } = await import('./utils/imageCropper.js');
+      const cropped = await openCropper(file, { title: 'Edit Photo', subtitle: m.originalName || '' });
+      if (!cropped) return;
+      const base = (m.originalName || 'photo').replace(/\.[^.]+$/, '');
+      const filename = cropped instanceof File ? cropped.name : `${base}.webp`;
+      await this.replaceMedia(m.id, cropped, filename);
+    } catch (err) {
+      this.setState({ dialogError: err.message || 'Failed to edit photo.' });
+    }
+  }
+
+  async replaceVideoMedia(mediaId, e) {
+    const file = (e.target.files || [])[0];
+    e.target.value = '';
+    if (!file) return;
+    await this.replaceMedia(mediaId, file, file.name);
+  }
+
+  async replaceMedia(mediaId, blob, filename) {
+    if (!this.state.editingId) return;
+    this.setState({ mediaUploading: true, dialogError: '' });
+    try {
+      const fd = new FormData();
+      fd.append('file', blob, filename);
+      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/${mediaId}`, { method: 'PUT', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to save edit.');
+      this.setState({
+        mediaItems: this.state.mediaItems.map((mi) => (mi.id === mediaId ? { ...mi, ...json.data } : mi)),
+        mediaUploading: false,
+      });
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ mediaUploading: false, dialogError: err.message });
+    }
+  }
+
+  async handleImportFile(e) {
+    const file = (e.target.files || [])[0];
+    e.target.value = '';
+    if (!file) return;
+    this.setState({ importBusy: true, errorMessage: '' });
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`/api/admin/products/import/${this.state.activeType}`, { method: 'POST', credentials: 'same-origin', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Import failed.');
+      this.setState({ importBusy: false, importOpen: true, importResult: json.data });
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ importBusy: false, importOpen: true, importResult: { imported: 0, totalRows: 0, errors: [], topLevelError: err.message } });
+    }
+  }
+
+  closeImportDialog() {
+    this.setState({ importOpen: false, importResult: null });
+  }
+
+  async removeMedia(mediaId) {
+    if (!this.state.editingId) return;
+    try {
+      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/${mediaId}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to remove media.');
+      this.setState({ mediaItems: this.state.mediaItems.filter((m) => m.id !== mediaId) });
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ dialogError: err.message });
+    }
+  }
+
+  // Pointer-based reorder (not native HTML5 drag-and-drop): draggable="true" +
+  // dragstart/dragover/drop needs the browser's own drag-gesture recognition,
+  // is inconsistent across browsers, gives no visual feedback here, and simply
+  // doesn't exist on touch devices. Plain pointer events work everywhere and
+  // let the grid reorder live as you drag, which IS the feedback.
+  startTileDrag(id, e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('button') || e.target.closest('label')) return; // let Remove / Set Cover / Edit clicks through untouched
+    e.preventDefault();
+    this._dragId = id;
+    this._dragOrderChanged = false;
+    this.setState({ draggingMediaId: id });
+    this._tileDragMove = (ev) => this.handleTileDragMove(ev);
+    this._tileDragUp = () => this.finishTileDrag();
+    window.addEventListener('pointermove', this._tileDragMove);
+    window.addEventListener('pointerup', this._tileDragUp);
+    window.addEventListener('pointercancel', this._tileDragUp);
+  }
+
+  handleTileDragMove(e) {
+    if (this._dragId == null) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const tile = el && el.closest('[data-media-id]');
+    if (!tile) return;
+    const overId = Number(tile.getAttribute('data-media-id'));
+    if (!Number.isFinite(overId) || overId === this._dragId) return;
+    const items = [...this.state.mediaItems];
+    const fromIdx = items.findIndex((m) => m.id === this._dragId);
+    const toIdx = items.findIndex((m) => m.id === overId);
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+    const [moved] = items.splice(fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+    this._dragOrderChanged = true;
+    this.setState({ mediaItems: items });
+  }
+
+  async finishTileDrag() {
+    window.removeEventListener('pointermove', this._tileDragMove);
+    window.removeEventListener('pointerup', this._tileDragUp);
+    window.removeEventListener('pointercancel', this._tileDragUp);
+    this._dragId = null;
+    this.setState({ draggingMediaId: null });
+    if (!this._dragOrderChanged || !this.state.editingId) return;
+    try {
+      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/reorder`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ order: this.state.mediaItems.map((m) => m.id) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to reorder media.');
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ dialogError: err.message });
+    }
+  }
+
+  async setCover(id) {
+    const items = [...this.state.mediaItems];
+    const idx = items.findIndex((m) => m.id === id);
+    if (idx <= 0) return;
+    const [moved] = items.splice(idx, 1);
+    items.unshift(moved);
+    this.setState({ mediaItems: items });
+    try {
+      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/reorder`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ order: items.map((m) => m.id) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to reorder media.');
+      this.loadProducts();
+    } catch (err) {
+      this.setState({ dialogError: err.message });
+    }
+  }
+
+  renderVals() {
+    const activeType = this.state.activeType;
+    const fmtPrice = (p) => {
+      if (p.totalPrice != null) return '$' + Number(p.totalPrice).toLocaleString();
+      if (p.pricePerCarat != null) return '$' + Number(p.pricePerCarat).toLocaleString() + '/ct';
+      return '—';
+    };
+    const specsFor = (p) => {
+      if (p.type === 'diamond') return [p.shape, p.color, p.clarity, p.weightCarat && p.weightCarat + 'ct'].filter(Boolean).join(' · ');
+      if (p.type === 'jewelry') return [p.metal, p.goldPurity, p.goldColor, p.goldWeightGrams && p.goldWeightGrams + 'g'].filter(Boolean).join(' · ');
+      return [p.stoneName, p.origin, p.color, p.weightCarat && p.weightCarat + 'ct'].filter(Boolean).join(' · ');
+    };
+    const PRICE_OVERRIDE_LABELS = { show: 'Price: Shown', hide: 'Price: Hidden', contact: 'Price: Contact', approved: 'Price: Approved Only' };
+    const allProducts = this.state.products.map((p) => {
+      const cover = (p.media && p.media[0]) || null;
+      return {
+        sku: p.sku, type: p.type, id: p.id, status: p.status,
+        category: p.category ? p.category.name : '—',
+        specs: specsFor(p),
+        price: fmtPrice(p),
+        tagClass: p.status === 'active' ? 'tag-accent' : 'tag-neutral',
+        toggleLabel: p.status === 'active' ? 'Hide' : 'Show',
+        toggleStatus: () => this.toggleStatus(p),
+        remove: () => { if (window.confirm(`Delete ${p.sku}? This cannot be undone.`)) this.removeProduct(p); },
+        edit: () => this.openEdit(p),
+        hasMedia: !!(p.media && p.media.length),
+        thumbUrl: cover ? cover.url : '',
+        thumbIsImage: !!cover && cover.kind === 'image',
+        thumbIsVideo: !!cover && cover.kind === 'video',
+        noMedia: !cover,
+        selected: this.state.selectedIds.has(p.id),
+        toggleSelect: () => this.toggleSelect(p.id),
+        hasPriceOverride: !!p.priceVisibilityOverride,
+        priceOverrideLabel: PRICE_OVERRIDE_LABELS[p.priceVisibilityOverride] || '',
+      };
+    });
+    const typeProducts = allProducts.filter((p) => p.type === activeType);
+    const categoryFilterOptions = this.filters
+      ? this.filters.distinctValues(typeProducts, 'category').filter((c) => c !== '—')
+      : [];
+    const visibleProducts = typeProducts.filter((p) => {
+      if (this.state.statusFilter !== 'all' && p.status !== this.state.statusFilter) return false;
+      if (this.state.categoryFilter !== 'All' && p.category !== this.state.categoryFilter) return false;
+      if (this.state.mediaFilter === 'has' && !p.hasMedia) return false;
+      if (this.state.mediaFilter === 'none' && p.hasMedia) return false;
+      if (this.filters && !this.filters.searchMatch(p, this.state.search, [
+        (x) => x.sku, (x) => x.category, (x) => x.specs,
+      ])) return false;
+      return true;
+    });
+    const allVisibleSelected = visibleProducts.length > 0 && visibleProducts.every((p) => p.selected);
+
+    const fh = {};
+    this.fieldKeys.forEach((k) => { fh[k] = (e) => this.setFormField(k, e.target.value); });
+
+    // Keeps a product's existing (possibly non-canonical) shape/color/cert value
+    // selectable and visible in its dropdown instead of going blank or being
+    // silently changed — see plan notes on the messy pre-existing free-text data.
+    const withCurrent = (list, current) => {
+      if (current && !list.some((n) => n.toLowerCase() === current.toLowerCase())) {
+        return [current, ...list];
+      }
+      return list;
+    };
+
+    const typeLabel = { diamond: 'Diamond', jewelry: 'Jewelry', gemstone: 'Gemstone' }[activeType];
+    const draggingId = this.state.draggingMediaId;
+    const mediaItems = this.state.mediaItems.map((m, i) => ({
+      ...m, isImage: m.kind === 'image', isVideo: m.kind === 'video',
+      isCover: i === 0, notCover: i !== 0,
+      remove: () => { if (window.confirm('Remove this file?')) this.removeMedia(m.id); },
+      makeCover: () => this.setCover(m.id),
+      editImage: () => this.editImageMedia(m),
+      replaceVideo: (e) => this.replaceVideoMedia(m.id, e),
+      dragStart: (e) => this.startTileDrag(m.id, e),
+      tileTransform: m.id === draggingId ? 'scale(1.06)' : 'none',
+      tileShadow: m.id === draggingId ? '0 10px 24px rgba(0,0,0,.28)' : 'none',
+      tileZ: m.id === draggingId ? 5 : 1,
+      tileOpacity: m.id === draggingId ? 0.9 : 1,
+    }));
+
+    return {
+      isDiamondTab: activeType === 'diamond', isJewelryTab: activeType === 'jewelry', isGemstoneTab: activeType === 'gemstone',
+      selectDiamondTab: () => this.setState({ activeType: 'diamond', categoryFilter: 'All', selectedIds: new Set() }),
+      selectJewelryTab: () => this.setState({ activeType: 'jewelry', categoryFilter: 'All', selectedIds: new Set() }),
+      selectGemstoneTab: () => this.setState({ activeType: 'gemstone', categoryFilter: 'All', selectedIds: new Set() }),
+      diamondCount: allProducts.filter((p) => p.type === 'diamond').length,
+      jewelryCount: allProducts.filter((p) => p.type === 'jewelry').length,
+      gemstoneCount: allProducts.filter((p) => p.type === 'gemstone').length,
+      activeTypeLabel: typeLabel,
+      visibleProducts,
+      filteredCount: visibleProducts.length,
+      activeTypeTotal: typeProducts.length,
+      search: this.state.search,
+      handleSearch: (e) => this.setState({ search: e.target.value }),
+      statusFilter: this.state.statusFilter,
+      handleStatusFilter: (e) => this.setState({ statusFilter: e.target.value }),
+      categoryFilter: this.state.categoryFilter,
+      categoryFilterOptions,
+      handleCategoryFilter: (e) => this.setState({ categoryFilter: e.target.value }),
+      mediaFilter: this.state.mediaFilter,
+      handleMediaFilter: (e) => this.setState({ mediaFilter: e.target.value }),
+      hasActiveFilters: !!this.state.search || this.state.statusFilter !== 'all' || this.state.categoryFilter !== 'All' || this.state.mediaFilter !== 'all',
+      clearFilters: () => this.setState({ search: '', statusFilter: 'all', categoryFilter: 'All', mediaFilter: 'all' }),
+      allVisibleSelected,
+      toggleSelectAll: () => this.toggleSelectAll(visibleProducts),
+      hasSelection: this.state.selectedIds.size > 0,
+      selectedCount: this.state.selectedIds.size,
+      bulkBusy: this.state.bulkBusy,
+      bulkActivate: () => this.bulkSetStatus('active'),
+      bulkHide: () => this.bulkSetStatus('hidden'),
+      bulkDelete: () => this.bulkDeleteSelected(),
+      clearSelection: () => this.clearSelection(),
+      bulkPriceVisibility: this.state.bulkPriceVisibility,
+      handleBulkPriceVisibility: (e) => this.setState({ bulkPriceVisibility: e.target.value }),
+      bulkApplyPriceVisibility: () => this.bulkApplyPriceVisibility(),
+      errorMessage: this.state.errorMessage,
+      openAdd: () => this.openAdd(),
+      dialogOpen: this.state.dialogOpen,
+      dialogTitle: (this.state.editingId ? 'Edit ' : 'Add ') + typeLabel,
+      closeDialog: () => this.setState({ dialogOpen: false }),
+      stop: (e) => e.stopPropagation(),
+      form: this.state.form, fh,
+      shapeOptions: withCurrent(this.state.shapeOptions, this.state.form.shape),
+      colorOptions: withCurrent(this.state.colorOptions, this.state.form.color),
+      certOptions: withCurrent(this.state.certOptions, this.state.form.certificate_authority),
+      globalPriceModeLabel: this.state.globalPriceModeLabel,
+      isDiamondForm: activeType === 'diamond', isJewelryForm: activeType === 'jewelry', isGemstoneForm: activeType === 'gemstone',
+      saveForm: () => this.saveForm(),
+      saving: this.state.saving,
+      saveLabel: this.state.saving ? 'Saving…' : 'Save Product',
+      dialogError: this.state.dialogError,
+      categoryOptions: this.state.categoryOptions,
+      subcategoryOptions: this.state.subcategoryOptions,
+      hasMedia: mediaItems.length > 0,
+      mediaItems,
+      canUploadMedia: !!this.state.editingId,
+      cannotUploadMedia: !this.state.editingId,
+      mediaUploading: this.state.mediaUploading,
+      handleMediaSelect: (e) => this.handleMediaSelect(e),
+      templateUrl: `/api/admin/products/import/${activeType}/template`,
+      importBusy: this.state.importBusy,
+      importButtonLabel: this.state.importBusy ? 'Importing…' : 'Import Excel',
+      handleImportFile: (e) => this.handleImportFile(e),
+      importOpen: this.state.importOpen,
+      closeImportDialog: () => this.closeImportDialog(),
+      importSummary: this.state.importResult
+        ? (this.state.importResult.topLevelError || `Imported ${this.state.importResult.imported} of ${this.state.importResult.totalRows} ${typeLabel.toLowerCase()} product(s).`)
+        : '',
+      importErrors: this.state.importResult ? (this.state.importResult.errors || []) : [],
+      importHasErrors: !!(this.state.importResult && this.state.importResult.errors && this.state.importResult.errors.length),
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: this.state.newContactCount,
+      hasNewContact: this.state.newContactCount > 0,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

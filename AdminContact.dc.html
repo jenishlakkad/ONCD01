@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item active">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><h6 style="color:var(--color-accent-700);">Customers</h6><h1 style="font-size:28px;margin-top:6px;">Contact Messages</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:13px;color:var(--color-accent-700);margin:-12px 0 16px;">{{ errorMessage }}</p>
+    </sc-if>
+
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="position:relative;flex:1;min-width:220px;max-width:360px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="input" value="{{ search }}" onChange="{{ handleSearch }}" placeholder="Search name, email, subject…" style="padding-left:34px;width:100%;box-sizing:border-box;"/>
+      </div>
+      <select class="input" value="{{ statusFilter }}" onChange="{{ handleStatusFilter }}" style="width:auto;">
+        <option value="all">All statuses</option>
+        <option value="new">New</option>
+        <option value="in_progress">In Progress</option>
+        <option value="replied">Replied</option>
+        <option value="closed">Closed</option>
+      </select>
+      <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ clearFilters }}" class="btn btn-ghost" style="font-size:12px;">Clear</button>
+      </sc-if>
+      <span style="font-size:12px;opacity:.6;margin-left:auto;">{{ filteredCount }} of {{ totalCount }}</span>
+    </div>
+
+    <div class="tbl-wrap"><table class="table">
+      <thead><tr><th class="adm-th">Name</th><th class="adm-th">Subject</th><th class="adm-th">Received</th><th class="adm-th">Status</th><th class="adm-th">Replies</th><th class="adm-th">Actions</th></tr></thead>
+      <tbody>
+        <sc-for list="{{ visibleMessages }}" as="m" hint-placeholder-count="6">
+          <tr>
+            <td class="adm-td">{{ m.fullName }}<div style="opacity:.55;font-size:11.5px;">{{ m.email }}</div></td>
+            <td class="adm-td">{{ m.subject }}</td>
+            <td class="adm-td" style="opacity:.75;">{{ m.dateLabel }}</td>
+            <td class="adm-td"><span class="tag {{ m.tagClass }}" style="{{ m.tagStyle }}">{{ m.statusLabel }}</span></td>
+            <td class="adm-td">{{ m.replyCount }}</td>
+            <td class="adm-td">
+              <div style="display:flex;gap:6px;">
+                <button onClick="{{ m.open }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Open</button>
+                <button onClick="{{ m.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table></div>
+
+    <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDialog }}">
+        <div class="dialog" style="max-width:640px;max-height:88vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ detail.subject }}</div>
+          <p style="font-size:12px;opacity:.6;margin-top:-6px;">From {{ detail.fullName }} &lt;{{ detail.email }}&gt; · {{ detail.phone }} · {{ detail.dateLabel }}</p>
+
+          <div style="display:flex;gap:8px;margin:10px 0 4px;flex-wrap:wrap;">
+            <a href="{{ detail.mailHref }}" class="btn btn-ghost" style="font-size:11px;padding:5px 10px;">Email</a>
+            <a href="{{ detail.telHref }}" class="btn btn-ghost" style="font-size:11px;padding:5px 10px;">Call</a>
+            <a href="{{ detail.waHref }}" target="_blank" class="btn btn-ghost" style="font-size:11px;padding:5px 10px;">WhatsApp</a>
+            <select class="input" value="{{ detail.status }}" onChange="{{ detail.handleStatus }}" style="width:auto;margin-left:auto;">
+              <option value="new">New</option>
+              <option value="in_progress">In Progress</option>
+              <option value="replied">Replied</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:8px;padding:14px;margin-top:10px;white-space:pre-wrap;font-size:13.5px;">{{ detail.message }}</div>
+
+          <sc-if value="{{ detail.hasReplies }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:11px;opacity:.55;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.06em;">Reply History</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ detail.replies }}" as="r" hint-placeholder-count="2">
+                <div style="border:1px solid var(--color-divider);border-radius:8px;padding:10px 12px;background:var(--color-surface);">
+                  <div style="font-size:11px;opacity:.6;margin-bottom:4px;">{{ r.adminName }} · {{ r.dateLabel }}</div>
+                  <div style="font-size:13px;white-space:pre-wrap;">{{ r.body }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <div class="field" style="margin-top:16px;">
+            <label>Reply to customer (sends a real email)</label>
+            <textarea class="input" rows="4" value="{{ replyText }}" onChange="{{ handleReplyText }}" placeholder="Type your reply…"></textarea>
+          </div>
+
+          <sc-if value="{{ dialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ dialogError }}</p>
+          </sc-if>
+
+          <div class="dialog-actions">
+            <button onClick="{{ closeDialog }}" class="btn btn-secondary">Close</button>
+            <button onClick="{{ sendReply }}" class="btn btn-primary" disabled="{{ replying }}">{{ replyLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    admin: null, messages: [], errorMessage: '',
+    search: '', statusFilter: 'all',
+    dialogOpen: false, detailId: null, detail: null, dialogError: '',
+    replyText: '', replying: false,
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    this.filters = await import('./utils/filters.js');
+    this.loadMessages();
+  }
+
+  async loadMessages() {
+    try {
+      const res = await fetch('/api/admin/contact', { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load messages.');
+      this.setState({ messages: json.data, errorMessage: '' });
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  async openDetail(id) {
+    this.setState({ dialogOpen: true, detailId: id, detail: null, dialogError: '', replyText: '' });
+    try {
+      const res = await fetch(`/api/admin/contact/${id}`, { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load message.');
+      this.setState({ detail: json.data });
+    } catch (err) {
+      this.setState({ dialogError: err.message });
+    }
+  }
+
+  async setStatus(status) {
+    if (!this.state.detailId) return;
+    try {
+      const res = await fetch(`/api/admin/contact/${this.state.detailId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update status.');
+      this.setState({ detail: json.data });
+      this.loadMessages();
+    } catch (err) {
+      this.setState({ dialogError: err.message });
+    }
+  }
+
+  async sendReply() {
+    const body = (this.state.replyText || '').trim();
+    if (!body) { this.setState({ dialogError: 'Write a reply before sending.' }); return; }
+    this.setState({ replying: true, dialogError: '' });
+    try {
+      const res = await fetch(`/api/admin/contact/${this.state.detailId}/reply`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ message: body }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to send reply.');
+      this.setState({ detail: json.data, replyText: '', replying: false });
+      this.loadMessages();
+    } catch (err) {
+      this.setState({ replying: false, dialogError: err.message });
+    }
+  }
+
+  async removeMessage(m) {
+    if (!window.confirm(`Delete the message from ${m.fullName}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/contact/${m.id}`, { method: 'DELETE', credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete.');
+      this.loadMessages();
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+  }
+
+  renderVals() {
+    const STATUS_LABEL = { new: 'New', in_progress: 'In Progress', replied: 'Replied', closed: 'Closed' };
+    const STATUS_TAG = {
+      new: { cls: 'tag-accent', style: '' },
+      in_progress: { cls: 'tag-outline', style: '' },
+      replied: { cls: 'tag-neutral', style: '' },
+      closed: { cls: 'tag-neutral', style: 'opacity:.55;' },
+    };
+    const fmtDate = (iso) => {
+      if (!iso) return '—';
+      const d = new Date(iso.replace(' ', 'T') + 'Z');
+      return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    };
+
+    const allMessages = this.state.messages.map((m) => ({
+      id: m.id, fullName: m.fullName, email: m.email, subject: m.subject,
+      status: m.status, statusLabel: STATUS_LABEL[m.status] || m.status,
+      tagClass: (STATUS_TAG[m.status] || {}).cls || 'tag-outline',
+      tagStyle: (STATUS_TAG[m.status] || {}).style || '',
+      dateLabel: fmtDate(m.createdAt),
+      replyCount: m.replyCount || 0,
+      open: () => this.openDetail(m.id),
+      remove: () => this.removeMessage(m),
+    }));
+
+    const visibleMessages = allMessages.filter((m) => {
+      if (this.state.statusFilter !== 'all' && m.status !== this.state.statusFilter) return false;
+      if (this.filters && !this.filters.searchMatch(m, this.state.search, [
+        (x) => x.fullName, (x) => x.email, (x) => x.subject,
+      ])) return false;
+      return true;
+    });
+
+    const d = this.state.detail;
+    const detail = d ? {
+      subject: d.subject, fullName: d.fullName, email: d.email, phone: d.phone, message: d.message,
+      status: d.status, dateLabel: fmtDate(d.createdAt),
+      mailHref: 'mailto:' + d.email, telHref: 'tel:' + d.phone,
+      waHref: 'https://wa.me/' + (d.phone || '').replace(/[^\d]/g, ''),
+      handleStatus: (e) => this.setStatus(e.target.value),
+      hasReplies: !!(d.replies && d.replies.length),
+      replies: (d.replies || []).map((r) => ({ ...r, dateLabel: fmtDate(r.createdAt) })),
+    } : { subject: '', fullName: '', email: '', phone: '', message: '', status: 'new', dateLabel: '', mailHref: '#', telHref: '#', waHref: '#', handleStatus: () => {}, hasReplies: false, replies: [] };
+
+    return {
+      adminName: this.state.admin ? this.state.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      errorMessage: this.state.errorMessage,
+      search: this.state.search,
+      handleSearch: (e) => this.setState({ search: e.target.value }),
+      statusFilter: this.state.statusFilter,
+      handleStatusFilter: (e) => this.setState({ statusFilter: e.target.value }),
+      hasActiveFilters: !!this.state.search || this.state.statusFilter !== 'all',
+      clearFilters: () => this.setState({ search: '', statusFilter: 'all' }),
+      visibleMessages,
+      filteredCount: visibleMessages.length,
+      totalCount: allMessages.length,
+      dialogOpen: this.state.dialogOpen,
+      closeDialog: () => this.setState({ dialogOpen: false }),
+      stop: (e) => e.stopPropagation(),
+      detail,
+      replyText: this.state.replyText,
+      handleReplyText: (e) => this.setState({ replyText: e.target.value }),
+      sendReply: () => this.sendReply(),
+      replying: this.state.replying,
+      replyLabel: this.state.replying ? 'Sending…' : 'Send Reply',
+      dialogError: this.state.dialogError,
+      newContactCount: allMessages.filter((m) => m.status === 'new').length,
+      hasNewContact: allMessages.some((m) => m.status === 'new'),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

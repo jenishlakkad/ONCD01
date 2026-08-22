@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Environment secrets
+.env
+
+# Logs
+*.log
+server-out.log
+server-err.log
+
+# SQLite temporary files
+data/*.db-shm
+data/*.db-wal

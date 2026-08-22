@@ -1,0 +1,24 @@
+{
+  "name": "aurum-and-co",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aurum & Co. — jewelry trade/retail site, Express + SQLite backend serving the existing static .dc.html frontend.",
+  "engines": {
+    "node": ">=20.16.0"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "migrate": "node server/db/migrate.js",
+    "seed": "node server/db/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^2.0.1",
+    "nodemailer": "^9.0.5",
+    "xlsx": "^0.18.5"
+  }
+}
