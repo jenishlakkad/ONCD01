@@ -250,14 +250,21 @@ a:hover{color:var(--color-accent-700)}
             </sc-for>
           </div>
           <div style="border-top:1px solid var(--color-divider);padding-top:16px;margin-top:16px;">
+            <div class="field" style="margin-bottom:12px;">
+              <label>Add a message (optional)</label>
+              <textarea class="input" rows="3" value="{{ cartNote }}" onChange="{{ handleCartNote }}" placeholder="Any specific questions about these items…"></textarea>
+            </div>
             <p style="font-size:12px;opacity:.7;margin:0 0 12px;">Send this inquiry to our sales desk via:</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-              <a href="{{ waLink }}" target="_blank" class="btn btn-secondary" onClick="{{ submitWa }}">WhatsApp</a>
+              <a href="{{ waLink }}" target="_blank" class="btn btn-secondary {{ cartGateClass }}" onClick="{{ submitWa }}">WhatsApp</a>
               <a href="{{ emailLink }}" class="btn btn-secondary" onClick="{{ submitEmail }}">Email</a>
-              <a href="{{ lineLink }}" target="_blank" class="btn btn-secondary" onClick="{{ submitLine }}">LINE</a>
-              <a href="{{ skypeLink }}" class="btn btn-secondary" onClick="{{ submitSkype }}">Skype</a>
+              <a href="{{ lineLink }}" target="_blank" class="btn btn-secondary {{ cartGateClass }}" onClick="{{ submitLine }}">LINE</a>
+              <a href="{{ skypeLink }}" class="btn btn-secondary {{ cartGateClass }}" onClick="{{ submitSkype }}">Skype</a>
             </div>
-            <button onClick="{{ clearCartFn }}" class="btn btn-ghost btn-block">Clear Cart</button>
+            <sc-if value="{{ cartShowGateNote }}" hint-placeholder-val="{{ false }}">
+              <p style="font-size:11.5px;opacity:.6;margin-top:10px;">WhatsApp, LINE and Skype are reserved for approved trade accounts — <a href="Login.dc.html">sign in</a> or <a href="Register.dc.html">register</a> to unlock direct chat. Email is always open.</p>
+            </sc-if>
+            <button onClick="{{ clearCartFn }}" class="btn btn-ghost btn-block" style="margin-top:12px;">Clear Cart</button>
           </div>
         </sc-if>
       </div>
@@ -316,7 +323,7 @@ class Component extends DCLogic {
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false, savedSkus: new Set(), filtersOpen: false,
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@aurumandco.com', lineId: '@aurumandco', skypeId: 'live:.cid.aurumandco' },
-    inquiryOpen: false, inquiryProduct: null, inquiryNote: '',
+    inquiryOpen: false, inquiryProduct: null, inquiryNote: '', cartNote: '',
   };
 
   async componentDidMount() {
@@ -357,7 +364,7 @@ class Component extends DCLogic {
       this.cart.removeFromCart(p.sku);
       this.refreshCart();
     } else {
-      this.cart.addToCart({ sku: p.sku, name: p.title, priceLabel: p.priceLabel, qty: 1 });
+      this.cart.addToCart({ sku: p.sku, name: p.title, priceLabel: p.priceLabel, qty: 1, product: p.raw });
       this.refreshCart();
       this.setState({ cartOpen: true });
     }
@@ -389,7 +396,8 @@ class Component extends DCLogic {
   renderVals() {
     const cart = this.cart;
     const items = this.state.cartItems;
-    const message = cart ? cart.buildMessage(items, {}) : '';
+    const cartApproved = !!(this.state.customer && this.state.customer.status === 'approved');
+    const message = cart ? cart.buildMessage(items, { customer: this.state.customer, note: this.state.cartNote }) : '';
     const jCatNames = ['All', ...this.state.categories.map((c) => c.name)];
     const jCategories = jCatNames.map((name) => ({
       name, activeClass: this.state.activeCategory === name ? 'active' : '',
@@ -472,15 +480,19 @@ class Component extends DCLogic {
       toggleCart: () => this.setState((s) => ({ cartOpen: !s.cartOpen })),
       closeCartBg: () => this.setState({ cartOpen: false }),
       stop: (e) => e.stopPropagation(),
-      clearCartFn: () => { cart && cart.clearCart(); this.refreshCart(); },
-      waLink: cart ? cart.channelLink('whatsapp', message, this.state.settings) : '#',
+      clearCartFn: () => { cart && cart.clearCart(); this.refreshCart(); this.setState({ cartNote: '' }); },
+      cartNote: this.state.cartNote,
+      handleCartNote: (e) => this.setState({ cartNote: e.target.value }),
+      cartGateClass: cartApproved ? '' : 'inquire-disabled',
+      cartShowGateNote: !cartApproved,
+      waLink: cartApproved && cart ? cart.channelLink('whatsapp', message, this.state.settings) : '#',
       emailLink: cart ? cart.channelLink('email', message, this.state.settings) : '#',
-      lineLink: cart ? cart.channelLink('line', message, this.state.settings) : '#',
-      skypeLink: cart ? cart.channelLink('skype', message, this.state.settings) : '#',
-      submitWa: () => cart && cart.submitInquiry(items, 'whatsapp'),
+      lineLink: cartApproved && cart ? cart.channelLink('line', message, this.state.settings) : '#',
+      skypeLink: cartApproved && cart ? cart.channelLink('skype', message, this.state.settings) : '#',
+      submitWa: (e) => { if (!cartApproved) { e.preventDefault(); return; } cart && cart.submitInquiry(items, 'whatsapp'); },
       submitEmail: () => cart && cart.submitInquiry(items, 'email'),
-      submitLine: () => cart && cart.submitInquiry(items, 'line'),
-      submitSkype: () => cart && cart.submitInquiry(items, 'skype'),
+      submitLine: (e) => { if (!cartApproved) { e.preventDefault(); return; } cart && cart.submitInquiry(items, 'line'); },
+      submitSkype: (e) => { if (!cartApproved) { e.preventDefault(); return; } cart && cart.submitInquiry(items, 'skype'); },
       ...this.buildInquiryVals(cart),
     };
   }
@@ -492,7 +504,7 @@ class Component extends DCLogic {
     const iqTitle = iq && ih ? ih.inquiryTitle(iq) : (iq ? iq.sku : '');
     const iqPriceLabel = iq && ih ? ih.inquiryPriceLabel(iq) : '';
     const iqSpecRows = iq && ih ? ih.inquirySpecRows(iq) : [];
-    const iqMsg = iq && ih ? ih.inquiryMessage(iq, this.state.inquiryNote) : '';
+    const iqMsg = iq && ih ? ih.inquiryMessage(iq, this.state.inquiryNote, this.state.customer) : '';
     const iqItems = iq ? [{ sku: iq.sku, name: iqTitle, qty: 1, priceLabel: iqPriceLabel }] : [];
     return {
       inquiryOpen: this.state.inquiryOpen,

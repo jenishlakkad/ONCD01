@@ -43,18 +43,50 @@ export function inquiryPriceLabel(p) {
   return p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : (p.priceLabel || 'Price on request');
 }
 
-export function inquiryMessage(p, note) {
+// *word* is the shared bold convention on WhatsApp and Skype (their compose
+// boxes render single-asterisk-wrapped text as bold). LINE and plain-text
+// email don't render it, but it still reads fine there as plain emphasis
+// markers, so one message format works unchanged across all four channels.
+function bold(text) {
+  return `*${text}*`;
+}
+
+// customer is the shape returned by GET /api/auth/me (server/routes/auth.js
+// publicCustomer()) - id, full_name, email, mobile, etc. - or null/undefined
+// for a guest (guests can only ever reach this via the Email channel, which
+// doesn't require a section explaining who they are).
+export function inquiryMessage(p, note, customer) {
   if (!p) return '';
   const title = inquiryTitle(p);
-  const specLine = inquirySpecRows(p).map((r) => r.value).join(', ');
   const priceLabel = inquiryPriceLabel(p);
+
   const lines = [
     "Hello, I'd like to inquire about the following item:",
     '',
-    `${p.sku} — ${title}${specLine ? ' (' + specLine + ')' : ''} — ${priceLabel}`,
+    bold('PRODUCT DETAILS'),
+    `SKU: ${p.sku}`,
+    `Item: ${bold(title)}`,
   ];
-  if (note && note.trim()) {
-    lines.push('', 'Message from customer:', note.trim());
+  for (const row of inquirySpecRows(p)) {
+    lines.push(`${row.label}: ${row.value}`);
   }
+  lines.push(`Price: ${bold(priceLabel)}`);
+
+  if (customer && customer.id) {
+    lines.push(
+      '',
+      bold('CUSTOMER DETAILS'),
+      `Customer ID: ${customer.id}`,
+      `Name: ${bold(customer.full_name || '')}`,
+      `Email: ${customer.email || ''}`,
+    );
+    if (customer.mobile) lines.push(`Phone: ${customer.mobile}`);
+    if (customer.company_name) lines.push(`Company: ${customer.company_name}`);
+  }
+
+  if (note && note.trim()) {
+    lines.push('', bold('MESSAGE'), note.trim());
+  }
+
   return lines.join('\n');
 }
