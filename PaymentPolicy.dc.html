@@ -13,17 +13,17 @@
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
-.tl-item{display:grid;grid-template-columns:100px 1px 1fr;gap:24px;padding-bottom:36px;}
-.tl-dot{position:relative;background:var(--color-divider);}
-.tl-dot::before{content:'';position:absolute;top:2px;left:-4px;width:9px;height:9px;border-radius:50%;background:var(--color-accent);}
-.factory-grid-hero{grid-row:span 2}
-@media (max-width:560px){
-  .tl-item{grid-template-columns:16px 1fr;gap:14px;}
-  .tl-item > div:first-child{grid-column:1/-1;text-align:left !important;font-size:15px !important;}
-  .factory-grid-hero{grid-row:auto}
-}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
+.legal-toc{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:20px 24px;margin:28px 0 8px;background:var(--color-surface);}
+.legal-toc a{color:var(--color-text);opacity:.8;}
+.legal-toc a:hover{opacity:1;color:var(--color-accent-700);}
+.legal-body h3{margin-top:36px;font-size:19px;}
+.legal-body h3:first-of-type{margin-top:0;}
+.legal-body p{margin-top:10px;opacity:.85;}
+.legal-body ul{margin:10px 0 0;padding-left:20px;opacity:.85;}
+.legal-body li{margin-top:6px;}
+.legal-note{border:1px solid var(--color-accent-300);background:var(--color-accent-100);border-radius:var(--radius-md);padding:16px 18px;margin-top:14px;font-size:13.5px;color:var(--color-accent-800);}
 </style>
 </helmet>
 
@@ -43,7 +43,7 @@ a:hover{color:var(--color-accent-700)}
     <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
       <a href="Gemstones.dc.html">Gemstones</a>
     </sc-if>
-    <a href="About.dc.html" aria-current="page">About</a>
+    <a href="About.dc.html">About</a>
     <a href="Contact.dc.html">Contact</a>
     <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
       <button onClick="{{ toggleCart }}" style="position:relative;background:none;border:none;cursor:pointer;color:var(--color-text);display:flex;">
@@ -81,132 +81,49 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </nav>
 
-  <section style="padding:64px clamp(20px,6vw,56px) 24px;max-width:760px;">
-    <h6 style="color:var(--color-accent-700);">{{ hero.kicker }}</h6>
-    <h1 style="font-size:44px;margin-top:10px;">{{ hero.title }}</h1>
-    <p style="opacity:.8;text-align:justify;margin-top:20px;">{{ hero.body }}</p>
-  </section>
+  <section style="padding:64px clamp(20px,6vw,56px) 0;max-width:820px;">
+    <h6 style="color:var(--color-accent-700);">Legal</h6>
+    <h1 style="font-size:40px;margin-top:10px;">Payment Policy</h1>
+    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: August 26, 2026</p>
 
-  <section style="padding:24px clamp(20px,6vw,56px) 96px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:clamp(20px,6vw,56px);align-items:center;">
-    <div>
-      <h6 style="color:var(--color-accent-700);">{{ story.kicker }}</h6>
-      <h2 style="font-size:30px;margin-top:8px;">{{ story.title }}</h2>
-      <p style="opacity:.8;text-align:justify;">{{ story.body }}</p>
-    </div>
-    <div class="plate" style="aspect-ratio:4/3;">
-      <sc-if value="{{ story.hasImage }}" hint-placeholder-val="{{ false }}">
-        <img src="{{ story.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-      </sc-if>
-      <sc-if value="{{ !story.hasImage }}" hint-placeholder-val="{{ true }}">
-        <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-      </sc-if>
+    <div class="legal-toc">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:10px;">On this page</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 24px;font-size:13.5px;">
+        <a href="#overview">1. Overview</a>
+        <a href="#methods">2. Accepted Payment Methods</a>
+        <a href="#pricing">3. Pricing &amp; Quotes</a>
+        <a href="#security">4. Payment Security</a>
+        <a href="#invoicing">5. Invoicing</a>
+        <a href="#fraud">6. Fraud Prevention</a>
+        <a href="#contact">7. Contact Us</a>
+      </div>
     </div>
   </section>
 
-  <section style="background:var(--color-surface);padding:80px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Milestones</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Our Timeline</h2>
-    <div style="max-width:640px;margin:0 auto;">
-      <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="5">
-        <div class="tl-item">
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;color:var(--color-accent-700);text-align:right;">{{ t.year }}</div>
-          <div class="tl-dot"></div>
-          <div>
-            <h4 style="margin:0;">{{ t.title }}</h4>
-            <p style="opacity:.75;font-size:14px;margin:6px 0 0;">{{ t.desc }}</p>
-          </div>
-        </div>
-      </sc-for>
-    </div>
-  </section>
+  <section style="padding:16px clamp(20px,6vw,56px) 96px;max-width:820px;">
+    <div class="legal-body" style="font-size:14.5px;line-height:1.75;">
 
-  <section style="padding:96px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Inside the House</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Factory &amp; Manufacturing</h2>
-    <div class="factory-grid" style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:20px;">
-      <sc-for list="{{ gallery }}" as="g" hint-placeholder-count="5">
-        <div class="plate {{ g.heroClass }}" style="aspect-ratio:4/3;position:relative;overflow:hidden;">
-          <sc-if value="{{ g.isImage }}" hint-placeholder-val="{{ true }}">
-            <img src="{{ g.url }}" alt="{{ g.caption }}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-          </sc-if>
-          <sc-if value="{{ g.isVideo }}" hint-placeholder-val="{{ false }}">
-            <video src="{{ g.url }}" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(32,31,29,.25);pointer-events:none;">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="#f8f4f4"><path d="M8 5v14l11-7Z"/></svg>
-            </div>
-          </sc-if>
-        </div>
-      </sc-for>
-      <sc-if value="{{ !hasGallery }}" hint-placeholder-val="{{ false }}">
-        <p style="opacity:.6;font-size:13px;grid-column:1/-1;">No factory photos yet.</p>
-      </sc-if>
-    </div>
-  </section>
+      <h3 id="overview">1. Overview</h3>
+      <p>ONCD does not process payments through this website. The Site is used to browse the catalog, register a trade account, and submit inquiries; every purchase is arranged and confirmed directly with our sales desk after your inquiry is reviewed. This Policy explains how payment works once that direct conversation begins.</p>
 
-  <section style="background:var(--color-surface);padding:96px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">The People Behind the Stones</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Our Team</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px;">
-      <sc-for list="{{ team }}" as="m" hint-placeholder-count="4">
-        <div>
-          <div class="plate" style="aspect-ratio:1;overflow:hidden;">
-            <sc-if value="{{ m.hasPhoto }}" hint-placeholder-val="{{ false }}">
-              <img src="{{ m.photoUrl }}" alt="{{ m.name }}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-            </sc-if>
-            <sc-if value="{{ !m.hasPhoto }}" hint-placeholder-val="{{ true }}">
-              <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-            </sc-if>
-          </div>
-          <h4 style="margin:14px 0 2px;font-size:17px;">{{ m.name }}</h4>
-          <p style="font-size:12px;opacity:.65;margin:0;">{{ m.role }}</p>
-        </div>
-      </sc-for>
-    </div>
-  </section>
+      <h3 id="methods">2. Accepted Payment Methods</h3>
+      <p>Payment is typically made by bank/wire transfer, or another method agreed directly with your ONCD account contact. Exact methods and any related instructions are communicated per transaction, since they can vary by destination country and order size. We do not collect, store, or process card payment details through this website.</p>
 
-  <section style="padding:96px clamp(20px,6vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;">
-    <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:36px;">
-      <h6 style="color:var(--color-accent-700);">{{ mission.kicker }}</h6>
-      <h3 style="margin-top:8px;">{{ mission.title }}</h3>
-      <p style="opacity:.8;">{{ mission.body }}</p>
-    </div>
-    <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:36px;">
-      <h6 style="color:var(--color-accent-700);">{{ vision.kicker }}</h6>
-      <h3 style="margin-top:8px;">{{ vision.title }}</h3>
-      <p style="opacity:.8;">{{ vision.body }}</p>
-    </div>
-  </section>
+      <h3 id="pricing">3. Pricing &amp; Quotes</h3>
+      <p>Where pricing is shown on the Site, it reflects our current pricing settings and your account's approval status — it may be shown outright, hidden behind "Contact for Price", or shown only to approved trade accounts after login. Any price displayed is indicative. Your final price is confirmed in writing by our sales desk before any payment is requested, and no payment is due until you've agreed to that final price.</p>
 
-  <section style="background:var(--color-surface);padding:80px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Accredited &amp; Verified</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Certificates</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:24px;">
-      <sc-for list="{{ certs }}" as="c" hint-placeholder-count="4">
-        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:24px;text-align:center;background:var(--color-bg);">
-          <div class="plate" style="aspect-ratio:1;width:64px;margin:0 auto 14px;overflow:hidden;">
-            <sc-if value="{{ c.hasLogo }}" hint-placeholder-val="{{ false }}">
-              <img src="{{ c.logoUrl }}" alt="{{ c.name }}" style="width:100%;height:100%;object-fit:contain;display:block;"/>
-            </sc-if>
-            <sc-if value="{{ !c.hasLogo }}" hint-placeholder-val="{{ true }}">
-              <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-            </sc-if>
-          </div>
-          <div style="font-family:var(--font-heading);font-weight:600;">{{ c.name }}</div>
-        </div>
-      </sc-for>
-    </div>
-  </section>
+      <h3 id="security">4. Payment Security</h3>
+      <p>Because payment details are never entered into this website, no card or bank information ever touches our servers. All payment arrangements happen through direct, verified communication with our sales desk — the same team who reviewed and approved your trade account.</p>
 
-  <section style="padding:96px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Why Choose Us</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">What Sets the House Apart</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px 0;">
-      <sc-for list="{{ whyUs }}" as="w" hint-placeholder-count="4">
-        <div style="padding:0 28px;border-left:1px solid var(--color-divider);">
-          <h4 style="font-size:19px;">{{ w.title }}</h4>
-          <p style="font-size:13px;opacity:.75;margin:0;">{{ w.desc }}</p>
-        </div>
-      </sc-for>
+      <h3 id="invoicing">5. Invoicing</h3>
+      <p>Once a price and payment method are agreed, we issue a formal invoice for the transaction. Please keep this for your own records; it is your primary reference if you ever need to raise a question about a completed payment.</p>
+
+      <h3 id="fraud">6. Fraud Prevention</h3>
+      <div class="legal-note">We will never ask you to send payment to a personal bank account, a wallet, or any account not confirmed directly by your named ONCD contact. If you ever receive banking instructions that seem unusual, or that arrive from an unfamiliar email address or contact channel, please verify them directly with us — using the contact details on this Site, not the details in the suspicious message — before transferring any funds.</div>
+
+      <h3 id="contact">7. Contact Us</h3>
+      <p>Questions about payment on a specific inquiry should go to your ONCD sales contact directly. General questions about this Policy can be sent via our <a href="Contact.dc.html">Contact page</a>, or to <span>{{ footerEmail }}</span>.</p>
+
     </div>
   </section>
 
@@ -309,10 +226,10 @@ class Component extends DCLogic {
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false,
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
-    blocks: {}, team: [], timeline: [], certs: [], gallery: [], whyUsBullets: [],
   };
 
   async componentDidMount() {
+    document.title = 'Payment Policy | ONCD';
     const mod = await import('./utils/cart.js');
     this.cart = mod;
     this.refreshCart();
@@ -327,18 +244,6 @@ class Component extends DCLogic {
       this.logoutCustomer = m.logoutCustomer;
       m.fetchCustomerSession().then((me) => this.setState({ customer: me }));
     });
-
-    try {
-      const res = await fetch('/api/about', { credentials: 'same-origin' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load content.');
-      this.setState({
-        blocks: json.data.blocks || {}, team: json.data.team || [], timeline: json.data.timeline || [],
-        certs: json.data.certs || [], gallery: json.data.gallery || [], whyUsBullets: json.data.whyUs || [],
-      });
-    } catch (err) {
-      console.error('[about] failed to load content', err);
-    }
   }
   componentWillUnmount() {
     window.removeEventListener('aurum-cart-change', this._onChange);
@@ -353,22 +258,7 @@ class Component extends DCLogic {
     const cart = this.cart;
     const items = this.state.cartItems;
     const message = cart ? cart.buildMessage(items, {}) : '';
-    const timeline = this.state.timeline.map((t) => ({ year: t.year, title: t.title, desc: t.description }));
-    const team = this.state.team.map((m) => ({ name: m.name, role: m.role, photoUrl: m.photoUrl, hasPhoto: !!m.photoUrl }));
-    const certs = this.state.certs.map((c) => ({ name: c.name, logoUrl: c.logoUrl, hasLogo: !!c.logoUrl }));
-    const whyUs = this.state.whyUsBullets.map((w) => ({ title: w.title, desc: w.description }));
-    const gallery = this.state.gallery.slice(0, 5).map((g, i) => ({
-      isImage: g.kind === 'image', isVideo: g.kind === 'video', url: g.url, caption: g.caption,
-      heroClass: i === 0 ? 'factory-grid-hero' : '',
-    }));
-    const blk = this.state.blocks;
-    const hero = blk.hero || {};
-    const story = { ...(blk.story || {}), hasImage: !!(blk.story && blk.story.imageUrl) };
-    const mission = blk.mission || {};
-    const vision = blk.vision || {};
     return {
-      timeline, team, certs, whyUs, gallery, hero, story, mission, vision,
-      hasGallery: gallery.length > 0,
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',

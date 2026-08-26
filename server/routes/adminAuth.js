@@ -54,7 +54,7 @@ router.post('/forgot', asyncRoute(async (req, res) => {
   // Always respond 200 regardless of whether the account exists (no user enumeration).
   if (admin) {
     const code = createOtp(email, 'admin_reset');
-    await sendMail({ to: email, subject: 'Reset your Aurum & Co. admin password', text: `Your password reset code is ${code}. It expires in 10 minutes.` });
+    await sendMail({ to: email, subject: 'Reset your ONCD admin password', text: `Your password reset code is ${code}. It expires in 10 minutes.` });
   }
   res.json({ data: { sent: true } });
 }));

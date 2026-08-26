@@ -9,7 +9,7 @@ const requirePermission = require('../middleware/requirePermission');
 const { makeUploader, kindOf } = require('../middleware/upload');
 const { serializeProduct } = require('../lib/serializeProduct');
 const { writeAudit } = require('../lib/audit');
-const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, importWorkbook, productColumns } = require('../lib/excelImport');
+const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns } = require('../lib/excelImport');
 const env = require('../config/env');
 
 const router = express.Router();
@@ -174,7 +174,37 @@ router.get('/import/:type/template', asyncRoute(async (req, res) => {
   if (!IMPORT_COLUMN_DEFS[type]) throw new ApiError(404, 'Unknown product type.');
   const buffer = buildTemplate(type);
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="aurum-${type}-stock-template.xlsx"`);
+  res.setHeader('Content-Disposition', `attachment; filename="oncd-${type}-stock-template.xlsx"`);
+  res.send(buffer);
+}));
+
+router.get('/export/:type', asyncRoute(async (req, res) => {
+  const { type } = req.params;
+  if (!IMPORT_COLUMN_DEFS[type]) throw new ApiError(404, 'Unknown product type.');
+
+  const idsParam = String(req.query.ids || '').trim();
+  let rows;
+  let selectedOnly = false;
+  if (idsParam) {
+    const ids = idsParam.split(',').map((s) => Number(s.trim())).filter((n) => Number.isInteger(n) && n > 0);
+    if (!ids.length) throw new ApiError(400, 'No valid product ids were provided.');
+    selectedOnly = true;
+    const placeholders = ids.map(() => '?').join(', ');
+    rows = db.prepare(`SELECT * FROM products WHERE type = ? AND id IN (${placeholders}) ORDER BY created_at DESC, id DESC`).all(type, ...ids);
+  } else {
+    rows = db.prepare('SELECT * FROM products WHERE type = ? ORDER BY created_at DESC, id DESC').all(type);
+  }
+  if (!rows.length) throw new ApiError(400, 'No products to export.');
+
+  const buffer = buildStockExport(type, rows);
+  writeAudit({
+    actor: req.adminUser.full_name,
+    action: `Exported ${rows.length} ${type} product(s) to Excel${selectedOnly ? ' (selected)' : ''}`,
+    target: `${rows.length} product(s)`,
+    module: 'Products',
+  });
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="oncd-${type}-stock-export${selectedOnly ? '-selected' : ''}.xlsx"`);
   res.send(buffer);
 }));
 

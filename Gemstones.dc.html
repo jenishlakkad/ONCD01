@@ -24,7 +24,7 @@ a:hover{color:var(--color-accent-700)}
 <div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
 
   <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
-    <div class="nav-brand" style="letter-spacing:.1em;">AURUM &amp; CO.</div>
+    <div class="nav-brand" style="letter-spacing:.1em;">ONCD</div>
     <input type="checkbox" class="nav-check" id="navCheck" hidden>
     <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
     <a href="Home.dc.html">Home</a>
@@ -184,7 +184,7 @@ a:hover{color:var(--color-accent-700)}
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
       <div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">AURUM &amp; CO.</div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">ONCD</div>
         <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
       </div>
       <div>
@@ -210,6 +210,17 @@ a:hover{color:var(--color-accent-700)}
         </div>
       </div>
       <div>
+        <h6 style="color:#f8f4f4;opacity:.6;">Legal</h6>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
+          <a href="PrivacyPolicy.dc.html" style="color:var(--color-neutral-300);">Privacy Policy</a>
+          <a href="TermsAndConditions.dc.html" style="color:var(--color-neutral-300);">Terms &amp; Conditions</a>
+          <a href="CookiePolicy.dc.html" style="color:var(--color-neutral-300);">Cookie Policy</a>
+          <a href="PaymentPolicy.dc.html" style="color:var(--color-neutral-300);">Payment Policy</a>
+          <a href="ShippingPolicy.dc.html" style="color:var(--color-neutral-300);">Shipping &amp; Delivery</a>
+          <a href="RefundPolicy.dc.html" style="color:var(--color-neutral-300);">Refund &amp; Return Policy</a>
+        </div>
+      </div>
+      <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
           <span>{{ footerEmail }}</span>
@@ -219,7 +230,7 @@ a:hover{color:var(--color-accent-700)}
       </div>
     </div>
     <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
-      <span>© 2026 Aurum &amp; Co. All rights reserved.</span>
+      <span>© 2026 ONCD. All rights reserved.</span>
       <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
@@ -271,7 +282,7 @@ class Component extends DCLogic {
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false, savedSkus: new Set(), filtersOpen: false,
     colorAttrs: [], shapeAttrs: [], certAttrs: [],
-    settings: { whatsapp: '15551234567', inquiryEmail: 'sales@aurumandco.com', lineId: '@aurumandco', skypeId: 'live:.cid.aurumandco' },
+    settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
   };
 
   async componentDidMount() {
@@ -384,7 +395,7 @@ class Component extends DCLogic {
       isEmpty: !this.state.loading && gems.length === 0,
       errorMessage: this.state.errorMessage,
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
-      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@aurumandco.com',
+      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
       isLoggedIn: !!this.state.customer,
       handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },

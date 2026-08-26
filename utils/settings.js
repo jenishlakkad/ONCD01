@@ -8,6 +8,6 @@ export async function fetchPublicSettings() {
     if (!res.ok) throw new Error();
     return json.data;
   } catch {
-    return { siteName: 'Aurum & Co.', supportEmail: '', whatsapp: '', inquiryEmail: '', lineId: '', skypeId: '', priceMode: 'approved' };
+    return { siteName: 'ONCD', supportEmail: '', whatsapp: '', inquiryEmail: '', lineId: '', skypeId: '', priceMode: 'approved' };
   }
 }

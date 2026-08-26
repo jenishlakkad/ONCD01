@@ -1,4 +1,4 @@
--- Aurum & Co. schema. SQLite, foreign keys enforced by connection.js (PRAGMA foreign_keys = ON).
+-- ONCD schema. SQLite, foreign keys enforced by connection.js (PRAGMA foreign_keys = ON).
 
 CREATE TABLE IF NOT EXISTS roles (
   id INTEGER PRIMARY KEY,

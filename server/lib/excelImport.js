@@ -125,7 +125,7 @@ function buildTemplate(type) {
   const cats = typeCategories(type);
   const label = type.charAt(0).toUpperCase() + type.slice(1);
   const info = [
-    [`Aurum & Co. — ${label} Stock Import`],
+    [`ONCD — ${label} Stock Import`],
     [''],
     ['Row 2 on the "Stock Data" sheet is an EXAMPLE — delete it before importing your real data.'],
     ['Do not rename, remove, or reorder the header row (row 1) on the "Stock Data" sheet.'],
@@ -155,6 +155,33 @@ function buildTemplate(type) {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Stock Data');
   XLSX.utils.book_append_sheet(wb, wsInfo, 'Instructions');
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+}
+
+// Exports live product rows to the same column shape as buildTemplate(), so a
+// downloaded stock export can be edited and re-imported through the same flow.
+// `rows` are raw `products` table rows (snake_case, category_id/subcategory_id
+// as ids) for one `type` — category/subcategory ids are resolved to names here
+// since that's what the Category/Subcategory columns show in the template too.
+function buildStockExport(type, rows) {
+  const cols = COLUMN_DEFS[type];
+  const headers = cols.map((c) => c.header);
+
+  const categoriesById = new Map(typeCategories(type).map((c) => [c.id, c.name]));
+  const subcategoriesById = new Map(allSubcategories().map((s) => [s.id, s.name]));
+
+  const dataRows = rows.map((row) => cols.map((c) => {
+    if (c.kind === 'category') return row.category_id != null ? (categoriesById.get(row.category_id) || '') : '';
+    if (c.kind === 'subcategory') return row.subcategory_id != null ? (subcategoriesById.get(row.subcategory_id) || '') : '';
+    const v = row[c.key];
+    return v === null || v === undefined ? '' : v;
+  }));
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+  ws['!cols'] = headers.map((h) => ({ wch: Math.max(16, h.length + 2) }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Stock Data');
   return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 }
 
@@ -300,4 +327,4 @@ function importWorkbook(type, buffer) {
   return { results };
 }
 
-module.exports = { COLUMN_DEFS, buildTemplate, importWorkbook, productColumns };
+module.exports = { COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns };

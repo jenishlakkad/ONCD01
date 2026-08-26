@@ -13,17 +13,16 @@
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
-.tl-item{display:grid;grid-template-columns:100px 1px 1fr;gap:24px;padding-bottom:36px;}
-.tl-dot{position:relative;background:var(--color-divider);}
-.tl-dot::before{content:'';position:absolute;top:2px;left:-4px;width:9px;height:9px;border-radius:50%;background:var(--color-accent);}
-.factory-grid-hero{grid-row:span 2}
-@media (max-width:560px){
-  .tl-item{grid-template-columns:16px 1fr;gap:14px;}
-  .tl-item > div:first-child{grid-column:1/-1;text-align:left !important;font-size:15px !important;}
-  .factory-grid-hero{grid-row:auto}
-}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
+.legal-toc{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:20px 24px;margin:28px 0 8px;background:var(--color-surface);}
+.legal-toc a{color:var(--color-text);opacity:.8;}
+.legal-toc a:hover{opacity:1;color:var(--color-accent-700);}
+.legal-body h3{margin-top:36px;font-size:19px;}
+.legal-body h3:first-of-type{margin-top:0;}
+.legal-body p{margin-top:10px;opacity:.85;}
+.legal-body ul{margin:10px 0 0;padding-left:20px;opacity:.85;}
+.legal-body li{margin-top:6px;}
 </style>
 </helmet>
 
@@ -43,7 +42,7 @@ a:hover{color:var(--color-accent-700)}
     <sc-if value="{{ showGemstones }}" hint-placeholder-val="{{ true }}">
       <a href="Gemstones.dc.html">Gemstones</a>
     </sc-if>
-    <a href="About.dc.html" aria-current="page">About</a>
+    <a href="About.dc.html">About</a>
     <a href="Contact.dc.html">Contact</a>
     <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
       <button onClick="{{ toggleCart }}" style="position:relative;background:none;border:none;cursor:pointer;color:var(--color-text);display:flex;">
@@ -81,132 +80,85 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </nav>
 
-  <section style="padding:64px clamp(20px,6vw,56px) 24px;max-width:760px;">
-    <h6 style="color:var(--color-accent-700);">{{ hero.kicker }}</h6>
-    <h1 style="font-size:44px;margin-top:10px;">{{ hero.title }}</h1>
-    <p style="opacity:.8;text-align:justify;margin-top:20px;">{{ hero.body }}</p>
-  </section>
+  <section style="padding:64px clamp(20px,6vw,56px) 0;max-width:820px;">
+    <h6 style="color:var(--color-accent-700);">Legal</h6>
+    <h1 style="font-size:40px;margin-top:10px;">Privacy Policy</h1>
+    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: August 26, 2026</p>
 
-  <section style="padding:24px clamp(20px,6vw,56px) 96px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:clamp(20px,6vw,56px);align-items:center;">
-    <div>
-      <h6 style="color:var(--color-accent-700);">{{ story.kicker }}</h6>
-      <h2 style="font-size:30px;margin-top:8px;">{{ story.title }}</h2>
-      <p style="opacity:.8;text-align:justify;">{{ story.body }}</p>
-    </div>
-    <div class="plate" style="aspect-ratio:4/3;">
-      <sc-if value="{{ story.hasImage }}" hint-placeholder-val="{{ false }}">
-        <img src="{{ story.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-      </sc-if>
-      <sc-if value="{{ !story.hasImage }}" hint-placeholder-val="{{ true }}">
-        <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-      </sc-if>
-    </div>
-  </section>
-
-  <section style="background:var(--color-surface);padding:80px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Milestones</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Our Timeline</h2>
-    <div style="max-width:640px;margin:0 auto;">
-      <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="5">
-        <div class="tl-item">
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;color:var(--color-accent-700);text-align:right;">{{ t.year }}</div>
-          <div class="tl-dot"></div>
-          <div>
-            <h4 style="margin:0;">{{ t.title }}</h4>
-            <p style="opacity:.75;font-size:14px;margin:6px 0 0;">{{ t.desc }}</p>
-          </div>
-        </div>
-      </sc-for>
+    <div class="legal-toc">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:10px;">On this page</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 24px;font-size:13.5px;">
+        <a href="#overview">1. Overview</a>
+        <a href="#collect">2. Information We Collect</a>
+        <a href="#use">3. How We Use Your Information</a>
+        <a href="#approval">4. Trade Account Approval &amp; Pricing Access</a>
+        <a href="#share">5. How We Share Information</a>
+        <a href="#security">6. Data Security</a>
+        <a href="#retention">7. Data Retention</a>
+        <a href="#rights">8. Your Rights</a>
+        <a href="#children">9. Children's Privacy</a>
+        <a href="#intl">10. International Users</a>
+        <a href="#changes">11. Changes to This Policy</a>
+        <a href="#contact">12. Contact Us</a>
+      </div>
     </div>
   </section>
 
-  <section style="padding:96px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Inside the House</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Factory &amp; Manufacturing</h2>
-    <div class="factory-grid" style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:20px;">
-      <sc-for list="{{ gallery }}" as="g" hint-placeholder-count="5">
-        <div class="plate {{ g.heroClass }}" style="aspect-ratio:4/3;position:relative;overflow:hidden;">
-          <sc-if value="{{ g.isImage }}" hint-placeholder-val="{{ true }}">
-            <img src="{{ g.url }}" alt="{{ g.caption }}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-          </sc-if>
-          <sc-if value="{{ g.isVideo }}" hint-placeholder-val="{{ false }}">
-            <video src="{{ g.url }}" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(32,31,29,.25);pointer-events:none;">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="#f8f4f4"><path d="M8 5v14l11-7Z"/></svg>
-            </div>
-          </sc-if>
-        </div>
-      </sc-for>
-      <sc-if value="{{ !hasGallery }}" hint-placeholder-val="{{ false }}">
-        <p style="opacity:.6;font-size:13px;grid-column:1/-1;">No factory photos yet.</p>
-      </sc-if>
-    </div>
-  </section>
+  <section style="padding:16px clamp(20px,6vw,56px) 96px;max-width:820px;">
+    <div class="legal-body" style="font-size:14.5px;line-height:1.75;">
 
-  <section style="background:var(--color-surface);padding:96px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">The People Behind the Stones</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Our Team</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px;">
-      <sc-for list="{{ team }}" as="m" hint-placeholder-count="4">
-        <div>
-          <div class="plate" style="aspect-ratio:1;overflow:hidden;">
-            <sc-if value="{{ m.hasPhoto }}" hint-placeholder-val="{{ false }}">
-              <img src="{{ m.photoUrl }}" alt="{{ m.name }}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-            </sc-if>
-            <sc-if value="{{ !m.hasPhoto }}" hint-placeholder-val="{{ true }}">
-              <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-            </sc-if>
-          </div>
-          <h4 style="margin:14px 0 2px;font-size:17px;">{{ m.name }}</h4>
-          <p style="font-size:12px;opacity:.65;margin:0;">{{ m.role }}</p>
-        </div>
-      </sc-for>
-    </div>
-  </section>
+      <h3 id="overview">1. Overview</h3>
+      <p>ONCD ("ONCD", "we", "us", "our") operates this website to showcase certified diamonds, fine jewelry and rare gemstones to trade partners and private collectors, and to let visitors register for a trade account, browse the catalog, and submit inquiries to our sales desk. This Policy explains what information we collect through the site, why we collect it, and how it is handled. It applies to guests, registered customers, and trade accounts alike.</p>
 
-  <section style="padding:96px clamp(20px,6vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;">
-    <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:36px;">
-      <h6 style="color:var(--color-accent-700);">{{ mission.kicker }}</h6>
-      <h3 style="margin-top:8px;">{{ mission.title }}</h3>
-      <p style="opacity:.8;">{{ mission.body }}</p>
-    </div>
-    <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:36px;">
-      <h6 style="color:var(--color-accent-700);">{{ vision.kicker }}</h6>
-      <h3 style="margin-top:8px;">{{ vision.title }}</h3>
-      <p style="opacity:.8;">{{ vision.body }}</p>
-    </div>
-  </section>
+      <h3 id="collect">2. Information We Collect</h3>
+      <p>We collect information in the following ways:</p>
+      <ul>
+        <li><strong>Account registration:</strong> full name, email address, mobile number, country, state, city, and, for trade accounts, company name, business type, website and any message you provide with your application.</li>
+        <li><strong>Inquiries:</strong> the item(s) you inquire about, the channel you choose to send the inquiry through (Email, WhatsApp, LINE or Skype), any message you write, and, for logged-in customers, your account details are attached to the inquiry so our sales desk knows who is asking.</li>
+        <li><strong>Contact form submissions:</strong> your name, email, phone and message when you write to us via the Contact page.</li>
+        <li><strong>Saved items and Inquiry Cart:</strong> the products you save or add to your Inquiry Cart, kept on your device and, for logged-in customers, mirrored to our systems so our team can see your list if you need help.</li>
+        <li><strong>Technical information:</strong> standard server logs (such as IP address and browser type) generated automatically when you use the site.</li>
+      </ul>
 
-  <section style="background:var(--color-surface);padding:80px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Accredited &amp; Verified</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Certificates</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:24px;">
-      <sc-for list="{{ certs }}" as="c" hint-placeholder-count="4">
-        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:24px;text-align:center;background:var(--color-bg);">
-          <div class="plate" style="aspect-ratio:1;width:64px;margin:0 auto 14px;overflow:hidden;">
-            <sc-if value="{{ c.hasLogo }}" hint-placeholder-val="{{ false }}">
-              <img src="{{ c.logoUrl }}" alt="{{ c.name }}" style="width:100%;height:100%;object-fit:contain;display:block;"/>
-            </sc-if>
-            <sc-if value="{{ !c.hasLogo }}" hint-placeholder-val="{{ true }}">
-              <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-            </sc-if>
-          </div>
-          <div style="font-family:var(--font-heading);font-weight:600;">{{ c.name }}</div>
-        </div>
-      </sc-for>
-    </div>
-  </section>
+      <h3 id="use">3. How We Use Your Information</h3>
+      <p>We use the information above to:</p>
+      <ul>
+        <li>Create and manage your account, and review trade account applications;</li>
+        <li>Send account-related emails — email verification codes, password reset codes, and confirmation of your account status;</li>
+        <li>Receive, route and respond to your inquiries about specific items;</li>
+        <li>Respond to messages sent through the Contact page;</li>
+        <li>Maintain the security of accounts and the integrity of the catalog and pricing shown to you; and</li>
+        <li>Improve the site and our catalog based on how it's used.</li>
+      </ul>
+      <p>We do not use your information for automated advertising profiling, and we do not sell your information to third parties.</p>
 
-  <section style="padding:96px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Why Choose Us</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">What Sets the House Apart</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px 0;">
-      <sc-for list="{{ whyUs }}" as="w" hint-placeholder-count="4">
-        <div style="padding:0 28px;border-left:1px solid var(--color-divider);">
-          <h4 style="font-size:19px;">{{ w.title }}</h4>
-          <p style="font-size:13px;opacity:.75;margin:0;">{{ w.desc }}</p>
-        </div>
-      </sc-for>
+      <h3 id="approval">4. Trade Account Approval &amp; Pricing Access</h3>
+      <p>Registering an account does not automatically grant access to trade pricing or to our direct contact channels. The details you submit at registration are reviewed by our team to decide whether to approve, reject, or (later) suspend an account. This review exists to protect the integrity of our trade relationships and pricing — see our <a href="TermsAndConditions.dc.html">Terms and Conditions</a> for more on this. What pricing is shown to you (visible, hidden, "contact for price", or "login to view") depends on your account's approval status and our current pricing settings.</p>
+
+      <h3 id="share">5. How We Share Information</h3>
+      <p>We do not sell or rent your personal information. Information you submit is accessible to our own sales and administrative staff so they can review applications, respond to inquiries, and manage your account. We may disclose information where required to comply with a legal obligation, or to protect the rights, property or safety of ONCD, our customers, or others.</p>
+
+      <h3 id="security">6. Data Security</h3>
+      <p>Account passwords are never stored in plain text — they are hashed before being saved. Login sessions are kept in a cookie that is not accessible to page scripts (<code>HttpOnly</code>) and expires automatically after a period of inactivity. Access to customer and inquiry data within our admin panel is restricted to authorized staff and, for meaningful actions, recorded in an internal audit log. No method of transmission or storage is perfectly secure, but we take reasonable, appropriate measures to protect your information.</p>
+
+      <h3 id="retention">7. Data Retention</h3>
+      <p>We keep account and inquiry information for as long as your account is active, and for a reasonable period afterward to meet business, tax, and legal record-keeping needs. You may request deletion of your account as described in Section 8.</p>
+
+      <h3 id="rights">8. Your Rights</h3>
+      <p>You may ask us to access, correct, or delete the personal information we hold about you, or to stop processing it, by contacting us using the details in Section 12. We will respond within a reasonable time. Some information may need to be retained where we have a legitimate business or legal reason to do so (for example, records of a completed transaction).</p>
+
+      <h3 id="children">9. Children's Privacy</h3>
+      <p>This site is intended for business and adult private-collector use and is not directed at children. We do not knowingly collect personal information from anyone under the age of 18.</p>
+
+      <h3 id="intl">10. International Users</h3>
+      <p>We work with trade partners and collectors across many countries. By using this site, you understand that your information may be processed in a country other than the one you live in, in connection with the purposes described in this Policy.</p>
+
+      <h3 id="changes">11. Changes to This Policy</h3>
+      <p>We may update this Policy from time to time to reflect changes to our practices or for legal reasons. The "Last updated" date at the top of this page shows when it was last revised. Material changes will be reflected here.</p>
+
+      <h3 id="contact">12. Contact Us</h3>
+      <p>Questions about this Privacy Policy, or requests relating to your personal information, can be sent via our <a href="Contact.dc.html">Contact page</a>, or to <span>{{ footerEmail }}</span>.</p>
+
     </div>
   </section>
 
@@ -309,10 +261,10 @@ class Component extends DCLogic {
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false,
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
-    blocks: {}, team: [], timeline: [], certs: [], gallery: [], whyUsBullets: [],
   };
 
   async componentDidMount() {
+    document.title = 'Privacy Policy | ONCD';
     const mod = await import('./utils/cart.js');
     this.cart = mod;
     this.refreshCart();
@@ -327,18 +279,6 @@ class Component extends DCLogic {
       this.logoutCustomer = m.logoutCustomer;
       m.fetchCustomerSession().then((me) => this.setState({ customer: me }));
     });
-
-    try {
-      const res = await fetch('/api/about', { credentials: 'same-origin' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load content.');
-      this.setState({
-        blocks: json.data.blocks || {}, team: json.data.team || [], timeline: json.data.timeline || [],
-        certs: json.data.certs || [], gallery: json.data.gallery || [], whyUsBullets: json.data.whyUs || [],
-      });
-    } catch (err) {
-      console.error('[about] failed to load content', err);
-    }
   }
   componentWillUnmount() {
     window.removeEventListener('aurum-cart-change', this._onChange);
@@ -353,22 +293,7 @@ class Component extends DCLogic {
     const cart = this.cart;
     const items = this.state.cartItems;
     const message = cart ? cart.buildMessage(items, {}) : '';
-    const timeline = this.state.timeline.map((t) => ({ year: t.year, title: t.title, desc: t.description }));
-    const team = this.state.team.map((m) => ({ name: m.name, role: m.role, photoUrl: m.photoUrl, hasPhoto: !!m.photoUrl }));
-    const certs = this.state.certs.map((c) => ({ name: c.name, logoUrl: c.logoUrl, hasLogo: !!c.logoUrl }));
-    const whyUs = this.state.whyUsBullets.map((w) => ({ title: w.title, desc: w.description }));
-    const gallery = this.state.gallery.slice(0, 5).map((g, i) => ({
-      isImage: g.kind === 'image', isVideo: g.kind === 'video', url: g.url, caption: g.caption,
-      heroClass: i === 0 ? 'factory-grid-hero' : '',
-    }));
-    const blk = this.state.blocks;
-    const hero = blk.hero || {};
-    const story = { ...(blk.story || {}), hasImage: !!(blk.story && blk.story.imageUrl) };
-    const mission = blk.mission || {};
-    const vision = blk.vision || {};
     return {
-      timeline, team, certs, whyUs, gallery, hero, story, mission, vision,
-      hasGallery: gallery.length > 0,
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',

@@ -149,7 +149,7 @@ export function channelLink(channel, message, contacts) {
       return 'https://wa.me/' + (c.whatsapp || '15551234567').replace(/[^\d]/g, '') + '?text=' + encodeURIComponent(text);
     case 'email':
       return (
-        'mailto:' + (c.inquiryEmail || 'sales@aurumandco.com') + '?subject=' +
+        'mailto:' + (c.inquiryEmail || 'sales@oncd.com') + '?subject=' +
         encodeURIComponent('Product Inquiry') +
         '&body=' +
         encodeURIComponent(text)
@@ -157,7 +157,7 @@ export function channelLink(channel, message, contacts) {
     case 'line':
       return 'https://line.me/R/msg/text/?' + encodeURIComponent(text);
     case 'skype':
-      return 'skype:' + (c.skypeId || 'live:.cid.aurumandco') + '?chat&text=' + encodeURIComponent(text);
+      return 'skype:' + (c.skypeId || 'live:.cid.oncd') + '?chat&text=' + encodeURIComponent(text);
     default:
       return '#';
   }

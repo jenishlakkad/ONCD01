@@ -35,7 +35,7 @@ router.post('/register', asyncRoute(async (req, res) => {
   );
 
   const code = createOtp(email, 'register');
-  await sendMail({ to: email, subject: 'Verify your Aurum & Co. account', text: `Your verification code is ${code}. It expires in 10 minutes.` });
+  await sendMail({ to: email, subject: 'Verify your ONCD account', text: `Your verification code is ${code}. It expires in 10 minutes.` });
   res.json({ data: { email } });
 }));
 
@@ -43,7 +43,7 @@ router.post('/register/resend', asyncRoute(async (req, res) => {
   const email = String((req.body || {}).email || '').trim().toLowerCase();
   if (!email) throw new ApiError(400, 'Email is required.');
   const code = createOtp(email, 'register');
-  await sendMail({ to: email, subject: 'Your new Aurum & Co. verification code', text: `Your verification code is ${code}. It expires in 10 minutes.` });
+  await sendMail({ to: email, subject: 'Your new ONCD verification code', text: `Your verification code is ${code}. It expires in 10 minutes.` });
   res.json({ data: { email } });
 }));
 
@@ -106,7 +106,7 @@ router.put('/profile', requireCustomer, asyncRoute(async (req, res) => {
 
 router.post('/change-password/request', requireCustomer, asyncRoute(async (req, res) => {
   const code = createOtp(req.customer.email, 'reset');
-  await sendMail({ to: req.customer.email, subject: 'Your Aurum & Co. password change code', text: `Your verification code is ${code}. It expires in 10 minutes.` });
+  await sendMail({ to: req.customer.email, subject: 'Your ONCD password change code', text: `Your verification code is ${code}. It expires in 10 minutes.` });
   res.json({ data: { sent: true } });
 }));
 
@@ -126,7 +126,7 @@ router.post('/forgot', asyncRoute(async (req, res) => {
   // Always respond 200 regardless of whether the account exists (no user enumeration).
   if (customer) {
     const code = createOtp(email, 'reset');
-    await sendMail({ to: email, subject: 'Reset your Aurum & Co. password', text: `Your password reset code is ${code}. It expires in 10 minutes.` });
+    await sendMail({ to: email, subject: 'Reset your ONCD password', text: `Your password reset code is ${code}. It expires in 10 minutes.` });
   }
   res.json({ data: { sent: true } });
 }));

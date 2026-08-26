@@ -24,7 +24,7 @@ a:hover{color:var(--color-accent-700)}
 
 <div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
   <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
-    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">ONCD ADMIN</div>
     <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
     <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
     <a href="AdminContact.dc.html" class="side-item">Contact Messages
@@ -68,6 +68,9 @@ a:hover{color:var(--color-accent-700)}
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <a href="{{ templateUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download Template</a>
+        <sc-if value="{{ hasProductsInTab }}" hint-placeholder-val="{{ true }}">
+          <a href="{{ exportAllUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download All Stock</a>
+        </sc-if>
         <label class="btn btn-ghost" style="font-size:12px;padding:6px 10px;cursor:pointer;">
           {{ importButtonLabel }}
           <input type="file" accept=".xlsx,.xls" onChange="{{ handleImportFile }}" disabled="{{ importBusy }}" style="display:none;"/>
@@ -118,6 +121,7 @@ a:hover{color:var(--color-accent-700)}
           <option value="approved">Approved Customers Only</option>
         </select>
         <button onClick="{{ bulkApplyPriceVisibility }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Apply</button>
+        <a href="{{ exportSelectedUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:5px 10px;">Download Selected</a>
         <button onClick="{{ clearSelection }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;margin-left:auto;">Clear</button>
       </div>
     </sc-if>
@@ -207,6 +211,7 @@ a:hover{color:var(--color-accent-700)}
               <sc-if value="{{ mediaUploading }}" hint-placeholder-val="{{ false }}">
                 <span style="font-size:12px;opacity:.65;margin-left:10px;">Uploading…</span>
               </sc-if>
+              <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1600px or larger, square — product photos are shown in a zoomable gallery, so extra resolution keeps zoomed-in detail sharp.</p>
             </div>
           </sc-if>
           <sc-if value="{{ cannotUploadMedia }}" hint-placeholder-val="{{ false }}">
@@ -953,6 +958,9 @@ class Component extends DCLogic {
       mediaUploading: this.state.mediaUploading,
       handleMediaSelect: (e) => this.handleMediaSelect(e),
       templateUrl: `/api/admin/products/import/${activeType}/template`,
+      hasProductsInTab: typeProducts.length > 0,
+      exportAllUrl: `/api/admin/products/export/${activeType}`,
+      exportSelectedUrl: `/api/admin/products/export/${activeType}?ids=${[...this.state.selectedIds].join(',')}`,
       importBusy: this.state.importBusy,
       importButtonLabel: this.state.importBusy ? 'Importing…' : 'Import Excel',
       handleImportFile: (e) => this.handleImportFile(e),

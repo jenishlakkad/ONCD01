@@ -2,7 +2,7 @@
   "name": "aurum-and-co",
   "version": "1.0.0",
   "private": true,
-  "description": "Aurum & Co. — jewelry trade/retail site, Express + SQLite backend serving the existing static .dc.html frontend.",
+  "description": "ONCD — jewelry trade/retail site, Express + SQLite backend serving the existing static .dc.html frontend.",
   "engines": {
     "node": "20.x"
   },

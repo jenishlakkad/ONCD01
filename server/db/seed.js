@@ -75,9 +75,9 @@ const run = db.transaction(() => {
       'INSERT INTO admin_users (full_name, email, password_hash, role_id, status) VALUES (?, ?, ?, ?, ?)'
     );
     const admins = [
-      ['Sofia Reyes', 'sofia@aurumandco.com', roleIds.superAdmin],
-      ['Marcus Webb', 'marcus@aurumandco.com', roleIds.catalogManager],
-      ['Elena Cross', 'elena@aurumandco.com', roleIds.contentEditor],
+      ['Sofia Reyes', 'sofia@oncd.com', roleIds.superAdmin],
+      ['Marcus Webb', 'marcus@oncd.com', roleIds.catalogManager],
+      ['Elena Cross', 'elena@oncd.com', roleIds.contentEditor],
     ];
     console.log('\n=== Seeded admin accounts (one-time temporary passwords) ===');
     for (const [full_name, email, role_id] of admins) {
@@ -275,10 +275,10 @@ const run = db.transaction(() => {
       'Why the emerald cut is having a moment with collectors this season — and which stones to see first.',
       'Read the Story', 'Diamonds.dc.html');
     ins.run('storyTeaser', 'home', 'Our Story', 'Three Generations of Stone Craft',
-      "Founded on a cutting-room floor and grown into a full-service diamond, jewelry and gemstone house, Aurum & Co. still answers to the same standard it opened with: every stone earns its certificate before it earns its price.",
+      "Founded on a cutting-room floor and grown into a full-service diamond, jewelry and gemstone house, ONCD still answers to the same standard it opened with: every stone earns its certificate before it earns its price.",
       'Learn Our Story', 'About.dc.html');
-    ins.run('hero', 'about', 'About Aurum & Co.', 'Three Decades of Stone Craft, One Family Standard',
-      'Aurum & Co. began as a single cutting bench in 1994 and has grown into a full-service diamond, jewelry and gemstone house serving wholesalers, retailers and private collectors across forty countries. We still cut, grade and certify every stone under one roof — the same discipline the company opened with.',
+    ins.run('hero', 'about', 'About ONCD (Only Natural Color Diamond)', 'Three Decades of Stone Craft, One Family Standard',
+      'ONCD began as a single cutting bench in 1994 and has grown into a full-service diamond, jewelry and gemstone house serving wholesalers, retailers and private collectors across forty countries. We still cut, grade and certify every stone under one roof — the same discipline the company opened with.',
       null, null);
     ins.run('story', 'about', 'Our Story', 'From Cutting Bench to Global Trade House',
       "What started as a two-person polishing operation is now a vertically integrated house spanning sourcing, cutting, certification and bespoke jewelry manufacture. Every expansion — from our first GIA-recognized lab partnership to our Surat production facility — was built on the same principle: transparency with the buyer, at every step of the stone's journey.",
@@ -375,17 +375,17 @@ const run = db.transaction(() => {
   // ---- seo_pages ----
   if (!already('seo_pages')) {
     const ins = db.prepare('INSERT INTO seo_pages (page_key, meta_title, meta_description) VALUES (?, ?, ?)');
-    ins.run('home', 'Aurum & Co. | Certified Diamonds, Jewelry & Gemstones', 'Trade and retail diamond, jewelry and gemstone house — certified sourcing, direct pricing.');
-    ins.run('diamonds', 'Certified Diamonds | Aurum & Co.', 'Browse certified loose diamonds — natural and lab-grown, GIA/IGI graded.');
-    ins.run('jewelry', 'Fine Jewelry | Aurum & Co.', 'Gold, silver and diamond jewelry, finished in-house or made to order.');
-    ins.run('gemstones', 'Natural & Lab Gemstones | Aurum & Co.', 'Certified natural and lab-created gemstones sourced worldwide.');
+    ins.run('home', 'ONCD (Only Natural Color Diamond) | Certified Diamonds, Jewelry & Gemstones', 'Trade and retail diamond, jewelry and gemstone house — certified sourcing, direct pricing.');
+    ins.run('diamonds', 'Certified Diamonds | ONCD', 'Browse certified loose diamonds — natural and lab-grown, GIA/IGI graded.');
+    ins.run('jewelry', 'Fine Jewelry | ONCD', 'Gold, silver and diamond jewelry, finished in-house or made to order.');
+    ins.run('gemstones', 'Natural & Lab Gemstones | ONCD', 'Certified natural and lab-created gemstones sourced worldwide.');
   }
 
   // ---- site_settings ----
   if (!already('site_settings')) {
     db.prepare(
       `INSERT INTO site_settings (id, site_name, support_email, whatsapp_number, inquiry_email, line_id, skype_id, price_mode)
-       VALUES (1, 'Aurum & Co.', 'sales@aurumandco.com', '+15551234567', 'sales@aurumandco.com', '@aurumandco', 'live:.cid.aurumandco', 'approved')`
+       VALUES (1, 'ONCD', 'sales@oncd.com', '+15551234567', 'sales@oncd.com', '@oncd', 'live:.cid.oncd', 'approved')`
     ).run();
   }
 

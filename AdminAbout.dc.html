@@ -21,7 +21,7 @@ a:hover{color:var(--color-accent-700)}
 
 <div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
   <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
-    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">AURUM ADMIN</div>
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;">ONCD ADMIN</div>
     <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
     <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
     <a href="AdminContact.dc.html" class="side-item">Contact Messages
@@ -162,6 +162,7 @@ a:hover{color:var(--color-accent-700)}
       <sc-if value="{{ galleryUploading }}" hint-placeholder-val="{{ false }}">
         <span style="font-size:12px;opacity:.65;margin-left:10px;">Uploading…</span>
       </sc-if>
+      <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1200px (4:3) photos.</p>
     </div>
 
     <h4>Why Choose Us</h4>
@@ -196,6 +197,7 @@ a:hover{color:var(--color-accent-700)}
                   {{ blockUploadLabel }}
                   <input type="file" accept="image/*" onChange="{{ handleBlockImageSelect }}" style="display:none;"/>
                 </label>
+                <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1200px (4:3).</p>
                 <sc-if value="{{ blockImageUploading }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
                 </sc-if>
@@ -233,6 +235,7 @@ a:hover{color:var(--color-accent-700)}
                   {{ teamUploadLabel }}
                   <input type="file" accept="image/*" onChange="{{ handleTeamPhotoSelect }}" style="display:none;"/>
                 </label>
+                <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 800×800px (square).</p>
                 <sc-if value="{{ teamPhotoUploading }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
                 </sc-if>
@@ -294,6 +297,7 @@ a:hover{color:var(--color-accent-700)}
                   {{ certUploadLabel }}
                   <input type="file" accept="image/*" onChange="{{ handleCertLogoSelect }}" style="display:none;"/>
                 </label>
+                <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 400×400px (square). A transparent PNG works best.</p>
                 <sc-if value="{{ certLogoUploading }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
                 </sc-if>
