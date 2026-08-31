@@ -15,7 +15,9 @@
 //                 falling back to the first video if there is no image).
 //   shape         rect | rounded | circle | pill   (default 'rounded')
 //   radius        Corner radius in px for 'rounded'. (default 12)
-//   fit           cover | contain                   (default 'cover')
+//   fit           cover | contain                   (default 'contain' — shows the
+//                 whole uploaded photo, never crops it; pass fit="cover" to fill
+//                 the box edge-to-edge instead, cropping non-matching aspect ratios)
 //   placeholder   Empty-state caption.
 //   hover-video   Boolean attribute — hovering swaps the cover to the
 //                 product's first video (muted/looping) if it has one.
@@ -164,7 +166,7 @@
         radius = (Number.isFinite(n) ? n : 12) + 'px';
       }
       this.shadowRoot.host.style.borderRadius = radius;
-      const fit = (this.getAttribute('fit') || 'cover').toLowerCase() === 'contain' ? 'contain' : 'cover';
+      const fit = (this.getAttribute('fit') || 'contain').toLowerCase() === 'cover' ? 'cover' : 'contain';
       this._img.style.objectFit = fit;
       this._hoverVid.style.objectFit = fit;
 

@@ -5,12 +5,19 @@
 // source (never a stretch), because the output canvas is drawn at exactly
 // the window's aspect ratio.
 
+// "Original" is listed (and defaults selected) first: most uploaded photos
+// aren't a perfect square/preset ratio, and forcing a crop by default silently
+// cuts off part of the image unless the admin remembers to switch presets.
+// Leaving the source uncropped by default is the safe choice — every product
+// photo now displays uncropped (see product-media.js's fit="contain" default)
+// regardless of preset, so a forced crop here is opt-in framing, not a
+// requirement for the image to look right on the site.
 const ASPECTS = [
+  { key: 'original', label: 'Original', ratio: null },
   { key: 'square', label: 'Square', ratio: 1 },
   { key: 'portrait', label: 'Portrait', ratio: 4 / 5 },
   { key: 'landscape', label: 'Landscape', ratio: 4 / 3 },
   { key: 'wide', label: 'Wide', ratio: 16 / 9 },
-  { key: 'original', label: 'Original', ratio: null },
 ];
 const MAX_OUT = 1600;
 const S_MAX = 4;

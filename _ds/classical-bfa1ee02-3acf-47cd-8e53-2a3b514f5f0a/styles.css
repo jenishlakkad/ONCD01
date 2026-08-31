@@ -384,6 +384,12 @@ img,svg,video,canvas{max-width:100%;height:auto;}
   .pill-row::-webkit-scrollbar{display:none;}
   .pill-row .pill{flex:none;}
 }
+/* Keeps the dark admin nav (and "Back to Website") pinned in the viewport
+   while the main content column scrolls, instead of stretching to match
+   main's full height and pushing the bottom of the sidebar off-screen. */
+@media (min-width:1024px){
+  .adm-shell > aside{position:sticky;top:0;height:100vh;overflow-y:auto;}
+}
 @media (max-width:1023px){
   .adm-shell{grid-template-columns:1fr;}
   .adm-shell > aside{

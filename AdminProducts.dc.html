@@ -103,7 +103,19 @@ a:hover{color:var(--color-accent-700)}
       <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
         <button onClick="{{ clearFilters }}" class="btn btn-ghost" style="font-size:12px;">Clear</button>
       </sc-if>
-      <span style="font-size:12px;opacity:.6;margin-left:auto;">{{ filteredCount }} of {{ activeTypeTotal }}</span>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+        <span style="font-size:12px;opacity:.6;">{{ filteredCount }} of {{ activeTypeTotal }}</span>
+        <select class="input" value="{{ pageSize }}" onChange="{{ handlePageSize }}" style="width:auto;font-size:12px;padding:6px 8px;">
+          <option value="50">50 / page</option>
+          <option value="100">100 / page</option>
+          <option value="150">150 / page</option>
+        </select>
+        <sc-if value="{{ showPagination }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ prevPage }}" class="btn btn-ghost" disabled="{{ isFirstPage }}" style="padding:5px 10px;font-size:12px;">‹ Prev</button>
+          <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ paginationLabel }}</span>
+          <button onClick="{{ nextPage }}" class="btn btn-ghost" disabled="{{ isLastPage }}" style="padding:5px 10px;font-size:12px;">Next ›</button>
+        </sc-if>
+      </div>
     </div>
 
     <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
@@ -123,6 +135,13 @@ a:hover{color:var(--color-accent-700)}
         <button onClick="{{ bulkApplyPriceVisibility }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Apply</button>
         <a href="{{ exportSelectedUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:5px 10px;">Download Selected</a>
         <button onClick="{{ clearSelection }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;margin-left:auto;">Clear</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showSelectAllBanner }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:9px 14px;background:var(--color-accent-100);border:1px solid var(--color-accent-300);border-radius:8px;font-size:12.5px;flex-wrap:wrap;">
+        <span>All {{ pageSelectedCount }} items on this page are selected.</span>
+        <button onClick="{{ selectAllMatching }}" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;">Select all {{ filteredCount }} matching items</button>
       </div>
     </sc-if>
 
@@ -169,6 +188,19 @@ a:hover{color:var(--color-accent-700)}
       </tbody>
     </table></div>
 
+    <sc-if value="{{ showPagination }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;">
+        <button onClick="{{ prevPage }}" class="btn btn-ghost" disabled="{{ isFirstPage }}" style="padding:6px 12px;font-size:12px;">‹ Prev</button>
+        <span style="font-size:12px;opacity:.7;white-space:nowrap;">{{ paginationLabel }}</span>
+        <button onClick="{{ nextPage }}" class="btn btn-ghost" disabled="{{ isLastPage }}" style="padding:6px 12px;font-size:12px;">Next ›</button>
+        <select class="input" value="{{ pageSize }}" onChange="{{ handlePageSize }}" style="width:auto;font-size:12px;padding:6px 8px;margin-left:8px;">
+          <option value="50">50 / page</option>
+          <option value="100">100 / page</option>
+          <option value="150">150 / page</option>
+        </select>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
       <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDialog }}">
         <div class="dialog" style="max-width:640px;max-height:88vh;overflow:auto;" onClick="{{ stop }}">
@@ -179,11 +211,11 @@ a:hover{color:var(--color-accent-700)}
               <sc-for list="{{ mediaItems }}" as="m" hint-placeholder-count="4">
                 <div data-media-id="{{ m.id }}" onPointerDown="{{ m.dragStart }}" style="position:relative;aspect-ratio:1;border:1px solid var(--color-divider);border-radius:8px;overflow:hidden;background:var(--color-surface);cursor:grab;touch-action:none;transition:transform .12s ease,box-shadow .12s ease;transform:{{ m.tileTransform }};box-shadow:{{ m.tileShadow }};z-index:{{ m.tileZ }};opacity:{{ m.tileOpacity }};user-select:none;">
                   <sc-if value="{{ m.isImage }}" hint-placeholder-val="{{ true }}">
-                    <img src="{{ m.url }}" alt="{{ m.originalName }}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"/>
+                    <img src="{{ m.url }}" alt="{{ m.originalName }}" draggable="false" style="width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;"/>
                     <button onClick="{{ m.editImage }}" title="Edit photo (crop / zoom)" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">✎ Edit</button>
                   </sc-if>
                   <sc-if value="{{ m.isVideo }}" hint-placeholder-val="{{ false }}">
-                    <video src="{{ m.url }}" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video>
+                    <video src="{{ m.url }}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>
                     <label title="Replace video" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">
                       ✎ Edit
                       <input type="file" accept="video/*" onChange="{{ m.replaceVideo }}" style="display:none;"/>
@@ -435,6 +467,7 @@ class Component extends DCLogic {
     admin: null, activeType: 'diamond',
     products: [], errorMessage: '',
     search: '', statusFilter: 'all', categoryFilter: 'All', mediaFilter: 'all',
+    pageSize: 50, currentPage: 1,
     selectedIds: new Set(), bulkBusy: false, bulkPriceVisibility: '__unset',
     dialogOpen: false, editingId: null,
     form: this.emptyForm, dialogError: '', saving: false,
@@ -591,12 +624,17 @@ class Component extends DCLogic {
     this.setState({ selectedIds: set });
   }
 
-  toggleSelectAll(visibleProducts) {
+  // Header checkbox only ever toggles the CURRENT PAGE's rows — selecting
+  // everything that matches the filters (possibly across many pages) is a
+  // separate, explicit action via the "Select all N matching" banner below.
+  toggleSelectAll(pageProducts) {
     const set = new Set(this.state.selectedIds);
-    const allSelected = visibleProducts.length > 0 && visibleProducts.every((p) => set.has(p.id));
-    visibleProducts.forEach((p) => (allSelected ? set.delete(p.id) : set.add(p.id)));
+    const allSelected = pageProducts.length > 0 && pageProducts.every((p) => set.has(p.id));
+    pageProducts.forEach((p) => (allSelected ? set.delete(p.id) : set.add(p.id)));
     this.setState({ selectedIds: set });
   }
+
+  selectAllMatching(ids) { this.setState({ selectedIds: new Set(ids) }); }
 
   clearSelection() { this.setState({ selectedIds: new Set() }); }
 
@@ -867,7 +905,17 @@ class Component extends DCLogic {
       ])) return false;
       return true;
     });
-    const allVisibleSelected = visibleProducts.length > 0 && visibleProducts.every((p) => p.selected);
+    const pageSize = this.state.pageSize;
+    const totalPages = Math.max(1, Math.ceil(visibleProducts.length / pageSize));
+    // Clamp against the current filter/tab's page count rather than resetting
+    // stored state everywhere filters can change - switching tabs, narrowing a
+    // search, or changing the page size all "just work" without extra wiring.
+    const currentPage = Math.min(Math.max(1, this.state.currentPage), totalPages);
+    const pageStart = (currentPage - 1) * pageSize;
+    const pagedProducts = visibleProducts.slice(pageStart, pageStart + pageSize);
+    const allPageSelected = pagedProducts.length > 0 && pagedProducts.every((p) => p.selected);
+    const allMatchingSelected = visibleProducts.length > 0 && visibleProducts.every((p) => p.selected);
+    const showSelectAllBanner = allPageSelected && !allMatchingSelected && visibleProducts.length > pagedProducts.length;
 
     const fh = {};
     this.fieldKeys.forEach((k) => { fh[k] = (e) => this.setFormField(k, e.target.value); });
@@ -907,9 +955,18 @@ class Component extends DCLogic {
       jewelryCount: allProducts.filter((p) => p.type === 'jewelry').length,
       gemstoneCount: allProducts.filter((p) => p.type === 'gemstone').length,
       activeTypeLabel: typeLabel,
-      visibleProducts,
+      visibleProducts: pagedProducts,
       filteredCount: visibleProducts.length,
       activeTypeTotal: typeProducts.length,
+      pageSize: String(pageSize),
+      handlePageSize: (e) => this.setState({ pageSize: Number(e.target.value), currentPage: 1 }),
+      currentPage, totalPages,
+      paginationLabel: `Page ${currentPage} of ${totalPages}`,
+      isFirstPage: currentPage <= 1,
+      isLastPage: currentPage >= totalPages,
+      prevPage: () => this.setState({ currentPage: Math.max(1, currentPage - 1) }),
+      nextPage: () => this.setState({ currentPage: Math.min(totalPages, currentPage + 1) }),
+      showPagination: visibleProducts.length > pageSize,
       search: this.state.search,
       handleSearch: (e) => this.setState({ search: e.target.value }),
       statusFilter: this.state.statusFilter,
@@ -921,8 +978,11 @@ class Component extends DCLogic {
       handleMediaFilter: (e) => this.setState({ mediaFilter: e.target.value }),
       hasActiveFilters: !!this.state.search || this.state.statusFilter !== 'all' || this.state.categoryFilter !== 'All' || this.state.mediaFilter !== 'all',
       clearFilters: () => this.setState({ search: '', statusFilter: 'all', categoryFilter: 'All', mediaFilter: 'all' }),
-      allVisibleSelected,
-      toggleSelectAll: () => this.toggleSelectAll(visibleProducts),
+      allVisibleSelected: allPageSelected,
+      toggleSelectAll: () => this.toggleSelectAll(pagedProducts),
+      showSelectAllBanner,
+      pageSelectedCount: pagedProducts.length,
+      selectAllMatching: () => this.selectAllMatching(visibleProducts.map((p) => p.id)),
       hasSelection: this.state.selectedIds.size > 0,
       selectedCount: this.state.selectedIds.size,
       bulkBusy: this.state.bulkBusy,

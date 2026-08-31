@@ -14,7 +14,7 @@
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
-.thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;}
+.thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;background:var(--color-surface);}
 .spec-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:14px;}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
@@ -99,10 +99,10 @@ a:hover{color:var(--color-accent-700)}
         <sc-for list="{{ thumbs }}" as="t" hint-placeholder-count="0">
           <div class="thumb" onClick="{{ t.select }}" style="aspect-ratio:1;position:relative;cursor:pointer;overflow:hidden;border-radius:6px;outline:2px solid {{ t.outlineColor }};outline-offset:-2px;">
             <sc-if value="{{ t.isImage }}" hint-placeholder-val="{{ true }}">
-              <img src="{{ t.url }}" alt="{{ t.placeholder }}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+              <img src="{{ t.url }}" alt="{{ t.placeholder }}" style="width:100%;height:100%;object-fit:contain;display:block;"/>
             </sc-if>
             <sc-if value="{{ t.isVideo }}" hint-placeholder-val="{{ false }}">
-              <video src="{{ t.url }}" muted="" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+              <video src="{{ t.url }}" muted="" style="width:100%;height:100%;object-fit:contain;display:block;"></video>
               <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(32,31,29,.25);pointer-events:none;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#f8f4f4"><path d="M8 5v14l11-7Z"/></svg>
               </div>
