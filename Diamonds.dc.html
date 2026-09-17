@@ -27,6 +27,12 @@ a:hover{color:var(--color-accent-700)}
     <div class="nav-brand" style="letter-spacing:.1em;">ONCD</div>
     <input type="checkbox" class="nav-check" id="navCheck" hidden>
     <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <button onClick="{{ toggleCart }}" class="nav-cart-mobile" aria-label="Cart">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
+        <span style="position:absolute;top:2px;right:2px;background:var(--color-accent);color:#fff;font-size:10px;border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;">{{ cartCount }}</span>
+      </sc-if>
+    </button>
     <a href="Home.dc.html">Home</a>
     <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
       <a href="Diamonds.dc.html" aria-current="page">Diamonds</a>
@@ -374,9 +380,13 @@ class Component extends DCLogic {
     import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
     import('./utils/customerAuth.js').then((m) => {
       this.logoutCustomer = m.logoutCustomer;
-      m.fetchCustomerSession().then((me) => this.setState({ customer: me }));
+      m.fetchCustomerSession().then((me) => {
+        this.setState({ customer: me });
+        // Saved items are customer-only server state — skip the guaranteed
+        // 401 this would otherwise fire for every guest visit.
+        if (me) import('./utils/savedItems.js').then((sm) => sm.getSavedSkus()).then((skus) => this.setState({ savedSkus: skus }));
+      });
     });
-    import('./utils/savedItems.js').then((m) => m.getSavedSkus()).then((skus) => this.setState({ savedSkus: skus }));
 
     this.loadProducts();
   }

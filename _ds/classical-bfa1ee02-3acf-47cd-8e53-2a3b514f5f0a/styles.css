@@ -283,6 +283,13 @@ footer{margin-top:auto;}
   box-shadow:var(--shadow-lg);
   width:100%;
   max-width:480px;
+  /* Safety net so a long form (many fields, no per-dialog max-height of its
+     own) can never grow taller than the viewport and push its own Save
+     button off-screen with no way to reach it — most dialogs are short
+     enough that this never engages; a dialog that sets its own inline
+     max-height/overflow (the big product-add forms) simply overrides it. */
+  max-height:88vh;
+  overflow-y:auto;
 }
 .dialog-title{
   font-family:var(--font-heading);
@@ -390,6 +397,24 @@ img,svg,video,canvas{max-width:100%;height:auto;}
 @media (min-width:1024px){
   .adm-shell > aside{position:sticky;top:0;height:100vh;overflow-y:auto;}
 }
+
+/* Home hero: 88vh (its desktop height, meant for a dramatic full-bleed
+   banner) has no ceiling, so on a phone or narrow/tall tablet window it
+   renders 700–900px+ tall before any real page content appears. Clamped
+   to a fixed, much more modest range below desktop widths regardless of
+   device height. */
+@media (max-width:1023px){
+  .hero-section{height:clamp(440px,62vh,600px) !important;min-height:0 !important;}
+  /* The prev/next circular buttons sit vertically centered across the
+     whole hero, same as the text block — desktop's extra width keeps
+     them clear of the (up to 640px wide) text, but as the viewport
+     narrows towards that same 640px the text runs edge to edge and the
+     buttons land right on top of it. The slides auto-rotate every 6s and
+     every dot below is independently tappable, so the arrows are a
+     desktop-only convenience, not the only way to navigate — simplest
+     correct fix is to not render them here at all. */
+  .hero-nav-btn{display:none !important;}
+}
 @media (max-width:1023px){
   .adm-shell{grid-template-columns:1fr;}
   .adm-shell > aside{
@@ -490,6 +515,19 @@ img,svg,video,canvas{max-width:100%;height:auto;}
   -webkit-tap-highlight-color:transparent;
 }
 .nav-burger:hover{background:var(--color-surface);}
+/* Cart is normally reachable via the trailing auth/account group, but that
+   whole group is hidden below 1024px until the hamburger menu is opened
+   (see ".nav > div:not(.nav-brand)" below) — leaving mobile visitors with
+   no way to see the cart badge or reach the drawer without an extra tap
+   into the full menu first. This duplicate icon (same toggleCart handler,
+   same badge) sits directly in the collapsed top bar instead; the original
+   stays put for desktop, so nothing about that flow changes there. */
+.nav-cart-mobile{
+  display:none;position:relative;background:none;border:none;cursor:pointer;
+  color:var(--color-text);width:38px;height:38px;padding:0;
+  align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
 .nav-burger span{display:block;width:20px;height:2px;background:var(--color-text);border-radius:2px;transition:transform .2s ease,opacity .2s ease;}
 .nav-check{position:absolute;opacity:0;width:0;height:0;pointer-events:none;}
 .nav-check:checked ~ .nav-burger span:nth-child(1){transform:translateY(7px) rotate(45deg);}
@@ -497,7 +535,8 @@ img,svg,video,canvas{max-width:100%;height:auto;}
 .nav-check:checked ~ .nav-burger span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 
 @media (max-width:1023px){
-  .nav-burger{display:flex !important;}
+  .nav-burger{display:flex !important;margin-left:0;}
+  .nav-cart-mobile{display:flex !important;order:1;}
   .nav{flex-wrap:wrap;row-gap:0;}
   /* !important on both sides of this toggle: the auth-buttons div carries
      an inline style="display:flex" (needed for its own desktop layout),
@@ -554,9 +593,24 @@ img,svg,video,canvas{max-width:100%;height:auto;}
      viewport (two side-by-side CTAs no longer force horizontal scroll). */
   .btn{white-space:normal;text-align:center;min-height:44px;}
   .btn-icon{min-height:0;}
+  /* The blanket 44px touch-target minimum above is right for standalone
+     CTAs but visibly oversized against a product card's compact 10.5–12px
+     button label — it was stretching the +Cart/Inquire pair much taller
+     than the rest of the card's proportions. 38px keeps them comfortably
+     tappable without that mismatch. */
+  .product-card-btns .btn{min-height:38px;}
 
   .seg-opt{padding:7px 10px !important;font-size:11.5px !important;}
   .table{font-size:12px;}
+
+  /* Every admin page's header row (page title on the left, "Admin: <name>"
+     badge + Log Out on the right) is a non-wrapping justify-content:
+     space-between flex row — fine at desktop widths, but the two sides
+     have nowhere to shrink to on a phone and end up rendering on top of
+     each other. Wrapping drops the badge/logout group to its own
+     full-width line under the title instead. */
+  .adm-page-header{flex-wrap:wrap;row-gap:10px;}
+  .adm-page-header > div:last-child{width:100%;}
 
   /* 44px is the accepted minimum comfortable touch target; the custom
      radio dot and its label row are enlarged to match on touch screens. */
@@ -572,6 +626,12 @@ img,svg,video,canvas{max-width:100%;height:auto;}
      never matches; a real class is the only reliable hook here.) */
   .factory-grid{grid-template-columns:1fr !important;}
   .factory-grid-hero{grid-row:auto !important;}
+
+  /* Promo banner: an aspect-ratio:4/3 image stacks under its own text
+     block once the two-column grid collapses below 640px, adding a very
+     tall image on top of an already-tall hero. Shorter ratio, same crop
+     behavior (object-fit:cover), just less scroll to get past it. */
+  .promo-plate{aspect-ratio:16/10 !important;}
 }
 @media (max-width:479px){
   .btn{padding:10px 16px;font-size:12.5px;}
