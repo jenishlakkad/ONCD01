@@ -9,6 +9,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<script src="./video-frame.js"></script>
 <style>
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
@@ -209,17 +210,14 @@ a:hover{color:var(--color-accent-700)}
           <sc-if value="{{ hasMedia }}" hint-placeholder-val="{{ false }}">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">
               <sc-for list="{{ mediaItems }}" as="m" hint-placeholder-count="4">
-                <div data-media-id="{{ m.id }}" onPointerDown="{{ m.dragStart }}" style="position:relative;aspect-ratio:1;border:1px solid var(--color-divider);border-radius:8px;overflow:hidden;background:var(--color-surface);cursor:grab;touch-action:none;transition:transform .12s ease,box-shadow .12s ease;transform:{{ m.tileTransform }};box-shadow:{{ m.tileShadow }};z-index:{{ m.tileZ }};opacity:{{ m.tileOpacity }};user-select:none;">
+                <div data-media-id="{{ m.clientId }}" onPointerDown="{{ m.dragStart }}" style="position:relative;aspect-ratio:1;border:1px solid var(--color-divider);border-radius:8px;overflow:hidden;background:var(--color-surface);cursor:grab;touch-action:none;transition:transform .12s ease,box-shadow .12s ease;transform:{{ m.tileTransform }};box-shadow:{{ m.tileShadow }};z-index:{{ m.tileZ }};opacity:{{ m.tileOpacity }};user-select:none;">
                   <sc-if value="{{ m.isImage }}" hint-placeholder-val="{{ true }}">
                     <img src="{{ m.url }}" alt="{{ m.originalName }}" draggable="false" style="width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;"/>
                     <button onClick="{{ m.editImage }}" title="Edit photo (crop / zoom)" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">✎ Edit</button>
                   </sc-if>
                   <sc-if value="{{ m.isVideo }}" hint-placeholder-val="{{ false }}">
-                    <video src="{{ m.url }}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>
-                    <label title="Replace video" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">
-                      ✎ Edit
-                      <input type="file" accept="video/*" onChange="{{ m.replaceVideo }}" style="display:none;"/>
-                    </label>
+                    <video-frame src="{{ m.url }}" crop="{{ m.cropJson }}" style="width:100%;height:100%;pointer-events:none;"></video-frame>
+                    <button onClick="{{ m.editVideo }}" title="Frame / crop video" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">✎ Edit</button>
                   </sc-if>
                   <sc-if value="{{ m.isCover }}" hint-placeholder-val="{{ false }}">
                     <span style="position:absolute;top:4px;left:4px;background:rgba(32,31,29,.75);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;pointer-events:none;">Cover</span>
@@ -234,20 +232,24 @@ a:hover{color:var(--color-accent-700)}
             <p style="font-size:11px;opacity:.55;margin-top:8px;">Drag any tile to reorder. The first photo is what customers see on listing pages.</p>
           </sc-if>
 
-          <sc-if value="{{ canUploadMedia }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top:10px;">
-              <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;">
-                + Add Photos / Videos
-                <input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ handleMediaSelect }}" style="display:none;"/>
-              </label>
-              <sc-if value="{{ mediaUploading }}" hint-placeholder-val="{{ false }}">
-                <span style="font-size:12px;opacity:.65;margin-left:10px;">Uploading…</span>
-              </sc-if>
-              <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1600px or larger, square — product photos are shown in a zoomable gallery, so extra resolution keeps zoomed-in detail sharp.</p>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;opacity:{{ addMediaOpacity }};pointer-events:{{ addMediaPointerEvents }};">
+              + Add Photos / Videos
+              <input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ handleMediaSelect }}" disabled="{{ mediaBusy }}" style="display:none;"/>
+            </label>
+            <sc-if value="{{ mediaBusy }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:12.5px;color:var(--color-accent-700);display:inline-flex;align-items:center;gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="animation:adm-spin .8s linear infinite;"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="42" stroke-dashoffset="14" stroke-linecap="round"/></svg>
+                Processing photo/video…
+              </span>
+            </sc-if>
+          </div>
+          <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1600px or larger, square — product photos are shown in a zoomable gallery, so extra resolution keeps zoomed-in detail sharp. Photos/videos are only saved when you click Save Product.</p>
+          <sc-if value="{{ mediaError }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;padding:12px 14px;border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-accent-700) 8%, var(--color-bg));border:1px solid color-mix(in srgb, var(--color-accent-700) 30%, transparent);">
+              <span style="font-size:16px;line-height:1;flex:none;">⚠️</span>
+              <p style="font-size:12.5px;color:var(--color-accent-800);margin:0;">{{ mediaError }}</p>
             </div>
-          </sc-if>
-          <sc-if value="{{ cannotUploadMedia }}" hint-placeholder-val="{{ false }}">
-            <p style="font-size:12px;opacity:.6;margin-top:10px;">Save the product first, then reopen it to add photos and videos.</p>
           </sc-if>
 
           <div class="field" style="margin-top:14px;"><label>SKU</label><input class="input" value="{{ form.sku }}" onChange="{{ fh.sku }}"/></div>
@@ -471,9 +473,10 @@ class Component extends DCLogic {
     selectedIds: new Set(), bulkBusy: false, bulkPriceVisibility: '__unset',
     dialogOpen: false, editingId: null,
     form: this.emptyForm, dialogError: '', saving: false,
+    formDirty: false, mediaDirty: false,
     categoryOptions: [], subcategoryOptions: [],
     shapeOptions: [], colorOptions: [], certOptions: [],
-    mediaItems: [], mediaUploading: false, draggingMediaId: null,
+    mediaItems: [], draggingMediaId: null, mediaError: '', mediaBusy: false,
     importBusy: false, importOpen: false, importResult: null,
     newContactCount: 0, globalPriceModeLabel: 'Site Default',
   };
@@ -490,6 +493,21 @@ class Component extends DCLogic {
     this.loadProducts();
     this.loadSubcategories();
     this.loadAttributes();
+    // Nothing in the product dialog persists until Submit — this is the
+    // browser-navigation half of that guarantee (closing the dialog itself
+    // is handled by requestCloseDialog). Checks live state on every attempt
+    // rather than being added/removed per dialog-open, so it can't go stale.
+    this._beforeUnload = (e) => {
+      if (this.state.dialogOpen && this.isDialogDirty()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', this._beforeUnload);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('beforeunload', this._beforeUnload);
   }
 
   async loadAttributes() {
@@ -549,7 +567,11 @@ class Component extends DCLogic {
   }
 
   openAdd() {
-    this.setState({ dialogOpen: true, editingId: null, form: { ...this.emptyForm }, dialogError: '', mediaItems: [] });
+    this.setState({
+      dialogOpen: true, editingId: null, form: { ...this.emptyForm },
+      formDirty: false, mediaDirty: false,
+      dialogError: '', mediaError: '', mediaItems: [],
+    });
     this.loadCategories(this.state.activeType);
   }
 
@@ -566,30 +588,150 @@ class Component extends DCLogic {
       total_price: p.totalPrice === null || p.totalPrice === undefined ? '' : String(p.totalPrice),
       price_visibility: p.priceVisibilityOverride || '',
     };
-    this.setState({ dialogOpen: true, editingId: p.id, form, dialogError: '', mediaItems: p.media || [] });
+    this.setState({
+      dialogOpen: true, editingId: p.id, form,
+      formDirty: false, mediaDirty: false,
+      dialogError: '', mediaError: '', mediaItems: this.mediaFromServer(p.media),
+    });
     this.loadCategories(p.type);
   }
 
-  setFormField(key, val) { this.setState({ form: { ...this.state.form, [key]: val } }); }
+  // Server media rows -> the dialog's own local working copy. Every tile the
+  // grid renders (existing or newly added, still-pending-removal or not)
+  // lives in this one shape for the rest of the dialog's lifetime, so the
+  // same crop/reorder/remove code paths work for both without caring which
+  // kind they're looking at — see requirements notes on staged editing.
+  mediaFromServer(media) {
+    return (media || []).map((m) => ({
+      clientId: 'existing-' + m.id, isExisting: true, serverId: m.id,
+      kind: m.kind, url: m.url, originalName: m.originalName,
+      crop: m.crop || null, cropTouched: false,
+      pendingFile: null, pendingRemove: false,
+    }));
+  }
 
+  setFormField(key, val) { this.setState({ form: { ...this.state.form, [key]: val }, formDirty: true }); }
+
+  isDialogDirty() { return this.state.formDirty || this.state.mediaDirty; }
+
+  // Every local object URL the dialog created (new-file previews, re-cropped
+  // image previews) needs revoking on the way out, or it just leaks for the
+  // rest of the page's life — nothing else ever references them again once
+  // the dialog closes.
+  revokeLocalMediaUrls() {
+    for (const m of this.state.mediaItems) {
+      if (m.url && m.url.indexOf('blob:') === 0) URL.revokeObjectURL(m.url);
+    }
+  }
+
+  // Cancel button, backdrop click, or the dialog's own × — all funnel
+  // through here so "warn only if there are actually unsaved changes" is
+  // enforced in exactly one place.
+  requestCloseDialog() {
+    if (this.isDialogDirty() && !window.confirm('You have unsaved changes. Leave without saving?')) return;
+    this.revokeLocalMediaUrls();
+    this.setState({
+      dialogOpen: false, mediaItems: [], formDirty: false, mediaDirty: false,
+      dialogError: '', mediaError: '',
+    });
+  }
+
+  // The single place anything in this dialog actually reaches the server.
+  // Everything up to this point — field edits, added/removed/reordered/
+  // re-cropped media — has only ever touched this.state; Submit is where it
+  // all gets reconciled against the real product in one pass. A failure
+  // partway through (e.g. the 2nd of 3 new uploads) leaves whatever already
+  // succeeded in place — there's no server-side transaction spanning field
+  // saves, file uploads and deletes — so on error this re-syncs the media
+  // grid from the server's actual current state rather than leaving the
+  // dialog showing a locally-guessed picture that may no longer be true.
   async saveForm() {
-    const { editingId, activeType, form } = this.state;
+    const { activeType, form } = this.state;
     if (!form.sku || !form.sku.trim()) { this.setState({ dialogError: 'SKU is required.' }); return; }
     const body = { ...form };
-    if (!editingId) body.type = activeType;
+    if (!this.state.editingId) body.type = activeType;
     for (const k of Object.keys(body)) if (body[k] === '') body[k] = null;
 
-    this.setState({ saving: true, dialogError: '' });
+    this.setState({ saving: true, dialogError: '', mediaError: '' });
+    let productId = this.state.editingId;
     try {
-      const url = editingId ? `/api/admin/products/${editingId}` : '/api/admin/products';
-      const method = editingId ? 'PUT' : 'POST';
+      const url = productId ? `/api/admin/products/${productId}` : '/api/admin/products';
+      const method = productId ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Save failed.');
-      this.setState({ dialogOpen: false, saving: false });
+      if (!productId) {
+        productId = json.data.id;
+        // The product now genuinely exists server-side even if a later media
+        // step below fails — recorded immediately so a retry after such a
+        // failure PUTs to it instead of POSTing a duplicate.
+        this.setState({ editingId: productId });
+      }
+
+      if (this.state.mediaDirty) {
+        for (const m of this.state.mediaItems) {
+          if (m.isExisting && m.pendingRemove) {
+            const r = await fetch(`/api/admin/products/${productId}/media/${m.serverId}`, { method: 'DELETE', credentials: 'same-origin' });
+            if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || `Failed to remove ${m.originalName || 'a file'}.`); }
+          }
+        }
+
+        const working = [];
+        for (const m of this.state.mediaItems) {
+          if (m.pendingRemove) continue;
+          if (!m.isExisting) {
+            const fd = new FormData();
+            fd.append('files', m.pendingFile, m.originalName || 'upload');
+            const r = await fetch(`/api/admin/products/${productId}/media`, { method: 'POST', credentials: 'same-origin', body: fd });
+            const j = await r.json();
+            if (!r.ok) throw new Error(j.error || `Failed to upload ${m.originalName || 'a file'}.`);
+            const created = j.data[0];
+            working.push({ ...m, isExisting: true, serverId: created.id, pendingFile: null });
+            if (m.cropTouched && m.crop) {
+              const cr = await fetch(`/api/admin/products/${productId}/media/${created.id}/crop`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ crop: m.crop }),
+              });
+              if (!cr.ok) { const j2 = await cr.json().catch(() => ({})); throw new Error(j2.error || 'Failed to save video framing.'); }
+            }
+          } else if (m.pendingFile) {
+            const fd = new FormData();
+            fd.append('file', m.pendingFile, m.originalName || 'upload');
+            const r = await fetch(`/api/admin/products/${productId}/media/${m.serverId}`, { method: 'PUT', credentials: 'same-origin', body: fd });
+            const j = await r.json();
+            if (!r.ok) throw new Error(j.error || `Failed to save the edit to ${m.originalName || 'a file'}.`);
+            working.push({ ...m, pendingFile: null });
+          } else {
+            if (m.cropTouched) {
+              const cr = await fetch(`/api/admin/products/${productId}/media/${m.serverId}/crop`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ crop: m.crop }),
+              });
+              if (!cr.ok) { const j2 = await cr.json().catch(() => ({})); throw new Error(j2.error || 'Failed to save video framing.'); }
+            }
+            working.push(m);
+          }
+        }
+
+        if (working.length) {
+          const r = await fetch(`/api/admin/products/${productId}/media/reorder`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+            body: JSON.stringify({ order: working.map((m) => m.serverId) }),
+          });
+          if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'Failed to save photo/video order.'); }
+        }
+      }
+
+      this.revokeLocalMediaUrls();
+      this.setState({ dialogOpen: false, saving: false, formDirty: false, mediaDirty: false, mediaItems: [] });
       this.loadProducts();
     } catch (err) {
       this.setState({ saving: false, dialogError: err.message });
+      if (productId) {
+        await this.loadProducts();
+        const fresh = this.state.products.find((p) => p.id === productId);
+        if (fresh) this.setState({ mediaItems: this.mediaFromServer(fresh.media), mediaDirty: false });
+      }
     }
   }
 
@@ -681,66 +823,114 @@ class Component extends DCLogic {
     if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to update.` });
   }
 
+  // Everything below (add/edit/remove/reorder/set cover) only ever touches
+  // this.state.mediaItems — none of it reaches the server until saveForm()
+  // runs on Submit, matching the same rule the form's own fields already
+  // followed. Selecting files here just stages them with a local preview;
+  // nothing is uploaded yet, so the grid works the same whether the product
+  // already exists or hasn't been created yet either.
+  //
+  // Every photo/video is auto-cropped to a centered square as soon as it's
+  // added — same result as opening Edit, picking Square, and clicking
+  // Apply, just without making the admin do that by hand for every tile.
+  // Edit is still there afterward for anyone who wants a different crop on
+  // a specific photo or wants to pan/zoom a video's framing instead of the
+  // plain center square.
+  //
+  // Auto-cropping a real photo (decode + draw + WebP-encode a few
+  // megapixels) is not free — measured well over a second per photo on a
+  // loaded page, longer for several at once. With no feedback during that
+  // window the form just looks frozen/unresponsive right after picking a
+  // file. mediaBusy covers that gap with a visible "Processing…" state;
+  // the try/finally guarantees it always clears even if a given browser
+  // throws instead of the expected resolve(null) for a file it can't decode.
   async handleMediaSelect(e) {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
-    if (!files.length || !this.state.editingId) return;
-    this.setState({ mediaUploading: true });
+    if (!files.length) return;
+    this.setState({ mediaBusy: true, mediaError: '' });
     try {
-      // Upload as-is — cropping (if wanted) happens afterward, per-tile, via the
-      // small Edit button, so bulk-selecting many files doesn't force N crop
-      // dialogs before anything lands on the server.
-      const fd = new FormData();
-      for (const f of files) fd.append('files', f);
-      const res = await fetch(`/api/admin/products/${this.state.editingId}/media`, { method: 'POST', credentials: 'same-origin', body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Upload failed.');
-      this.setState({ mediaItems: [...this.state.mediaItems, ...json.data], mediaUploading: false });
-      this.loadProducts();
+      const { cropToCenterSquare } = await import('./utils/imageCropper.js');
+      const newItems = await Promise.all(files.map(async (f) => {
+        const clientId = 'new-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+        const kind = this.clientMediaKind(f);
+        if (kind === 'video') {
+          return {
+            clientId, isExisting: false, serverId: null, kind,
+            url: URL.createObjectURL(f), originalName: f.name,
+            // { x:0, y:0, scale:1 } is exactly "no pan, no extra zoom" — the
+            // plain centered square of the frame, applied via CSS wherever
+            // the video is shown (see utils/applyVideoCrop.js), never
+            // re-encoding the file itself.
+            crop: { x: 0, y: 0, scale: 1, aspect: 'square' }, cropTouched: true,
+            pendingFile: f, pendingRemove: false,
+          };
+        }
+        // HEIC (and any other format the browser can't decode into an <img>)
+        // can't be auto-cropped client-side — cropToCenterSquare resolves
+        // null and the original file uploads as-is, unaffected, same as
+        // before this existed. It's still converted to a normal viewable
+        // photo server-side at Submit either way (see server/middleware/
+        // upload.js); it just won't also be square until manually re-cropped.
+        const cropped = await cropToCenterSquare(f);
+        const pendingFile = cropped || f;
+        const base = (f.name || 'photo').replace(/\.[^.]+$/, '');
+        const originalName = cropped ? `${base}.webp` : f.name;
+        return {
+          clientId, isExisting: false, serverId: null, kind,
+          url: URL.createObjectURL(pendingFile), originalName,
+          crop: null, cropTouched: false,
+          pendingFile, pendingRemove: false,
+        };
+      }));
+      this.setState({ mediaItems: [...this.state.mediaItems, ...newItems], mediaDirty: true, mediaBusy: false });
     } catch (err) {
-      this.setState({ mediaUploading: false, dialogError: err.message });
+      this.setState({ mediaBusy: false, mediaError: err.message || 'Failed to add file(s).' });
     }
+  }
+
+  // Same extension-first, mimetype-fallback approach the server's own
+  // upload filter uses (browsers routinely misreport .file.type for HEIC/
+  // MOV) — this only drives which tile UI renders locally, the server does
+  // its own authoritative check again on actual upload at Submit.
+  clientMediaKind(file) {
+    const ext = (file.name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+    const videoExt = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.m4v', '.3gp', '.3gpp', '.wmv', '.mpeg', '.mpg'];
+    const imageExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.heic', '.heif', '.bmp', '.tif', '.tiff', '.svg'];
+    if (videoExt.includes(ext)) return 'video';
+    if (imageExt.includes(ext)) return 'image';
+    return (file.type || '').startsWith('video/') ? 'video' : 'image';
   }
 
   async editImageMedia(m) {
-    if (!this.state.editingId) return;
     try {
-      const blob = await fetch(m.url, { credentials: 'same-origin' }).then((r) => r.blob());
-      const file = new File([blob], m.originalName || 'photo.jpg', { type: blob.type || 'image/jpeg' });
+      const blob = m.pendingFile || await fetch(m.url, { credentials: 'same-origin' }).then((r) => r.blob());
+      const file = blob instanceof File ? blob : new File([blob], m.originalName || 'photo.jpg', { type: blob.type || 'image/jpeg' });
       const { openCropper } = await import('./utils/imageCropper.js');
-      const cropped = await openCropper(file, { title: 'Edit Photo', subtitle: m.originalName || '' });
+      const cropped = await openCropper(file, { title: 'Edit Photo', subtitle: m.originalName || '', defaultAspect: 'square' });
       if (!cropped) return;
-      const base = (m.originalName || 'photo').replace(/\.[^.]+$/, '');
-      const filename = cropped instanceof File ? cropped.name : `${base}.webp`;
-      await this.replaceMedia(m.id, cropped, filename);
+      const newUrl = URL.createObjectURL(cropped);
+      if (m.url.indexOf('blob:') === 0) URL.revokeObjectURL(m.url);
+      this.setState({
+        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId ? { ...mi, url: newUrl, pendingFile: cropped } : mi)),
+        mediaDirty: true,
+      });
     } catch (err) {
-      this.setState({ dialogError: err.message || 'Failed to edit photo.' });
+      this.setState({ mediaError: err.message || 'Failed to edit photo.' });
     }
   }
 
-  async replaceVideoMedia(mediaId, e) {
-    const file = (e.target.files || [])[0];
-    e.target.value = '';
-    if (!file) return;
-    await this.replaceMedia(mediaId, file, file.name);
-  }
-
-  async replaceMedia(mediaId, blob, filename) {
-    if (!this.state.editingId) return;
-    this.setState({ mediaUploading: true, dialogError: '' });
+  async editVideoMedia(m) {
     try {
-      const fd = new FormData();
-      fd.append('file', blob, filename);
-      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/${mediaId}`, { method: 'PUT', credentials: 'same-origin', body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to save edit.');
+      const { openVideoCropper } = await import('./utils/videoCropper.js');
+      const result = await openVideoCropper(m.url, { title: 'Frame Video', subtitle: m.originalName || '', initialCrop: m.crop || null, defaultAspect: 'square' });
+      if (result === undefined) return; // cancelled — no change
       this.setState({
-        mediaItems: this.state.mediaItems.map((mi) => (mi.id === mediaId ? { ...mi, ...json.data } : mi)),
-        mediaUploading: false,
+        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId ? { ...mi, crop: result, cropTouched: true } : mi)),
+        mediaDirty: true,
       });
-      this.loadProducts();
     } catch (err) {
-      this.setState({ mediaUploading: false, dialogError: err.message });
+      this.setState({ mediaError: err.message || 'Failed to update video framing.' });
     }
   }
 
@@ -766,16 +956,21 @@ class Component extends DCLogic {
     this.setState({ importOpen: false, importResult: null });
   }
 
-  async removeMedia(mediaId) {
-    if (!this.state.editingId) return;
-    try {
-      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/${mediaId}`, { method: 'DELETE', credentials: 'same-origin' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to remove media.');
-      this.setState({ mediaItems: this.state.mediaItems.filter((m) => m.id !== mediaId) });
-      this.loadProducts();
-    } catch (err) {
-      this.setState({ dialogError: err.message });
+  // A never-uploaded item just disappears (nothing to undo server-side); an
+  // existing one is only marked pending — it stays in the underlying list
+  // (filtered out of what actually renders, see mediaItemsView below) so
+  // Submit still knows to delete it, and Cancel can still bring it back with
+  // nothing having actually happened. No confirmation here: removal is a
+  // fully reversible local edit until Submit, same as everything else.
+  removeMedia(m) {
+    if (!m.isExisting) {
+      if (m.url.indexOf('blob:') === 0) URL.revokeObjectURL(m.url);
+      this.setState({ mediaItems: this.state.mediaItems.filter((mi) => mi.clientId !== m.clientId), mediaDirty: true });
+    } else {
+      this.setState({
+        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId ? { ...mi, pendingRemove: true } : mi)),
+        mediaDirty: true,
+      });
     }
   }
 
@@ -783,14 +978,15 @@ class Component extends DCLogic {
   // dragstart/dragover/drop needs the browser's own drag-gesture recognition,
   // is inconsistent across browsers, gives no visual feedback here, and simply
   // doesn't exist on touch devices. Plain pointer events work everywhere and
-  // let the grid reorder live as you drag, which IS the feedback.
-  startTileDrag(id, e) {
+  // let the grid reorder live as you drag, which IS the feedback. Purely
+  // local — the new order only reaches the server on Submit.
+  startTileDrag(clientId, e) {
     if (e.button !== undefined && e.button !== 0) return;
     if (e.target.closest('button') || e.target.closest('label')) return; // let Remove / Set Cover / Edit clicks through untouched
     e.preventDefault();
-    this._dragId = id;
+    this._dragId = clientId;
     this._dragOrderChanged = false;
-    this.setState({ draggingMediaId: id });
+    this.setState({ draggingMediaId: clientId });
     this._tileDragMove = (ev) => this.handleTileDragMove(ev);
     this._tileDragUp = () => this.finishTileDrag();
     window.addEventListener('pointermove', this._tileDragMove);
@@ -803,11 +999,11 @@ class Component extends DCLogic {
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const tile = el && el.closest('[data-media-id]');
     if (!tile) return;
-    const overId = Number(tile.getAttribute('data-media-id'));
-    if (!Number.isFinite(overId) || overId === this._dragId) return;
+    const overId = tile.getAttribute('data-media-id');
+    if (!overId || overId === this._dragId) return;
     const items = [...this.state.mediaItems];
-    const fromIdx = items.findIndex((m) => m.id === this._dragId);
-    const toIdx = items.findIndex((m) => m.id === overId);
+    const fromIdx = items.findIndex((m) => m.clientId === this._dragId);
+    const toIdx = items.findIndex((m) => m.clientId === overId);
     if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
     const [moved] = items.splice(fromIdx, 1);
     items.splice(toIdx, 0, moved);
@@ -815,44 +1011,22 @@ class Component extends DCLogic {
     this.setState({ mediaItems: items });
   }
 
-  async finishTileDrag() {
+  finishTileDrag() {
     window.removeEventListener('pointermove', this._tileDragMove);
     window.removeEventListener('pointerup', this._tileDragUp);
     window.removeEventListener('pointercancel', this._tileDragUp);
     this._dragId = null;
     this.setState({ draggingMediaId: null });
-    if (!this._dragOrderChanged || !this.state.editingId) return;
-    try {
-      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/reorder`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-        body: JSON.stringify({ order: this.state.mediaItems.map((m) => m.id) }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to reorder media.');
-      this.loadProducts();
-    } catch (err) {
-      this.setState({ dialogError: err.message });
-    }
+    if (this._dragOrderChanged) this.setState({ mediaDirty: true });
   }
 
-  async setCover(id) {
+  setCover(clientId) {
     const items = [...this.state.mediaItems];
-    const idx = items.findIndex((m) => m.id === id);
+    const idx = items.findIndex((m) => m.clientId === clientId);
     if (idx <= 0) return;
     const [moved] = items.splice(idx, 1);
     items.unshift(moved);
-    this.setState({ mediaItems: items });
-    try {
-      const res = await fetch(`/api/admin/products/${this.state.editingId}/media/reorder`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-        body: JSON.stringify({ order: items.map((m) => m.id) }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to reorder media.');
-      this.loadProducts();
-    } catch (err) {
-      this.setState({ dialogError: err.message });
-    }
+    this.setState({ mediaItems: items, mediaDirty: true });
   }
 
   renderVals() {
@@ -932,18 +1106,22 @@ class Component extends DCLogic {
 
     const typeLabel = { diamond: 'Diamond', jewelry: 'Jewelry', gemstone: 'Gemstone' }[activeType];
     const draggingId = this.state.draggingMediaId;
-    const mediaItems = this.state.mediaItems.map((m, i) => ({
+    // pendingRemove items stay in state (Submit still needs to know to
+    // delete them, Cancel still needs to be able to restore them) but never
+    // render — that's the whole "removal is reversible until Submit" trick.
+    const mediaItems = this.state.mediaItems.filter((m) => !m.pendingRemove).map((m, i) => ({
       ...m, isImage: m.kind === 'image', isVideo: m.kind === 'video',
+      cropJson: JSON.stringify(m.crop || null),
       isCover: i === 0, notCover: i !== 0,
-      remove: () => { if (window.confirm('Remove this file?')) this.removeMedia(m.id); },
-      makeCover: () => this.setCover(m.id),
+      remove: () => this.removeMedia(m),
+      makeCover: () => this.setCover(m.clientId),
       editImage: () => this.editImageMedia(m),
-      replaceVideo: (e) => this.replaceVideoMedia(m.id, e),
-      dragStart: (e) => this.startTileDrag(m.id, e),
-      tileTransform: m.id === draggingId ? 'scale(1.06)' : 'none',
-      tileShadow: m.id === draggingId ? '0 10px 24px rgba(0,0,0,.28)' : 'none',
-      tileZ: m.id === draggingId ? 5 : 1,
-      tileOpacity: m.id === draggingId ? 0.9 : 1,
+      editVideo: () => this.editVideoMedia(m),
+      dragStart: (e) => this.startTileDrag(m.clientId, e),
+      tileTransform: m.clientId === draggingId ? 'scale(1.06)' : 'none',
+      tileShadow: m.clientId === draggingId ? '0 10px 24px rgba(0,0,0,.28)' : 'none',
+      tileZ: m.clientId === draggingId ? 5 : 1,
+      tileOpacity: m.clientId === draggingId ? 0.9 : 1,
     }));
 
     return {
@@ -997,7 +1175,7 @@ class Component extends DCLogic {
       openAdd: () => this.openAdd(),
       dialogOpen: this.state.dialogOpen,
       dialogTitle: (this.state.editingId ? 'Edit ' : 'Add ') + typeLabel,
-      closeDialog: () => this.setState({ dialogOpen: false }),
+      closeDialog: () => this.requestCloseDialog(),
       stop: (e) => e.stopPropagation(),
       form: this.state.form, fh,
       shapeOptions: withCurrent(this.state.shapeOptions, this.state.form.shape),
@@ -1009,13 +1187,11 @@ class Component extends DCLogic {
       saving: this.state.saving,
       saveLabel: this.state.saving ? 'Saving…' : 'Save Product',
       dialogError: this.state.dialogError,
+      mediaError: this.state.mediaError,
       categoryOptions: this.state.categoryOptions,
       subcategoryOptions: this.state.subcategoryOptions,
       hasMedia: mediaItems.length > 0,
       mediaItems,
-      canUploadMedia: !!this.state.editingId,
-      cannotUploadMedia: !this.state.editingId,
-      mediaUploading: this.state.mediaUploading,
       handleMediaSelect: (e) => this.handleMediaSelect(e),
       templateUrl: `/api/admin/products/import/${activeType}/template`,
       hasProductsInTab: typeProducts.length > 0,

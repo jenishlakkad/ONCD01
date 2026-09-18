@@ -89,6 +89,8 @@
       this._empty = root.querySelector('.empty');
       this._cap = root.querySelector('.cap');
       this._media = [];
+      this._posterCropCleanup = null;
+      this._hoverCropCleanup = null;
       this._onEnter = () => this._startHoverVideo();
       this._onLeave = () => this._stopHoverVideo();
       this._onClick = (e) => this._handleClick(e);
@@ -124,6 +126,8 @@
       this.removeEventListener('pointerleave', this._onLeave);
       this.removeEventListener('click', this._onClick);
       this._stopHoverVideo();
+      if (this._posterCropCleanup) this._posterCropCleanup();
+      if (this._hoverCropCleanup) this._hoverCropCleanup();
     }
     attributeChangedCallback(name, oldVal, newVal) {
       if (name === 'media' && oldVal !== newVal) this._media = safeParseJson(newVal || '[]');
@@ -140,6 +144,11 @@
       const v = firstVideo(this._media);
       if (!v) return;
       if (this._hoverVid.src !== v.url) this._hoverVid.src = v.url;
+      if (this._hoverCropCleanup) this._hoverCropCleanup();
+      this._hoverCropCleanup = null;
+      import('./utils/applyVideoCrop.js').then(({ applyVideoCrop }) => {
+        this._hoverCropCleanup = applyVideoCrop(this._hoverVid, v.crop || null);
+      });
       this.setAttribute('data-hovering', '');
       const p = this._hoverVid.play();
       if (p && p.catch) p.catch(() => {});
@@ -192,11 +201,27 @@
       // its own paused first frame with a big play affordance — it must NOT
       // autoplay here; only hover-video (cards) or the zoom lightbox actually play.
       if (showVideoPoster) {
-        if (this._posterVid.getAttribute('src') !== active.url) this._posterVid.src = active.url;
+        if (this._posterVid.getAttribute('src') !== active.url) {
+          this._posterVid.src = active.url;
+          // preload="metadata" doesn't guarantee a frame has been decoded
+          // and painted — without forcing one, this sits blank/white
+          // instead of showing the video at all until played. Seeking to a
+          // tiny nonzero offset reliably forces a real frame decode+paint
+          // without any perceptible playback, which is what "must NOT
+          // autoplay" above actually means — a play/pause is not reliable
+          // here since pause can land before the first frame paints.
+          this._posterVid.addEventListener('loadeddata', () => { this._posterVid.currentTime = 0.1; }, { once: true });
+        }
         this._posterVid.style.display = 'block';
+        if (this._posterCropCleanup) this._posterCropCleanup();
+        this._posterCropCleanup = null;
+        import('./utils/applyVideoCrop.js').then(({ applyVideoCrop }) => {
+          this._posterCropCleanup = applyVideoCrop(this._posterVid, active.crop || null);
+        });
       } else {
         this._posterVid.style.display = 'none';
         this._posterVid.removeAttribute('src');
+        if (this._posterCropCleanup) { this._posterCropCleanup(); this._posterCropCleanup = null; }
       }
       this._playBig.style.display = showVideoPoster ? 'flex' : 'none';
       this._empty.style.display = (!showImage && !showVideoPoster) ? 'flex' : 'none';

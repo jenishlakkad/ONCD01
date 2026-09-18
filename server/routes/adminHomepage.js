@@ -5,7 +5,7 @@ const db = require('../db/connection');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireAdmin = require('../middleware/requireAdmin');
 const requirePermission = require('../middleware/requirePermission');
-const { makeUploader } = require('../middleware/upload');
+const { makeUploader, convertHeic } = require('../middleware/upload');
 const { writeAudit } = require('../lib/audit');
 const env = require('../config/env');
 
@@ -62,7 +62,7 @@ router.put('/slides/:id', asyncRoute(async (req, res) => {
   res.json({ data: { updated: true } });
 }));
 
-router.post('/slides/:id/image', upload.single('image'), asyncRoute(async (req, res) => {
+router.post('/slides/:id/image', upload.single('image'), convertHeic, asyncRoute(async (req, res) => {
   const existing = db.prepare('SELECT * FROM homepage_slides WHERE id = ?').get(req.params.id);
   if (!existing) throw new ApiError(404, 'Slide not found.');
   if (!req.file) throw new ApiError(400, 'No image uploaded.');
@@ -106,7 +106,7 @@ router.put('/blocks/:key', asyncRoute(async (req, res) => {
   res.json({ data: { updated: true } });
 }));
 
-router.post('/blocks/:key/image', upload.single('image'), asyncRoute(async (req, res) => {
+router.post('/blocks/:key/image', upload.single('image'), convertHeic, asyncRoute(async (req, res) => {
   if (!BLOCK_KEYS.includes(req.params.key)) throw new ApiError(404, 'Unknown block.');
   const existing = db.prepare(`SELECT * FROM content_blocks WHERE key = ? AND page = 'home'`).get(req.params.key);
   if (!existing) throw new ApiError(404, 'Unknown block.');
@@ -132,7 +132,7 @@ router.put('/collections/:key', asyncRoute(async (req, res) => {
   res.json({ data: { updated: true } });
 }));
 
-router.post('/collections/:key/image', upload.single('image'), asyncRoute(async (req, res) => {
+router.post('/collections/:key/image', upload.single('image'), convertHeic, asyncRoute(async (req, res) => {
   const existing = db.prepare('SELECT * FROM homepage_collections WHERE key = ?').get(req.params.key);
   if (!existing) throw new ApiError(404, 'Unknown collection.');
   if (!req.file) throw new ApiError(400, 'No image uploaded.');

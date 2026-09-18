@@ -5,13 +5,14 @@
 // source (never a stretch), because the output canvas is drawn at exactly
 // the window's aspect ratio.
 
-// "Original" is listed (and defaults selected) first: most uploaded photos
-// aren't a perfect square/preset ratio, and forcing a crop by default silently
-// cuts off part of the image unless the admin remembers to switch presets.
-// Leaving the source uncropped by default is the safe choice — every product
-// photo now displays uncropped (see product-media.js's fit="contain" default)
-// regardless of preset, so a forced crop here is opt-in framing, not a
-// requirement for the image to look right on the site.
+// "Original" is listed first and is the fallback default for any caller
+// that doesn't ask for a specific one via opts.defaultAspect — most uploaded
+// photos aren't a perfect square/preset ratio, so leaving the source
+// uncropped by default (rather than silently cutting part of it off) is the
+// safer choice for general-purpose editing (About page photos, homepage
+// banners, …). Product photos specifically default to "square" instead —
+// see AdminProducts.dc.html's editImageMedia — since a consistent square
+// grid is what that catalog wants.
 const ASPECTS = [
   { key: 'original', label: 'Original', ratio: null },
   { key: 'square', label: 'Square', ratio: 1 },
@@ -70,6 +71,39 @@ export function openCropper(file, opts) {
   });
 }
 
+/**
+ * Same result as opening the cropper, picking "Square" with no pan/zoom,
+ * and clicking Apply Crop — but computed silently with no dialog. Used to
+ * auto-crop every photo to a centered square the moment it's added to the
+ * product form, so square framing is the out-of-the-box result instead of
+ * something the admin has to remember to click Apply on for every tile —
+ * openCropper (with defaultAspect: 'square') stays available afterward for
+ * anyone who wants to pan/zoom/reposition a specific photo differently.
+ * @param {File} file
+ * @returns {Promise<Blob|null>} the cropped square image, or null if the
+ *   file failed to load as an image (caller should fall back to the
+ *   original file rather than lose the upload).
+ */
+export function cropToCenterSquare(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      const sx = (img.naturalWidth - side) / 2;
+      const sy = (img.naturalHeight - side) / 2;
+      const outSize = Math.min(side, MAX_OUT);
+      const canvas = document.createElement('canvas');
+      canvas.width = outSize;
+      canvas.height = outSize;
+      canvas.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, outSize, outSize);
+      canvas.toBlob((blob) => { URL.revokeObjectURL(url); resolve(blob); }, 'image/webp', 0.9);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 function mount(file, img, url, opts, resolve) {
   injectStyle();
   const backdrop = document.createElement('div');
@@ -92,7 +126,7 @@ function mount(file, img, url, opts, resolve) {
   const windowEl = backdrop.querySelector('.aic-window');
   windowEl.appendChild(img);
 
-  let aspect = ASPECTS[0];
+  let aspect = (opts.defaultAspect && ASPECTS.find((a) => a.key === opts.defaultAspect)) || ASPECTS[0];
   let view = { s: 1, x: 0, y: 0 };
   let ww = 0, wh = 0, base = 1;
 

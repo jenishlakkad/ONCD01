@@ -206,6 +206,32 @@ function headerMap(type) {
   return map;
 }
 
+const TYPE_LABEL = { diamond: 'Diamond', jewelry: 'Jewelry', gemstone: 'Gemstone' };
+
+// SKU/Category/Certificate/Total Price/Status/Visibility are spelled the same
+// across all three templates, so a genuine file for `type` always scores at
+// least that many matches against every other type too — a sparse, mostly-
+// blank-but-correct file must never trip this. It only fires when another
+// type's template is an unambiguously *better* fit than the one the admin
+// currently has selected (e.g. a Jewelry file's Metal/Gold Purity/Stone
+// Weight columns scoring well above Diamond's own headers) — the exact shape
+// of "uploaded the right file on the wrong tab," which used to import
+// silently, tagging the row with the active tab's type and dropping every
+// column that type's schema doesn't have (see excel-import mistagging fix).
+function detectHeaderTypeMismatch(headers, type) {
+  const normalized = headers.map(normalizeHeader);
+  const scores = {};
+  for (const t of Object.keys(COLUMN_DEFS)) {
+    const known = new Set(COLUMN_DEFS[t].map((c) => normalizeHeader(c.header)));
+    scores[t] = normalized.filter((h) => known.has(h)).length;
+  }
+  const bestType = Object.keys(scores).reduce((a, b) => (scores[b] > scores[a] ? b : a));
+  if (bestType !== type && scores[bestType] > scores[type] + 1) {
+    return `This file's columns look like a ${TYPE_LABEL[bestType]} stock file, not ${TYPE_LABEL[type]} — importing it here would tag every row as ${TYPE_LABEL[type]} and drop the ${TYPE_LABEL[bestType]}-only columns. Switch to the ${TYPE_LABEL[bestType]} tab and import there instead, or re-download the ${TYPE_LABEL[type]} template if this really is meant to be ${TYPE_LABEL[type]} stock.`;
+  }
+  return null;
+}
+
 function remapRow(type, rawRow) {
   const map = headerMap(type);
   const out = {};
@@ -310,6 +336,8 @@ function importWorkbook(type, buffer) {
   if (!parsed.rows.length) {
     return { topLevelError: 'The uploaded file has no data rows to import.' };
   }
+  const mismatch = detectHeaderTypeMismatch(parsed.headers, type);
+  if (mismatch) return { topLevelError: mismatch };
 
   const ctx = {
     categories: typeCategories(type),

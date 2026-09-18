@@ -5,7 +5,7 @@ const db = require('../db/connection');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireAdmin = require('../middleware/requireAdmin');
 const requirePermission = require('../middleware/requirePermission');
-const { makeUploader, kindOf } = require('../middleware/upload');
+const { makeUploader, kindOf, convertHeic } = require('../middleware/upload');
 const { writeAudit } = require('../lib/audit');
 const env = require('../config/env');
 
@@ -61,7 +61,7 @@ router.put('/blocks/:key', asyncRoute(async (req, res) => {
   res.json({ data: { updated: true } });
 }));
 
-router.post('/blocks/:key/image', upload.single('image'), asyncRoute(async (req, res) => {
+router.post('/blocks/:key/image', upload.single('image'), convertHeic, asyncRoute(async (req, res) => {
   if (!BLOCK_KEYS.includes(req.params.key)) throw new ApiError(404, 'Unknown block.');
   const existing = db.prepare(`SELECT * FROM content_blocks WHERE key = ? AND page = 'about'`).get(req.params.key);
   if (!existing) throw new ApiError(404, 'Unknown block.');
@@ -109,7 +109,7 @@ router.put('/team/reorder', asyncRoute(async (req, res) => {
   res.json({ data: { reordered: true } });
 }));
 
-router.post('/team/:id/photo', upload.single('photo'), asyncRoute(async (req, res) => {
+router.post('/team/:id/photo', upload.single('photo'), convertHeic, asyncRoute(async (req, res) => {
   const existing = db.prepare('SELECT * FROM team_members WHERE id = ?').get(req.params.id);
   if (!existing) throw new ApiError(404, 'Team member not found.');
   if (!req.file) throw new ApiError(400, 'No photo uploaded.');
@@ -197,7 +197,7 @@ router.put('/certs/:id', asyncRoute(async (req, res) => {
   res.json({ data: { updated: true } });
 }));
 
-router.post('/certs/:id/logo', upload.single('logo'), asyncRoute(async (req, res) => {
+router.post('/certs/:id/logo', upload.single('logo'), convertHeic, asyncRoute(async (req, res) => {
   const existing = db.prepare('SELECT * FROM certifications WHERE id = ?').get(req.params.id);
   if (!existing) throw new ApiError(404, 'Certification not found.');
   if (!req.file) throw new ApiError(400, 'No logo uploaded.');
@@ -219,13 +219,13 @@ router.delete('/certs/:id', asyncRoute(async (req, res) => {
 
 // ---- Factory photo/video gallery ----
 
-router.post('/gallery', upload.array('files', 12), asyncRoute(async (req, res) => {
+router.post('/gallery', upload.array('files', 12), convertHeic, asyncRoute(async (req, res) => {
   if (!req.files || !req.files.length) throw new ApiError(400, 'No files uploaded.');
   const ins = db.prepare('INSERT INTO about_gallery (kind, url, caption, sort_order) VALUES (?, ?, ?, ?)');
   const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order), -1) AS m FROM about_gallery').get().m;
   const created = req.files.map((f, i) => {
     const url = `/uploads/about/${path.basename(f.path)}`;
-    const kind = kindOf(f.mimetype);
+    const kind = kindOf(f.mimetype, f.originalname);
     const info = ins.run(kind, url, null, maxOrder + 1 + i);
     return { id: info.lastInsertRowid, kind, url, caption: null, sortOrder: maxOrder + 1 + i };
   });

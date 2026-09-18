@@ -13,4 +13,10 @@ if (!productsCols.includes('price_visibility')) {
   console.log('Migration: added products.price_visibility column.');
 }
 
+const productMediaCols = db.prepare('PRAGMA table_info(product_media)').all().map((c) => c.name);
+if (!productMediaCols.includes('crop')) {
+  db.exec('ALTER TABLE product_media ADD COLUMN crop TEXT');
+  console.log('Migration: added product_media.crop column.');
+}
+
 console.log('Migration complete: schema applied to', require('../config/env').dbFile);

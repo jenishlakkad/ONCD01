@@ -132,6 +132,10 @@ CREATE TABLE IF NOT EXISTS product_media (
   url TEXT NOT NULL,
   sort_order INTEGER NOT NULL DEFAULT 0,
   original_name TEXT,
+  -- Non-destructive framing for video only ({"x":0,"y":0,"scale":1,"aspect":"square"}),
+  -- applied at display time via CSS transform — see utils/videoCropper.js. Images
+  -- don't use this column: their crop tool re-encodes an actual new file instead.
+  crop TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_media_product ON product_media(product_id);

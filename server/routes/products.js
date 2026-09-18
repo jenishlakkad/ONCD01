@@ -31,7 +31,8 @@ function subcategoryRow(id) {
   return id ? db.prepare('SELECT id, name FROM subcategories WHERE id = ?').get(id) : null;
 }
 function mediaFor(productId) {
-  return db.prepare('SELECT id, kind, url, sort_order AS sortOrder FROM product_media WHERE product_id = ? ORDER BY sort_order').all(productId);
+  const rows = db.prepare('SELECT id, kind, url, sort_order AS sortOrder, crop FROM product_media WHERE product_id = ? ORDER BY sort_order').all(productId);
+  return rows.map((r) => ({ ...r, crop: r.crop ? JSON.parse(r.crop) : null }));
 }
 
 router.get('/', asyncRoute(async (req, res) => {

@@ -6,7 +6,7 @@ const db = require('../db/connection');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireAdmin = require('../middleware/requireAdmin');
 const requirePermission = require('../middleware/requirePermission');
-const { makeUploader, kindOf } = require('../middleware/upload');
+const { makeUploader, kindOf, convertHeic } = require('../middleware/upload');
 const { serializeProduct } = require('../lib/serializeProduct');
 const { writeAudit } = require('../lib/audit');
 const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns } = require('../lib/excelImport');
@@ -38,7 +38,8 @@ function pickBody(body) {
 function categoryRow(id) { return id ? db.prepare('SELECT id, name FROM categories WHERE id = ?').get(id) : null; }
 function subcategoryRow(id) { return id ? db.prepare('SELECT id, name FROM subcategories WHERE id = ?').get(id) : null; }
 function mediaFor(productId) {
-  return db.prepare('SELECT id, kind, url, sort_order AS sortOrder, original_name AS originalName FROM product_media WHERE product_id = ? ORDER BY sort_order').all(productId);
+  const rows = db.prepare('SELECT id, kind, url, sort_order AS sortOrder, original_name AS originalName, crop FROM product_media WHERE product_id = ? ORDER BY sort_order').all(productId);
+  return rows.map((r) => ({ ...r, crop: r.crop ? JSON.parse(r.crop) : null }));
 }
 function fullProduct(row) {
   return serializeProduct(row, { category: categoryRow(row.category_id), subcategory: subcategoryRow(row.subcategory_id), media: mediaFor(row.id) });
@@ -108,7 +109,7 @@ router.delete('/:id', asyncRoute(async (req, res) => {
   res.json({ data: { deleted: true } });
 }));
 
-router.post('/:id/media', upload.array('files', 12), asyncRoute(async (req, res) => {
+router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(async (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) throw new ApiError(404, 'Product not found.');
   if (!req.files || !req.files.length) throw new ApiError(400, 'No files uploaded.');
@@ -116,8 +117,9 @@ router.post('/:id/media', upload.array('files', 12), asyncRoute(async (req, res)
   const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order), -1) AS m FROM product_media WHERE product_id = ?').get(product.id).m;
   const created = req.files.map((f, i) => {
     const url = `/uploads/products/${path.basename(f.path)}`;
-    const info = ins.run(product.id, kindOf(f.mimetype), url, maxOrder + 1 + i, f.originalname);
-    return { id: info.lastInsertRowid, kind: kindOf(f.mimetype), url, originalName: f.originalname };
+    const kind = kindOf(f.mimetype, f.originalname);
+    const info = ins.run(product.id, kind, url, maxOrder + 1 + i, f.originalname);
+    return { id: info.lastInsertRowid, kind, url, originalName: f.originalname };
   });
   writeAudit({ actor: req.adminUser.full_name, action: 'Uploaded media', target: product.sku, module: 'Products' });
   res.status(201).json({ data: created });
@@ -152,7 +154,7 @@ router.delete('/:id/media/:mediaId', asyncRoute(async (req, res) => {
   res.json({ data: { deleted: true } });
 }));
 
-router.put('/:id/media/:mediaId', upload.single('file'), asyncRoute(async (req, res) => {
+router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute(async (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) throw new ApiError(404, 'Product not found.');
   const media = db.prepare('SELECT * FROM product_media WHERE id = ? AND product_id = ?').get(req.params.mediaId, product.id);
@@ -160,13 +162,44 @@ router.put('/:id/media/:mediaId', upload.single('file'), asyncRoute(async (req, 
   if (!req.file) throw new ApiError(400, 'No file uploaded.');
 
   const newUrl = `/uploads/products/${path.basename(req.file.path)}`;
-  const newKind = kindOf(req.file.mimetype);
+  const newKind = kindOf(req.file.mimetype, req.file.originalname);
   db.prepare('UPDATE product_media SET kind = ?, url = ?, original_name = ? WHERE id = ?').run(newKind, newUrl, req.file.originalname, media.id);
   const oldPath = path.join(env.rootDir, media.url.replace(/^\//, ''));
   fs.unlink(oldPath, () => {});
 
   writeAudit({ actor: req.adminUser.full_name, action: 'Edited media', target: product.sku, module: 'Products' });
   res.json({ data: { id: media.id, kind: newKind, url: newUrl, originalName: req.file.originalname } });
+}));
+
+// Video framing (pan/zoom crop) is stored as metadata, not re-encoded — see
+// utils/videoCropper.js. { x, y } are percentage pan offsets, { scale } is
+// the zoom factor, { aspect } is one of imageCropper's aspect keys, matching
+// the shape the client already draws for image cropping. `crop: null`
+// clears it back to an uncropped, natural-aspect display.
+router.put('/:id/media/:mediaId/crop', asyncRoute(async (req, res) => {
+  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+  if (!product) throw new ApiError(404, 'Product not found.');
+  const media = db.prepare('SELECT * FROM product_media WHERE id = ? AND product_id = ?').get(req.params.mediaId, product.id);
+  if (!media) throw new ApiError(404, 'Media not found.');
+  if (media.kind !== 'video') throw new ApiError(400, 'Crop framing only applies to video media.');
+
+  const { crop } = req.body || {};
+  let stored = null;
+  if (crop !== null && crop !== undefined) {
+    const { x, y, scale, aspect } = crop;
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof scale !== 'number' || typeof aspect !== 'string') {
+      throw new ApiError(400, 'crop must be { x, y, scale, aspect } or null.');
+    }
+    stored = JSON.stringify({
+      x: Math.max(-100, Math.min(100, x)),
+      y: Math.max(-100, Math.min(100, y)),
+      scale: Math.max(1, Math.min(4, scale)),
+      aspect,
+    });
+  }
+  db.prepare('UPDATE product_media SET crop = ? WHERE id = ?').run(stored, media.id);
+  writeAudit({ actor: req.adminUser.full_name, action: 'Reframed video', target: product.sku, module: 'Products' });
+  res.json({ data: { id: media.id, crop: stored ? JSON.parse(stored) : null } });
 }));
 
 router.get('/import/:type/template', asyncRoute(async (req, res) => {
