@@ -20,6 +20,7 @@ a:hover{color:var(--color-accent-700)}
 .adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
 .adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
 .vid-drop{border:1px dashed var(--color-divider);border-radius:var(--radius-md);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:color-mix(in srgb, var(--color-text) 55%, transparent);text-align:center;padding:8px;}
+@keyframes adm-spin{to{transform:rotate(360deg);}}
 </style>
 </helmet>
 
@@ -419,7 +420,7 @@ a:hover{color:var(--color-accent-700)}
 
           <div class="dialog-actions">
             <button onClick="{{ closeDialog }}" class="btn btn-secondary">Cancel</button>
-            <button onClick="{{ saveForm }}" class="btn btn-primary" disabled="{{ saving }}">{{ saveLabel }}</button>
+            <button onClick="{{ saveForm }}" class="btn btn-primary" disabled="{{ saveDisabled }}">{{ saveLabel }}</button>
           </div>
         </div>
       </div>
@@ -1185,9 +1186,13 @@ class Component extends DCLogic {
       isDiamondForm: activeType === 'diamond', isJewelryForm: activeType === 'jewelry', isGemstoneForm: activeType === 'gemstone',
       saveForm: () => this.saveForm(),
       saving: this.state.saving,
-      saveLabel: this.state.saving ? 'Saving…' : 'Save Product',
+      saveLabel: this.state.saving ? 'Saving…' : this.state.mediaBusy ? 'Processing…' : 'Save Product',
+      saveDisabled: this.state.saving || this.state.mediaBusy,
       dialogError: this.state.dialogError,
       mediaError: this.state.mediaError,
+      mediaBusy: this.state.mediaBusy,
+      addMediaOpacity: this.state.mediaBusy ? '.5' : '1',
+      addMediaPointerEvents: this.state.mediaBusy ? 'none' : 'auto',
       categoryOptions: this.state.categoryOptions,
       subcategoryOptions: this.state.subcategoryOptions,
       hasMedia: mediaItems.length > 0,

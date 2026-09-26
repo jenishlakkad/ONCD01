@@ -248,7 +248,14 @@ class Component extends DCLogic {
     };
     const fmtDate = (iso) => {
       if (!iso) return '—';
-      const d = new Date(iso.replace(' ', 'T') + 'Z');
+      // PostgreSQL now returns full ISO-8601 timestamps with a trailing Z
+      // (e.g. "2026-08-19T06:52:57.000Z"), unlike the old SQLite API's bare
+      // "YYYY-MM-DD HH:MM:SS" string this code was originally written
+      // against. Forcing a second "Z" onto an already timezone-aware string
+      // produced an invalid date. Only apply the space->T + Z fallback when
+      // the string isn't already timezone-aware — same UTC meaning either way.
+      const isTzAware = /Z$/i.test(iso) || /[+-]\d{2}:\d{2}$/.test(iso);
+      const d = new Date(isTzAware ? iso : iso.replace(' ', 'T') + 'Z');
       return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
     };
 
