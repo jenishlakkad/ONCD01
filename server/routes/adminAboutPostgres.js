@@ -8,6 +8,7 @@ const requirePermission = require('../middleware/requirePermission');
 const { makeUploader, kindOf, convertHeic } = require('../middleware/upload');
 const { writeAudit } = require('../lib/auditPostgres');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
+const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
 const env = require('../config/env');
 
 // PostgreSQL counterpart to server/routes/adminAbout.js (SQLite). Parallel/
@@ -94,8 +95,20 @@ router.post('/blocks/:key/image', upload.single('image'), convertHeic, asyncRout
   const existing = await db.get(`SELECT * FROM content_blocks WHERE key = $1 AND page = 'about'`, [req.params.key]);
   if (!existing) throw new ApiError(404, 'Unknown block.');
   if (!req.file) throw new ApiError(400, 'No image uploaded.');
-  const url = `/uploads/about/${path.basename(req.file.path)}`;
-  await db.query(`UPDATE content_blocks SET image_url = $1, updated_at = NOW() WHERE key = $2`, [url, existing.key]);
+
+  let url;
+  try {
+    url = await persistUploadedFile(req.file, 'about');
+  } catch (err) {
+    throw new ApiError(502, 'Failed to upload the image. Please try again.');
+  }
+  try {
+    await db.query(`UPDATE content_blocks SET image_url = $1, updated_at = NOW() WHERE key = $2`, [url, existing.key]);
+  } catch (err) {
+    await discardPersistedFile(url, req.file);
+    throw new ApiError(502, 'Failed to save the image. Please try again.');
+  }
+  await removeR2ObjectForUrl(existing.image_url);
   removeUploadedFile(existing.image_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Updated About block image', target: existing.title || existing.key, module: 'About' });
   res.json({ data: { imageUrl: url } });
@@ -149,8 +162,20 @@ router.post('/team/:id/photo', upload.single('photo'), convertHeic, asyncRoute(a
   const existing = await db.get('SELECT * FROM team_members WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Team member not found.');
   if (!req.file) throw new ApiError(400, 'No photo uploaded.');
-  const url = `/uploads/about/${path.basename(req.file.path)}`;
-  await db.query('UPDATE team_members SET photo_url = $1 WHERE id = $2', [url, existing.id]);
+
+  let url;
+  try {
+    url = await persistUploadedFile(req.file, 'about');
+  } catch (err) {
+    throw new ApiError(502, 'Failed to upload the photo. Please try again.');
+  }
+  try {
+    await db.query('UPDATE team_members SET photo_url = $1 WHERE id = $2', [url, existing.id]);
+  } catch (err) {
+    await discardPersistedFile(url, req.file);
+    throw new ApiError(502, 'Failed to save the photo. Please try again.');
+  }
+  await removeR2ObjectForUrl(existing.photo_url);
   removeUploadedFile(existing.photo_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Updated team member photo', target: existing.name, module: 'About' });
   res.json({ data: { photoUrl: url } });
@@ -159,7 +184,8 @@ router.post('/team/:id/photo', upload.single('photo'), convertHeic, asyncRoute(a
 router.delete('/team/:id', asyncRoute(async (req, res) => {
   const existing = await db.get('SELECT * FROM team_members WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Team member not found.');
-  await db.query('DELETE FROM team_members WHERE id = $1', [existing.id]);
+  await db.query('DELETE FROM team_members WHERE id = $1', [existing.id]); // authoritative — commits first
+  await removeR2ObjectForUrl(existing.photo_url);
   removeUploadedFile(existing.photo_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Removed team member', target: existing.name, module: 'About' });
   res.json({ data: { deleted: true } });
@@ -246,8 +272,20 @@ router.post('/certs/:id/logo', upload.single('logo'), convertHeic, asyncRoute(as
   const existing = await db.get('SELECT * FROM certifications WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Certification not found.');
   if (!req.file) throw new ApiError(400, 'No logo uploaded.');
-  const url = `/uploads/about/${path.basename(req.file.path)}`;
-  await db.query('UPDATE certifications SET logo_url = $1 WHERE id = $2', [url, existing.id]);
+
+  let url;
+  try {
+    url = await persistUploadedFile(req.file, 'about');
+  } catch (err) {
+    throw new ApiError(502, 'Failed to upload the logo. Please try again.');
+  }
+  try {
+    await db.query('UPDATE certifications SET logo_url = $1 WHERE id = $2', [url, existing.id]);
+  } catch (err) {
+    await discardPersistedFile(url, req.file);
+    throw new ApiError(502, 'Failed to save the logo. Please try again.');
+  }
+  await removeR2ObjectForUrl(existing.logo_url);
   removeUploadedFile(existing.logo_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Updated certification logo', target: existing.name, module: 'About' });
   res.json({ data: { logoUrl: url } });
@@ -256,7 +294,8 @@ router.post('/certs/:id/logo', upload.single('logo'), convertHeic, asyncRoute(as
 router.delete('/certs/:id', asyncRoute(async (req, res) => {
   const existing = await db.get('SELECT * FROM certifications WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Certification not found.');
-  await db.query('DELETE FROM certifications WHERE id = $1', [existing.id]);
+  await db.query('DELETE FROM certifications WHERE id = $1', [existing.id]); // authoritative — commits first
+  await removeR2ObjectForUrl(existing.logo_url);
   removeUploadedFile(existing.logo_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Removed certification', target: existing.name, module: 'About' });
   res.json({ data: { deleted: true } });
@@ -267,25 +306,40 @@ router.delete('/certs/:id', asyncRoute(async (req, res) => {
 router.post('/gallery', upload.array('files', 12), convertHeic, asyncRoute(async (req, res) => {
   if (!req.files || !req.files.length) throw new ApiError(400, 'No files uploaded.');
   const maxOrderRow = await db.get('SELECT COALESCE(MAX(sort_order), -1) AS m FROM about_gallery');
-  // NOT wrapped in db.transaction() — matches the SQLite source exactly,
-  // which also never wrapped this loop in a transaction (see Step 13A
-  // audit: a partial-batch DB failure here can leave already-uploaded
-  // files on disk with no DB row, preserved as-is per instructions).
-  // Sequential, independent pooled INSERT ... RETURNING id per file.
+  // Two-stage, per-file — see adminProductsPostgres.js's POST /:id/media for
+  // the full rationale: (1) upload to R2, on failure nothing else happens
+  // for this file; (2) DB insert, if THIS fails after R2 already succeeded,
+  // discardPersistedFile() removes ONLY that file's just-created R2
+  // object + local file. Either failure is reported per-file in `errors`
+  // and never affects the other files in the batch.
   const created = [];
-  for (let i = 0; i < req.files.length; i++) {
-    const f = req.files[i];
-    const url = `/uploads/about/${path.basename(f.path)}`;
-    const kind = kindOf(f.mimetype, f.originalname);
-    const sortOrder = maxOrderRow.m + 1 + i;
-    const inserted = await db.get(
-      'INSERT INTO about_gallery (kind, url, caption, sort_order) VALUES ($1, $2, $3, $4) RETURNING id',
-      [kind, url, null, sortOrder]
-    );
-    created.push({ id: Number(inserted.id), kind, url, caption: null, sortOrder });
+  const failed = [];
+  for (const f of req.files) {
+    let url;
+    try {
+      url = await persistUploadedFile(f, 'about');
+    } catch (err) {
+      failed.push({ originalName: f.originalname, error: 'Failed to upload this file. Please try again.' });
+      continue;
+    }
+    try {
+      const kind = kindOf(f.mimetype, f.originalname);
+      const sortOrder = maxOrderRow.m + 1 + created.length;
+      const inserted = await db.get(
+        'INSERT INTO about_gallery (kind, url, caption, sort_order) VALUES ($1, $2, $3, $4) RETURNING id',
+        [kind, url, null, sortOrder]
+      );
+      created.push({ id: Number(inserted.id), kind, url, caption: null, sortOrder });
+    } catch (err) {
+      await discardPersistedFile(url, f);
+      failed.push({ originalName: f.originalname, error: 'Failed to save this file. Please try again.' });
+    }
   }
-  await writeAudit({ actor: req.adminUser.full_name, action: 'Uploaded gallery media', target: `${created.length} file(s)`, module: 'About' });
-  res.status(201).json({ data: created });
+  if (created.length) {
+    await writeAudit({ actor: req.adminUser.full_name, action: 'Uploaded gallery media', target: `${created.length} file(s)`, module: 'About' });
+  }
+  if (!created.length) throw new ApiError(502, 'Failed to upload media. Please try again.');
+  res.status(201).json({ data: created, errors: failed.length ? failed : undefined });
 }));
 
 router.put('/gallery/reorder', asyncRoute(async (req, res) => {
@@ -309,7 +363,8 @@ router.put('/gallery/reorder', asyncRoute(async (req, res) => {
 router.delete('/gallery/:id', asyncRoute(async (req, res) => {
   const existing = await db.get('SELECT * FROM about_gallery WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Media not found.');
-  await db.query('DELETE FROM about_gallery WHERE id = $1', [existing.id]);
+  await db.query('DELETE FROM about_gallery WHERE id = $1', [existing.id]); // authoritative — commits first
+  await removeR2ObjectForUrl(existing.url);
   removeUploadedFile(existing.url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Removed gallery media', target: `#${Number(existing.id)}`, module: 'About' });
   res.json({ data: { deleted: true } });

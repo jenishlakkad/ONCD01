@@ -684,7 +684,14 @@ class Component extends DCLogic {
       const res = await fetch('/api/admin/about/gallery', { method: 'POST', credentials: 'same-origin', body: fd });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Upload failed.');
-      this.setState({ galleryUploading: false });
+      // Some files can succeed while others fail (e.g. one file's R2 upload
+      // fails) — the successful ones are already saved, so we still refresh
+      // the gallery; the failed ones are reported instead of silently dropped.
+      const errors = (json.data && json.data.errors) || [];
+      this.setState({
+        galleryUploading: false,
+        errorMessage: errors.length ? `${errors.length} file(s) failed to upload: ${errors.map((e) => e.originalName || 'file').join(', ')}` : '',
+      });
       this.loadAll();
     } catch (err) {
       this.setState({ galleryUploading: false, errorMessage: err.message });

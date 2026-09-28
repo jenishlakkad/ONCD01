@@ -9,6 +9,7 @@ const requirePermission = require('../middleware/requirePermission');
 const { makeUploader, kindOf, convertHeic } = require('../middleware/upload');
 const { serializeProduct } = require('../lib/serializeProduct');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
+const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
 const { writeAudit } = require('../lib/auditPostgres');
 const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns } = require('../lib/excelImportPostgres');
 const env = require('../config/env');
@@ -127,9 +128,14 @@ router.put('/:id', asyncRoute(async (req, res) => {
 router.delete('/:id', asyncRoute(async (req, res) => {
   const existing = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Product not found.');
-  const media = await mediaFor(existing.id);
+  // Raw (unresolved) urls — deliberately NOT mediaFor(), which applies the
+  // read-side toPublicMediaUrl() resolver. Cleanup needs the actual stored
+  // /uploads/... value to derive the right R2 key/local path regardless of
+  // R2_MEDIA_READS_ENABLED's state.
+  const media = await db.all('SELECT url FROM product_media WHERE product_id = $1', [existing.id]);
   await db.query('DELETE FROM products WHERE id = $1', [existing.id]);
   for (const m of media) {
+    await removeR2ObjectForUrl(m.url);
     const p = path.join(env.rootDir, m.url.replace(/^\//, ''));
     fs.unlink(p, () => {});
   }
@@ -144,23 +150,41 @@ router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(asy
   const maxOrderRow = await db.get('SELECT COALESCE(MAX(sort_order), -1) AS m FROM product_media WHERE product_id = $1', [product.id]);
   const maxOrder = maxOrderRow.m;
 
-  // Sequential for...of + await, NOT an unawaited .map() — each insert is
-  // independent so parallelizing would also be correct, but sequential keeps
-  // this first Postgres conversion pass the most conservative and matches
-  // the original code's own sequential (synchronous) execution order.
+  // Two-stage, per-file: (1) upload to R2 — on failure, nothing else for this
+  // file happens, its local temp copy is already cleaned up by
+  // persistUploadedFile() itself; (2) DB insert — if THIS fails after R2
+  // already succeeded, discardPersistedFile() removes ONLY that file's just-
+  // created R2 object + local file so nothing is orphaned. Either failure
+  // mode is reported per-file in `errors` and never affects other files in
+  // the same batch — sequential for...of, not Promise.all, so each file's
+  // two stages fully resolve before the next file starts.
   const created = [];
-  for (let i = 0; i < req.files.length; i++) {
-    const f = req.files[i];
-    const url = `/uploads/products/${path.basename(f.path)}`;
-    const kind = kindOf(f.mimetype, f.originalname);
-    const inserted = await db.get(
-      'INSERT INTO product_media (product_id, kind, url, sort_order, original_name) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [product.id, kind, url, maxOrder + 1 + i, f.originalname]
-    );
-    created.push({ id: Number(inserted.id), kind, url, originalName: f.originalname });
+  const failed = [];
+  for (const f of req.files) {
+    let url;
+    try {
+      url = await persistUploadedFile(f, 'products');
+    } catch (err) {
+      failed.push({ originalName: f.originalname, error: 'Failed to upload this file. Please try again.' });
+      continue;
+    }
+    try {
+      const kind = kindOf(f.mimetype, f.originalname);
+      const inserted = await db.get(
+        'INSERT INTO product_media (product_id, kind, url, sort_order, original_name) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [product.id, kind, url, maxOrder + 1 + created.length, f.originalname]
+      );
+      created.push({ id: Number(inserted.id), kind, url, originalName: f.originalname });
+    } catch (err) {
+      await discardPersistedFile(url, f);
+      failed.push({ originalName: f.originalname, error: 'Failed to save this file. Please try again.' });
+    }
   }
-  await writeAudit({ actor: req.adminUser.full_name, action: 'Uploaded media', target: product.sku, module: 'Products' });
-  res.status(201).json({ data: created });
+  if (created.length) {
+    await writeAudit({ actor: req.adminUser.full_name, action: 'Uploaded media', target: product.sku, module: 'Products' });
+  }
+  if (!created.length) throw new ApiError(502, 'Failed to upload media. Please try again.');
+  res.status(201).json({ data: created, errors: failed.length ? failed : undefined });
 }));
 
 router.put('/:id/media/reorder', asyncRoute(async (req, res) => {
@@ -190,7 +214,8 @@ router.delete('/:id/media/:mediaId', asyncRoute(async (req, res) => {
   const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [req.params.mediaId, req.params.id]);
   if (!media) throw new ApiError(404, 'Media not found.');
   const product = await db.get('SELECT sku FROM products WHERE id = $1', [req.params.id]);
-  await db.query('DELETE FROM product_media WHERE id = $1', [media.id]);
+  await db.query('DELETE FROM product_media WHERE id = $1', [media.id]); // authoritative — commits first
+  await removeR2ObjectForUrl(media.url); // best-effort cleanup after the DB delete commits
   const p = path.join(env.rootDir, media.url.replace(/^\//, ''));
   fs.unlink(p, () => {});
   await writeAudit({ actor: req.adminUser.full_name, action: 'Removed media', target: product ? product.sku : `#${req.params.id}`, module: 'Products' });
@@ -204,9 +229,26 @@ router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute
   if (!media) throw new ApiError(404, 'Media not found.');
   if (!req.file) throw new ApiError(400, 'No file uploaded.');
 
-  const newUrl = `/uploads/products/${path.basename(req.file.path)}`;
+  // Upload the replacement first — a fresh multer-generated filename means
+  // its R2 key can never collide with the old object's key, so the old
+  // media is physically safe no matter what happens next.
+  let newUrl;
+  try {
+    newUrl = await persistUploadedFile(req.file, 'products');
+  } catch (err) {
+    throw new ApiError(502, 'Failed to upload the replacement file. The existing media was not changed.');
+  }
+
   const newKind = kindOf(req.file.mimetype, req.file.originalname);
-  await db.query('UPDATE product_media SET kind = $1, url = $2, original_name = $3 WHERE id = $4', [newKind, newUrl, req.file.originalname, media.id]);
+  try {
+    await db.query('UPDATE product_media SET kind = $1, url = $2, original_name = $3 WHERE id = $4', [newKind, newUrl, req.file.originalname, media.id]);
+  } catch (err) {
+    await discardPersistedFile(newUrl, req.file); // R2 succeeded but DB failed — undo ONLY the new file/object
+    throw new ApiError(502, 'Failed to save the replacement. The existing media was not changed.');
+  }
+
+  // DB UPDATE committed — only now clean up the superseded OLD media.
+  await removeR2ObjectForUrl(media.url);
   const oldPath = path.join(env.rootDir, media.url.replace(/^\//, ''));
   fs.unlink(oldPath, () => {});
 

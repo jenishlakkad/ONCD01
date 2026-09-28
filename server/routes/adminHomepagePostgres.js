@@ -8,6 +8,7 @@ const requirePermission = require('../middleware/requirePermission');
 const { makeUploader, convertHeic } = require('../middleware/upload');
 const { writeAudit } = require('../lib/auditPostgres');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
+const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
 const env = require('../config/env');
 
 // PostgreSQL counterpart to server/routes/adminHomepage.js (SQLite).
@@ -97,8 +98,20 @@ router.post('/slides/:id/image', upload.single('image'), convertHeic, asyncRoute
   const existing = await db.get('SELECT * FROM homepage_slides WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Slide not found.');
   if (!req.file) throw new ApiError(400, 'No image uploaded.');
-  const url = `/uploads/homepage/${path.basename(req.file.path)}`;
-  await db.query('UPDATE homepage_slides SET image_url = $1 WHERE id = $2', [url, existing.id]);
+
+  let url;
+  try {
+    url = await persistUploadedFile(req.file, 'homepage');
+  } catch (err) {
+    throw new ApiError(502, 'Failed to upload the image. Please try again.');
+  }
+  try {
+    await db.query('UPDATE homepage_slides SET image_url = $1 WHERE id = $2', [url, existing.id]);
+  } catch (err) {
+    await discardPersistedFile(url, req.file);
+    throw new ApiError(502, 'Failed to save the image. Please try again.');
+  }
+  await removeR2ObjectForUrl(existing.image_url);
   removeUploadedFile(existing.image_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Updated slide image', target: existing.title, module: 'Homepage' });
   res.json({ data: { imageUrl: url } });
@@ -107,7 +120,8 @@ router.post('/slides/:id/image', upload.single('image'), convertHeic, asyncRoute
 router.delete('/slides/:id', asyncRoute(async (req, res) => {
   const existing = await db.get('SELECT * FROM homepage_slides WHERE id = $1', [req.params.id]);
   if (!existing) throw new ApiError(404, 'Slide not found.');
-  await db.query('DELETE FROM homepage_slides WHERE id = $1', [existing.id]);
+  await db.query('DELETE FROM homepage_slides WHERE id = $1', [existing.id]); // authoritative — commits first
+  await removeR2ObjectForUrl(existing.image_url);
   removeUploadedFile(existing.image_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Removed slide', target: existing.title, module: 'Homepage' });
   res.json({ data: { deleted: true } });
@@ -145,8 +159,20 @@ router.post('/blocks/:key/image', upload.single('image'), convertHeic, asyncRout
   const existing = await db.get(`SELECT * FROM content_blocks WHERE key = $1 AND page = 'home'`, [req.params.key]);
   if (!existing) throw new ApiError(404, 'Unknown block.');
   if (!req.file) throw new ApiError(400, 'No image uploaded.');
-  const url = `/uploads/homepage/${path.basename(req.file.path)}`;
-  await db.query(`UPDATE content_blocks SET image_url = $1, updated_at = NOW() WHERE key = $2`, [url, existing.key]);
+
+  let url;
+  try {
+    url = await persistUploadedFile(req.file, 'homepage');
+  } catch (err) {
+    throw new ApiError(502, 'Failed to upload the image. Please try again.');
+  }
+  try {
+    await db.query(`UPDATE content_blocks SET image_url = $1, updated_at = NOW() WHERE key = $2`, [url, existing.key]);
+  } catch (err) {
+    await discardPersistedFile(url, req.file);
+    throw new ApiError(502, 'Failed to save the image. Please try again.');
+  }
+  await removeR2ObjectForUrl(existing.image_url);
   removeUploadedFile(existing.image_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Updated marketing block image', target: existing.title || existing.key, module: 'Homepage' });
   res.json({ data: { imageUrl: url } });
@@ -171,8 +197,20 @@ router.post('/collections/:key/image', upload.single('image'), convertHeic, asyn
   const existing = await db.get('SELECT * FROM homepage_collections WHERE key = $1', [req.params.key]);
   if (!existing) throw new ApiError(404, 'Unknown collection.');
   if (!req.file) throw new ApiError(400, 'No image uploaded.');
-  const url = `/uploads/homepage/${path.basename(req.file.path)}`;
-  await db.query('UPDATE homepage_collections SET image_url = $1 WHERE key = $2', [url, existing.key]);
+
+  let url;
+  try {
+    url = await persistUploadedFile(req.file, 'homepage');
+  } catch (err) {
+    throw new ApiError(502, 'Failed to upload the image. Please try again.');
+  }
+  try {
+    await db.query('UPDATE homepage_collections SET image_url = $1 WHERE key = $2', [url, existing.key]);
+  } catch (err) {
+    await discardPersistedFile(url, req.file);
+    throw new ApiError(502, 'Failed to save the image. Please try again.');
+  }
+  await removeR2ObjectForUrl(existing.image_url);
   removeUploadedFile(existing.image_url);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Updated collection tile image', target: existing.title, module: 'Homepage' });
   res.json({ data: { imageUrl: url } });
