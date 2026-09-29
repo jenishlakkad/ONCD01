@@ -10,6 +10,7 @@ const { makeUploader, kindOf, convertHeic } = require('../middleware/upload');
 const { serializeProduct } = require('../lib/serializeProduct');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
+const { stripVideoAudio } = require('../lib/stripVideoAudio');
 const { writeAudit } = require('../lib/auditPostgres');
 const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns } = require('../lib/excelImportPostgres');
 const env = require('../config/env');
@@ -161,15 +162,27 @@ router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(asy
   const created = [];
   const failed = [];
   for (const f of req.files) {
+    const kind = kindOf(f.mimetype, f.originalname);
     let url;
     try {
+      // Product preview videos never need sound — every byte of audio is
+      // pure wasted storage. Stream-copy (no re-encode, near-instant) via
+      // ffmpeg before the file ever reaches R2, so no video uploaded from
+      // this form can carry an audio track. Swapping f.path here also makes
+      // persistUploadedFile() derive the R2 key/local filename from the
+      // audio-stripped file, not the original.
+      if (kind === 'video') {
+        const stripped = await stripVideoAudio(f.path);
+        fs.unlink(f.path, () => {}); // the pre-strip copy is no longer needed
+        f.path = stripped;
+        f.filename = path.basename(stripped);
+      }
       url = await persistUploadedFile(f, 'products');
     } catch (err) {
       failed.push({ originalName: f.originalname, error: 'Failed to upload this file. Please try again.' });
       continue;
     }
     try {
-      const kind = kindOf(f.mimetype, f.originalname);
       const inserted = await db.get(
         'INSERT INTO product_media (product_id, kind, url, sort_order, original_name) VALUES ($1, $2, $3, $4, $5) RETURNING id',
         [product.id, kind, url, maxOrder + 1 + created.length, f.originalname]
@@ -229,19 +242,33 @@ router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute
   if (!media) throw new ApiError(404, 'Media not found.');
   if (!req.file) throw new ApiError(400, 'No file uploaded.');
 
+  const newKind = kindOf(req.file.mimetype, req.file.originalname);
+
   // Upload the replacement first — a fresh multer-generated filename means
   // its R2 key can never collide with the old object's key, so the old
   // media is physically safe no matter what happens next.
   let newUrl;
   try {
+    // Same audio-strip guarantee as create — see POST /:id/media above.
+    if (newKind === 'video') {
+      const stripped = await stripVideoAudio(req.file.path);
+      fs.unlink(req.file.path, () => {});
+      req.file.path = stripped;
+      req.file.filename = path.basename(stripped);
+    }
     newUrl = await persistUploadedFile(req.file, 'products');
   } catch (err) {
     throw new ApiError(502, 'Failed to upload the replacement file. The existing media was not changed.');
   }
-
-  const newKind = kindOf(req.file.mimetype, req.file.originalname);
   try {
-    await db.query('UPDATE product_media SET kind = $1, url = $2, original_name = $3 WHERE id = $4', [newKind, newUrl, req.file.originalname, media.id]);
+    // crop is always cleared on a file replace: any previous framing
+    // metadata was computed against the OLD file's dimensions/content and
+    // no longer applies to the new one. The destructive video-crop flow
+    // (editVideoMedia -> openVideoCropper) relies on this specifically —
+    // it bakes the selected framing into the new file's actual pixels, so
+    // the old CSS-transform metadata must not linger and get applied a
+    // second time on top of an already-cropped video.
+    await db.query('UPDATE product_media SET kind = $1, url = $2, original_name = $3, crop = NULL WHERE id = $4', [newKind, newUrl, req.file.originalname, media.id]);
   } catch (err) {
     await discardPersistedFile(newUrl, req.file); // R2 succeeded but DB failed — undo ONLY the new file/object
     throw new ApiError(502, 'Failed to save the replacement. The existing media was not changed.');

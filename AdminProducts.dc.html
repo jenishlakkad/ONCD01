@@ -688,6 +688,15 @@ class Component extends DCLogic {
             if (!r.ok) throw new Error(j.error || `Failed to upload ${m.originalName || 'a file'}.`);
             const created = j.data[0];
             working.push({ ...m, isExisting: true, serverId: created.id, pendingFile: null });
+            // The only remaining metadata-only crop path: a brand-new video's
+            // auto-applied centered-square default (see handleMediaSelect)
+            // is deliberately still non-destructive/CSS-only, not re-encoded
+            // here — re-encoding every video the instant it's added would
+            // turn a fast multi-file add into a multi-second-per-video wait,
+            // for a framing the admin never explicitly asked for. Explicitly
+            // opening "Frame Video" (editVideoMedia) always produces a real,
+            // destructive crop instead, whether confirming this same default
+            // or picking something else — this is the one path that doesn't.
             if (m.cropTouched && m.crop) {
               const cr = await fetch(`/api/admin/products/${productId}/media/${created.id}/crop`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
@@ -703,13 +712,6 @@ class Component extends DCLogic {
             if (!r.ok) throw new Error(j.error || `Failed to save the edit to ${m.originalName || 'a file'}.`);
             working.push({ ...m, pendingFile: null });
           } else {
-            if (m.cropTouched) {
-              const cr = await fetch(`/api/admin/products/${productId}/media/${m.serverId}/crop`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ crop: m.crop }),
-              });
-              if (!cr.ok) { const j2 = await cr.json().catch(() => ({})); throw new Error(j2.error || 'Failed to save video framing.'); }
-            }
             working.push(m);
           }
         }
@@ -925,13 +927,26 @@ class Component extends DCLogic {
     try {
       const { openVideoCropper } = await import('./utils/videoCropper.js');
       const result = await openVideoCropper(m.url, { title: 'Frame Video', subtitle: m.originalName || '', initialCrop: m.crop || null, defaultAspect: 'square' });
-      if (result === undefined) return; // cancelled — no change
+      if (result === undefined) return; // cancelled, or nothing to crop — no change
+      // Cropping is now destructive: the video was actually re-encoded down
+      // to just the selected window (see utils/videoCropExport.js), so from
+      // here it's treated exactly like a replacement file — same as
+      // editImageMedia() — not a separate metadata update. `crop` is reset
+      // to null since the framing is now physically baked into the pixels;
+      // no CSS overlay is needed (or wanted) on top of it.
+      const ext = result.extension || '.mp4';
+      const base = (m.originalName || 'video').replace(/\.[^.]+$/, '');
+      const file = new File([result.blob], base + ext, { type: result.mimeType });
+      const newUrl = URL.createObjectURL(file);
+      if (m.url.indexOf('blob:') === 0) URL.revokeObjectURL(m.url);
       this.setState({
-        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId ? { ...mi, crop: result, cropTouched: true } : mi)),
+        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId
+          ? { ...mi, url: newUrl, originalName: file.name, pendingFile: file, crop: null, cropTouched: false }
+          : mi)),
         mediaDirty: true,
       });
     } catch (err) {
-      this.setState({ mediaError: err.message || 'Failed to update video framing.' });
+      this.setState({ mediaError: err.message || 'Failed to crop video.' });
     }
   }
 

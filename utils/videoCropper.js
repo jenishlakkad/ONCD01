@@ -2,14 +2,24 @@
 // aspect-ratio window, using the exact same interaction model as
 // utils/imageCropper.js (drag to pan, scroll/pinch to zoom, aspect presets).
 //
-// Unlike the image cropper, this can't cheaply re-encode a new video file in
-// the browser, so instead of resolving a Blob it resolves a small
-// { x, y, scale, aspect } framing descriptor. The caller PUTs that to the
-// media's /crop endpoint; every place the video is displayed then applies it
-// via a CSS transform (see product-media.js and the product-detail thumbnail
-// strips). The original file and its audio are never touched or re-uploaded
-// — this is a non-destructive "how it's framed on screen" setting, not a
-// permanent crop of the source video.
+// Clicking Apply DESTRUCTIVELY crops the video: utils/videoCropExport.js
+// re-encodes exactly the selected pan/zoom/aspect window as a new, smaller
+// video file via canvas + MediaRecorder (there's no in-browser ffmpeg, and
+// this app has no server-side transcoding pipeline), and this module
+// resolves that Blob alongside the crop descriptor. The caller (see
+// AdminProducts.dc.html's editVideoMedia()) treats it exactly like a
+// replacement file — same as editing a photo — so it flows through the
+// existing upload/replace path, and the OLD, larger file is deleted once
+// the new one is saved. Nothing outside the selected window is kept.
+//
+// A previously-cropped video that's opened here again is re-cropped FROM
+// its current (already-cropped) state — there is no hidden "original" kept
+// around to revert to, on purpose (that's the whole point: only the
+// selected region is ever stored). Picking "Original" and clicking Apply on
+// a video that was never cropped, or re-opening one that already was, is
+// therefore a no-op (nothing to re-encode) rather than a "restore" action.
+import { exportCroppedVideo, isVideoCropExportSupported } from './videoCropExport.js';
+
 const ASPECTS = [
   { key: 'original', label: 'Original', ratio: null },
   { key: 'square', label: 'Square', ratio: 1 },
@@ -46,6 +56,14 @@ function injectStyle() {
       font-size:13px;cursor:pointer}
     .vic-btn.primary{background:#201f1d;color:#fff;border-color:#201f1d}
     .vic-btn.ghost{border-color:transparent;color:#8a6a1f}
+    .vic-btn:disabled{opacity:.5;cursor:default}
+    .vic-progress{display:none;margin-top:12px}
+    .vic-progress[data-active]{display:block}
+    .vic-progress-label{font-size:11.5px;opacity:.7;text-align:center;margin-bottom:6px}
+    .vic-progress-track{height:6px;border-radius:999px;background:#ece8e2;overflow:hidden}
+    .vic-progress-fill{height:100%;width:0%;background:#201f1d;transition:width .15s ease}
+    .vic-error{display:none;font-size:12px;color:#a13b2b;margin-top:10px;text-align:center}
+    .vic-error[data-active]{display:block}
   `;
   document.head.appendChild(s);
 }
@@ -59,9 +77,10 @@ const clampS = (s) => Math.max(1, Math.min(S_MAX, s));
  *   video being framed for the first time) — falls back to "original" (the
  *   first ASPECTS entry) when omitted. Ignored once initialCrop is present;
  *   re-opening an already-framed video always shows what was actually saved.
- * @returns {Promise<{x:number,y:number,scale:number,aspect:string}|null|undefined>}
- *   the new framing to save, `null` if the admin cleared it back to Original,
- *   or `undefined` if the admin cancelled (caller should make no API call).
+ * @returns {Promise<{blob:Blob, mimeType:string, extension:string, crop:{x:number,y:number,scale:number,aspect:string}}|undefined>}
+ *   the newly-cropped video file to save, or `undefined` if the admin
+ *   cancelled / picked "Original" with nothing to re-encode (caller should
+ *   make no API call either way).
  */
 export function openVideoCropper(url, opts) {
   opts = opts || {};
@@ -92,9 +111,14 @@ function mount(video, opts, resolve) {
     '  <div class="vic-sub">' + (opts.subtitle || '') + '</div>' +
     '  <div class="vic-presets"></div>' +
     '  <div class="vic-window"></div>' +
-    '  <div class="vic-hint">Drag to reposition &middot; scroll or pinch to zoom &middot; plays on loop while you frame it</div>' +
+    '  <div class="vic-hint" data-hint>Drag to reposition &middot; scroll or pinch to zoom &middot; plays on loop while you frame it</div>' +
+    '  <div class="vic-progress" data-progress>' +
+    '    <div class="vic-progress-label" data-progress-label>Processing video&hellip; please don\'t close this window</div>' +
+    '    <div class="vic-progress-track"><div class="vic-progress-fill" data-progress-fill></div></div>' +
+    '  </div>' +
+    '  <div class="vic-error" data-error></div>' +
     '  <div class="vic-actions">' +
-    '    <button type="button" class="vic-btn ghost" data-act="reset">Reset to Original</button>' +
+    '    <button type="button" class="vic-btn ghost" data-act="reset">Reset Selection</button>' +
     '    <div class="vic-actions-right">' +
     '      <button type="button" class="vic-btn" data-act="cancel">Cancel</button>' +
     '      <button type="button" class="vic-btn primary" data-act="apply">Apply</button>' +
@@ -155,7 +179,9 @@ function mount(video, opts, resolve) {
   presetsEl.innerHTML = ASPECTS.map((a) =>
     `<button type="button" class="vic-preset" data-key="${a.key}"${a === aspect ? ' data-active' : ''}>${a.label}</button>`
   ).join('');
+  let exporting = false;
   presetsEl.addEventListener('click', (e) => {
+    if (exporting) return;
     const btn = e.target.closest('.vic-preset');
     if (!btn) return;
     aspect = ASPECTS.find((a) => a.key === btn.getAttribute('data-key')) || ASPECTS[0];
@@ -165,7 +191,7 @@ function mount(video, opts, resolve) {
 
   let drag = null;
   windowEl.addEventListener('pointerdown', (e) => {
-    if (!aspect.ratio) return;
+    if (exporting || !aspect.ratio) return;
     drag = { px: e.clientX, py: e.clientY, x: view.x, y: view.y };
     windowEl.setPointerCapture(e.pointerId);
     windowEl.setAttribute('data-panning', '');
@@ -180,7 +206,7 @@ function mount(video, opts, resolve) {
   windowEl.addEventListener('pointerup', endDrag);
   windowEl.addEventListener('pointercancel', endDrag);
   windowEl.addEventListener('wheel', (e) => {
-    if (!aspect.ratio) return;
+    if (exporting || !aspect.ratio) return;
     e.preventDefault();
     view.s = clampS(view.s * Math.pow(1.0015, -e.deltaY));
     apply();
@@ -195,12 +221,63 @@ function mount(video, opts, resolve) {
 
   function finish(result) { cleanup(); resolve(result); }
 
-  backdrop.querySelector('[data-act="cancel"]').addEventListener('click', () => finish(undefined));
-  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) finish(undefined); });
-  backdrop.querySelector('[data-act="reset"]').addEventListener('click', () => finish(null));
-  backdrop.querySelector('[data-act="apply"]').addEventListener('click', () => {
-    if (!aspect.ratio) { finish(null); return; }
-    finish({ x: view.x, y: view.y, scale: view.s, aspect: aspect.key });
+  const hintEl = backdrop.querySelector('[data-hint]');
+  const progressEl = backdrop.querySelector('[data-progress]');
+  const progressFillEl = backdrop.querySelector('[data-progress-fill]');
+  const errorEl = backdrop.querySelector('[data-error]');
+  const cancelBtn = backdrop.querySelector('[data-act="cancel"]');
+  const resetBtn = backdrop.querySelector('[data-act="reset"]');
+  const applyBtn = backdrop.querySelector('[data-act="apply"]');
+
+  function setExporting(on) {
+    exporting = on;
+    applyBtn.disabled = on;
+    cancelBtn.disabled = on;
+    resetBtn.disabled = on;
+    hintEl.style.display = on ? 'none' : '';
+    progressEl.toggleAttribute('data-active', on);
+    if (on) errorEl.removeAttribute('data-active');
+  }
+  function showError(message) {
+    errorEl.textContent = message;
+    errorEl.setAttribute('data-active', '');
+  }
+
+  if (!isVideoCropExportSupported()) {
+    applyBtn.disabled = true;
+    showError("This browser can't export cropped video (try Chrome or Edge). You can still Cancel.");
+  }
+
+  cancelBtn.addEventListener('click', () => { if (!exporting) finish(undefined); });
+  backdrop.addEventListener('click', (e) => { if (!exporting && e.target === backdrop) finish(undefined); });
+  resetBtn.addEventListener('click', () => {
+    if (exporting) return;
+    aspect = ASPECTS[0];
+    view = { s: 1, x: 0, y: 0 };
+    [...presetsEl.children].forEach((c) => c.toggleAttribute('data-active', c.getAttribute('data-key') === aspect.key));
+    errorEl.removeAttribute('data-active');
+    layoutWindow(false);
+  });
+  applyBtn.addEventListener('click', async () => {
+    if (exporting) return;
+    // "Original" (no aspect crop) means there's nothing to re-encode — a
+    // previously-cropped video's already-baked-in pixels can't be restored
+    // either way, so this is always a no-op rather than a destructive
+    // "revert" that would need a copy of an original this app never keeps.
+    if (!aspect.ratio) { finish(undefined); return; }
+    if (!isVideoCropExportSupported()) return;
+    errorEl.removeAttribute('data-active');
+    setExporting(true);
+    try {
+      const crop = { x: view.x, y: view.y, scale: view.s, aspect: aspect.key };
+      const { blob, mimeType, extension } = await exportCroppedVideo(video, crop, aspect, (fraction) => {
+        progressFillEl.style.width = Math.round(fraction * 100) + '%';
+      });
+      finish({ blob, mimeType, extension, crop });
+    } catch (err) {
+      setExporting(false);
+      showError((err && err.message) || 'Failed to crop the video. Please try again.');
+    }
   });
 
   layoutWindow(!!initial);

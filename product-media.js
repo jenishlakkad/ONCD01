@@ -28,6 +28,28 @@
   function firstImage(media) { return media.find((m) => m && m.kind === 'image' && m.url) || null; }
   function firstVideo(media) { return media.find((m) => m && m.kind === 'video' && m.url) || null; }
 
+  // Shared across every <product-media> on the page — at most ONE card's
+  // hover/touch preview video may be active at a time. Desktop mouse hover
+  // is naturally exclusive already (only one element can be :hover'd), but
+  // touch has no such guarantee: pointerleave for a touch pointer that just
+  // lifts off (rather than dragging away) is not reliably fired by every
+  // mobile browser, so without this, tapping card B would leave card A's
+  // video playing/paused-mid-clip in the background. Centralizing it here
+  // (rather than a per-card boolean) is what makes "only one active video"
+  // an invariant instead of something each card has to get right on its own.
+  let activeMedia = null;
+
+  // Tapping/clicking ANYWHERE that isn't the currently active card (not just
+  // tapping a different card, which _startHoverVideo() already handles, but
+  // e.g. tapping blank page area) also deactivates it. Registered once, at
+  // module load, on the bubble phase — pointerdown bubbles to document from
+  // every card's shadow-DOM content (retargeted to the <product-media> host
+  // itself per standard shadow-DOM event retargeting), so this one listener
+  // covers every card without each instance adding its own.
+  document.addEventListener('pointerdown', (e) => {
+    if (activeMedia && e.target !== activeMedia) activeMedia._stopHoverVideo();
+  });
+
   const HOST_STYLE =
     ':host{display:block;position:relative;width:100%;height:100%;aspect-ratio:3/2;' +
     '  overflow:hidden;background:rgba(127,127,127,.08);' +
@@ -143,6 +165,11 @@
       if (!this.hasAttribute('hover-video')) return;
       const v = firstVideo(this._media);
       if (!v) return;
+      // Only one card's video may be active at a time — stop whichever card
+      // (if any) held that spot before this one takes it. A no-op when this
+      // card is already the active one (e.g. a stray extra pointerenter).
+      if (activeMedia && activeMedia !== this) activeMedia._stopHoverVideo();
+      activeMedia = this;
       if (this._hoverVid.src !== v.url) this._hoverVid.src = v.url;
       if (this._hoverCropCleanup) this._hoverCropCleanup();
       this._hoverCropCleanup = null;
@@ -150,12 +177,19 @@
         this._hoverCropCleanup = applyVideoCrop(this._hoverVid, v.crop || null);
       });
       this.setAttribute('data-hovering', '');
+      // Always restart from the beginning — without this, a video paused
+      // mid-playback (on a previous hover) resumes from that same stale
+      // position instead of the start, which is the exact "diamond appears
+      // lower in the frame on the second hover" bug this fixes.
+      this._hoverVid.currentTime = 0;
       const p = this._hoverVid.play();
       if (p && p.catch) p.catch(() => {});
     }
     _stopHoverVideo() {
+      if (activeMedia === this) activeMedia = null;
       this.removeAttribute('data-hovering');
       this._hoverVid.pause();
+      this._hoverVid.currentTime = 0;
     }
 
     _handleClick(e) {
