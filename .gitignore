@@ -8,7 +8,23 @@ node_modules/
 *.log
 server-out.log
 server-err.log
+.server-*.log
 
-# SQLite temporary files
+# SQLite database and temporary files
+data/*.db
 data/*.db-shm
 data/*.db-wal
+
+# Temporary migration / audit files
+migration/
+audit-r2-*.js
+recovery-matcher-dry-run.js
+check-db.js
+migrate-to-postgres.js
+
+# Temporary test scripts
+test-postgres-*.js
+test-r2-*.js
+
+test-postgres.js
+test-jewelry-save-fix.js

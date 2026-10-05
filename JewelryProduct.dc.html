@@ -15,8 +15,24 @@
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
-.thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;background:var(--color-surface);}
-.spec-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:14px;}
+.thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;background:var(--color-surface);transition:outline-color .15s ease;}
+.thumb:hover{outline:2px solid var(--color-accent-300);outline-offset:-2px;}
+.spec-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:14px;}
+.spec-row:last-child{border-bottom:none;}
+.metal-swatch{display:flex;align-items:center;gap:8px;padding:7px 14px 7px 7px;border-radius:999px;background:var(--color-bg);cursor:pointer;transition:border-color .15s ease,transform .1s ease;}
+.metal-swatch:hover{transform:translateY(-1px);}
+/* Was a bare "♥" text glyph inside a near-invisible btn-ghost — easy to miss
+   next to the two solid action buttons. Gives it the same clearly-tappable,
+   circular treatment the listing cards' save button already uses. */
+.pdp-save-btn{
+  width:48px;height:48px;border-radius:999px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--color-bg);border:1px solid var(--color-divider);
+  color:var(--color-text);font-size:19px;line-height:1;cursor:pointer;
+  transition:transform .15s ease,background .15s ease,border-color .15s ease,color .15s ease;
+}
+.pdp-save-btn:hover{transform:scale(1.08);border-color:var(--color-accent-300);}
+.pdp-save-btn.saved{color:#b3273e;border-color:#f0c3cb;background:#fdf2f3;}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
 </style>
@@ -121,61 +137,83 @@ a:hover{color:var(--color-accent-700)}
       <h1 style="font-size:34px;margin-top:6px;">{{ title }}</h1>
       <p style="opacity:.7;font-size:14px;margin-top:6px;">{{ subtitle }}</p>
 
-      <h5 style="margin-top:28px;color:var(--color-accent-700);">Jewelry Details</h5>
-      <div style="margin:12px 0;">
-        <sc-if value="{{ hasSubcategory }}" hint-placeholder-val="{{ false }}">
-          <div class="spec-row"><span style="opacity:.6;">Piece Type</span><span>{{ subcategoryName }}</span></div>
-        </sc-if>
-        <div class="spec-row"><span style="opacity:.6;">Metal</span><span>{{ metal }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Gold Purity</span><span>{{ goldPurity }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Gold Color</span><span>{{ goldColor }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Gold Weight</span><span>{{ goldWeight }}</span></div>
-        <div class="spec-row">
-          <span style="opacity:.6;">Jewelry Certificate</span>
-          <span>{{ jewelryCertLabel }}
-            <sc-if value="{{ hasJewelryCertLink }}" hint-placeholder-val="{{ false }}">
-              <a href="{{ certLinkJewelry }}" target="_blank" style="margin-left:6px;">View →</a>
-            </sc-if>
-          </span>
-        </div>
-      </div>
-
-      <h5 style="margin-top:24px;color:var(--color-accent-700);">Center Stone Details</h5>
-      <div style="margin:12px 0;">
-        <div class="spec-row"><span style="opacity:.6;">Weight</span><span>{{ stoneWeight }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Color</span><span>{{ stoneColor }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Shape</span><span>{{ stoneShape }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Clarity</span><span>{{ stoneClarity }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Measurements</span><span>{{ stoneMeasurements }}</span></div>
-      </div>
-
-      <sc-if value="{{ priceVisible }}" hint-placeholder-val="{{ false }}">
-        <div class="spec-row"><span style="opacity:.6;">Total Price</span><span>{{ totalPriceLabel }}</span></div>
-      </sc-if>
-      <sc-if value="{{ pricesLocked }}" hint-placeholder-val="{{ true }}">
-        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:12px;background:var(--color-surface);margin-top:12px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
-          <div style="font-size:13px;">
-            <sc-if value="{{ isPriceCtaLogin }}" hint-placeholder-val="{{ false }}">
-              <strong>{{ priceLabel }}</strong> — <a href="Login.dc.html">Log in</a> or <a href="Register.dc.html">register</a> to view pricing.
-            </sc-if>
-            <sc-if value="{{ isPriceCtaPending }}" hint-placeholder-val="{{ false }}">
-              <strong>{{ priceLabel }}</strong> — your account doesn't currently have pricing access. <a href="Contact.dc.html">Contact us</a> if you believe this is a mistake.
-            </sc-if>
-            <sc-if value="{{ isPriceCtaContact }}" hint-placeholder-val="{{ false }}">
-              <strong>{{ priceLabel }}</strong> — <a href="Contact.dc.html">contact our sales team</a> for current pricing.
-            </sc-if>
-            <sc-if value="{{ isPriceCtaNone }}" hint-placeholder-val="{{ true }}">
-              <strong>{{ priceLabel }}</strong>
-            </sc-if>
+      <sc-if value="{{ hasMetalSwatches }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:22px;">
+          <h6 style="opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Metal: {{ activeMetalLabel }}</h6>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <sc-for list="{{ metalSwatches }}" as="ms" hint-placeholder-count="3">
+              <button class="metal-swatch" onClick="{{ ms.select }}" title="{{ ms.metal }}" style="border:{{ ms.borderStyle }};">
+                <span style="width:20px;height:20px;border-radius:50%;background:{{ ms.dotColor }};border:1px solid rgba(0,0,0,.15);display:block;"></span>
+                <span style="font-size:12.5px;font-weight:500;">{{ ms.metal }}</span>
+              </button>
+            </sc-for>
           </div>
         </div>
       </sc-if>
 
-      <div style="display:flex;gap:14px;margin-top:24px;">
-        <button onClick="{{ addToCartFn }}" class="btn {{ cartBtnClass }}" style="padding:14px 28px;">{{ cartBtnLabel }}</button>
-        <button onClick="{{ openInquireNowFn }}" class="btn btn-primary" style="padding:14px 28px;">Inquire Now</button>
-        <button onClick="{{ toggleSaveFn }}" class="btn btn-ghost" style="{{ saveStyle }}padding:14px 16px;" aria-label="Save item" title="Save for later">♥</button>
+      <!-- Price + actions sit right under what-it-is/which-metal, not buried
+           below two full spec sections — what a shopper looks for first. -->
+      <div style="margin-top:24px;">
+        <sc-if value="{{ priceVisible }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:var(--font-heading);font-size:34px;font-weight:600;color:var(--color-accent-800);line-height:1.1;">{{ totalPriceLabel }}</div>
+        </sc-if>
+        <sc-if value="{{ pricesLocked }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:12px;background:var(--color-surface);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
+            <div style="font-size:13px;">
+              <sc-if value="{{ isPriceCtaLogin }}" hint-placeholder-val="{{ false }}">
+                <strong>{{ priceLabel }}</strong> — <a href="Login.dc.html">Log in</a> or <a href="Register.dc.html">register</a> to view pricing.
+              </sc-if>
+              <sc-if value="{{ isPriceCtaPending }}" hint-placeholder-val="{{ false }}">
+                <strong>{{ priceLabel }}</strong> — your account doesn't currently have pricing access. <a href="Contact.dc.html">Contact us</a> if you believe this is a mistake.
+              </sc-if>
+              <sc-if value="{{ isPriceCtaContact }}" hint-placeholder-val="{{ false }}">
+                <strong>{{ priceLabel }}</strong> — <a href="Contact.dc.html">contact our sales team</a> for current pricing.
+              </sc-if>
+              <sc-if value="{{ isPriceCtaNone }}" hint-placeholder-val="{{ true }}">
+                <strong>{{ priceLabel }}</strong>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap;">
+        <button onClick="{{ addToCartFn }}" class="btn {{ cartBtnClass }}" style="padding:14px 24px;flex:1;min-width:140px;">{{ cartBtnLabel }}</button>
+        <button onClick="{{ openInquireNowFn }}" class="btn btn-primary" style="padding:14px 24px;flex:1;min-width:140px;">Inquire Now</button>
+        <button onClick="{{ toggleSaveFn }}" class="pdp-save-btn {{ savedClass }}" aria-label="Save item" title="Save for later">{{ heartGlyph }}</button>
+      </div>
+
+      <div class="card" style="margin-top:32px;">
+        <h5 style="color:var(--color-accent-700);margin:0;">Jewelry Details</h5>
+        <div style="margin-top:8px;">
+          <sc-if value="{{ hasSubcategory }}" hint-placeholder-val="{{ false }}">
+            <div class="spec-row"><span style="opacity:.6;">Piece Type</span><span>{{ subcategoryName }}</span></div>
+          </sc-if>
+          <div class="spec-row"><span style="opacity:.6;">Metal</span><span>{{ metal }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Gold Purity</span><span>{{ goldPurity }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Gold Color</span><span>{{ goldColor }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Gold Weight</span><span>{{ goldWeight }}</span></div>
+          <div class="spec-row">
+            <span style="opacity:.6;">Jewelry Certificate</span>
+            <span>{{ jewelryCertLabel }}
+              <sc-if value="{{ hasJewelryCertLink }}" hint-placeholder-val="{{ false }}">
+                <a href="{{ certLinkJewelry }}" target="_blank" style="margin-left:6px;">View →</a>
+              </sc-if>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h5 style="color:var(--color-accent-700);margin:0;">Center Stone Details</h5>
+        <div style="margin-top:8px;">
+          <div class="spec-row"><span style="opacity:.6;">Weight</span><span>{{ stoneWeight }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Color</span><span>{{ stoneColor }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Shape</span><span>{{ stoneShape }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Clarity</span><span>{{ stoneClarity }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Measurements</span><span>{{ stoneMeasurements }}</span></div>
+        </div>
       </div>
     </div>
   </section>
@@ -349,6 +387,7 @@ a:hover{color:var(--color-accent-700)}
 class Component extends DCLogic {
   state = {
     cartOpen: false, cartItems: [], loading: true, notFound: false, product: null, activeIndex: 0,
+    selectedVariantMetal: null,
     showDiamonds: true, showJewelry: true, showGemstones: true,
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(), savedSkus: new Set(),
     accountMenuOpen: false,
@@ -387,10 +426,18 @@ class Component extends DCLogic {
       if (res.status === 404) { this.setState({ loading: false, notFound: true }); return; }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load.');
-      this.setState({ loading: false, product: json.data });
+      const variants = json.data.variants || [];
+      this.setState({ loading: false, product: json.data, selectedVariantMetal: variants.length ? variants[0].metal : null });
     } catch {
       this.setState({ loading: false, notFound: true });
     }
+  }
+
+  // Pure client-side — no network call. All of this product's variations
+  // (price + which photo) already arrived with the initial fetch, since
+  // they're sub-rows of this ONE product now, not separate linked products.
+  selectVariant(metal) {
+    this.setState({ selectedVariantMetal: metal });
   }
   componentWillUnmount() {
     window.removeEventListener('aurum-cart-change', this._onChange);
@@ -455,7 +502,28 @@ class Component extends DCLogic {
     if (!p) return base;
 
     const media = p.media || [];
-    const activeIndex = Math.max(0, Math.min(this.state.activeIndex, Math.max(media.length - 1, 0)));
+    const variants = p.variants || [];
+    const activeVariant = variants.find((v) => v.metal === this.state.selectedVariantMetal) || variants[0] || null;
+    const effectivePrice = activeVariant ? activeVariant.price : p.totalPrice;
+
+    const METAL_SWATCH_COLORS = { 'Yellow Gold': '#d4af37', 'Rose Gold': '#b76e79', 'White Gold': '#f2f0ea', 'Silver': '#c7c7c7' };
+    const metalSwatches = variants.map((v) => ({
+      metal: v.metal,
+      dotColor: METAL_SWATCH_COLORS[v.metal] || '#999',
+      borderStyle: v.metal === (activeVariant && activeVariant.metal) ? '2px solid var(--color-accent-700)' : '1px solid var(--color-divider)',
+      select: () => this.selectVariant(v.metal),
+    }));
+
+    let activeIndex = Math.max(0, Math.min(this.state.activeIndex, Math.max(media.length - 1, 0)));
+    // The selected variant's own photo takes over the main viewer — jumps
+    // the SAME activeIndex thumbnails already use, nothing hidden, nothing
+    // re-fetched. Falls back to the normal cover when a variant has no
+    // photo of its own assigned (coverMediaId null) or that photo was since
+    // removed (server already nulls a deleted media's coverMediaId).
+    if (activeVariant && activeVariant.coverMediaId) {
+      const idx = media.findIndex((m) => m.id === activeVariant.coverMediaId);
+      if (idx >= 0) activeIndex = idx;
+    }
     const thumbs = media.map((m, i) => ({
       url: m.url, isImage: m.kind === 'image', isVideo: m.kind === 'video',
       cropJson: JSON.stringify(m.crop || null),
@@ -502,29 +570,42 @@ class Component extends DCLogic {
       isPriceCtaPending: p.priceCta === 'pending',
       isPriceCtaContact: p.priceCta === 'contact',
       isPriceCtaNone: !p.priceCta,
-      totalPriceLabel: p.totalPrice != null ? '$' + Number(p.totalPrice).toLocaleString() : '—',
+      totalPriceLabel: effectivePrice != null ? '$' + Number(effectivePrice).toLocaleString() : '—',
+      hasMetalSwatches: metalSwatches.length > 1,
+      metalSwatches,
+      activeMetalLabel: activeVariant ? activeVariant.metal : '',
       related,
       relRef: this.relRef,
       relPrev: () => this.relScroll(-1),
       relNext: () => this.relScroll(1),
       addToCartFn: () => {
         if (!cart) return;
+        // Includes which metal was chosen in the cart line's own name — the
+        // cart/inquiry only ever tracks one SKU, so this is the one place
+        // that records which variation the shopper actually meant.
+        const cartName = activeVariant ? `${title} — ${activeVariant.metal}` : title;
         if (cart.getCart().some((i) => i.sku === p.sku)) {
           cart.removeFromCart(p.sku);
           this.refreshCart();
         } else {
-          cart.addToCart({ sku: p.sku, name: title, priceLabel: p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : p.priceLabel, qty: 1, product: p });
+          cart.addToCart({ sku: p.sku, name: cartName, priceLabel: p.priceVisible ? '$' + Number(effectivePrice).toLocaleString() : p.priceLabel, qty: 1, product: p });
           this.refreshCart();
           this.setState({ cartOpen: true });
         }
       },
       cartBtnClass: this.state.cartItems.some((i) => i.sku === p.sku) ? 'btn-added' : 'btn-secondary',
       cartBtnLabel: this.state.cartItems.some((i) => i.sku === p.sku) ? '✓ In Cart' : 'Add to Cart',
-      saveStyle: this.state.savedSkus.has(p.sku) ? 'color:#b3273e;' : 'color:var(--color-text);opacity:.5;',
+      savedClass: this.state.savedSkus.has(p.sku) ? 'saved' : '',
+      heartGlyph: this.state.savedSkus.has(p.sku) ? '♥' : '♡',
       toggleSaveFn: () => this.toggleSaveSku(
-        p.sku, title, p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : p.priceLabel, 'jewelry'
+        p.sku, activeVariant ? `${title} — ${activeVariant.metal}` : title,
+        p.priceVisible ? '$' + Number(effectivePrice).toLocaleString() : p.priceLabel, 'jewelry'
       ),
-      openInquireNowFn: () => this.openInquiry(p),
+      // Overrides totalPrice with whichever variant is currently selected —
+      // utils/inquiryItem.js (shared with other pages) reads p.totalPrice
+      // directly, so this is the minimal way to get the right price into
+      // the inquiry popup without changing that shared module.
+      openInquireNowFn: () => this.openInquiry({ ...p, totalPrice: effectivePrice }),
     };
   }
 

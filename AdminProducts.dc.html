@@ -340,6 +340,11 @@ a:hover{color:var(--color-accent-700)}
                 </select>
               </div>
               <div class="field"><label>Jewelry Certificate #</label><input class="input" value="{{ form.certificate_number }}" onChange="{{ fh.certificate_number }}"/></div>
+              <div class="field" style="grid-column:1/-1;">
+                <label>Certificate Verify URL</label>
+                <input class="input" value="{{ form.certificate_website }}" onChange="{{ fh.certificate_website }}" placeholder="https://www.gia.edu/report-check?reportno="/>
+                <p style="font-size:11px;opacity:.6;margin:6px 0 0;">Paste the lab's verify URL ending right where the report number should go — the Certificate # above is appended to it automatically. E.g. GIA: https://www.gia.edu/report-check?reportno= · IGI: https://www.igi.org/Verify-Your-Report/?r=</p>
+              </div>
             </div>
             <h5 style="margin-top:18px;color:var(--color-accent-700);">Center Stone</h5>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
@@ -361,12 +366,37 @@ a:hover{color:var(--color-accent-700)}
               <div class="field"><label>Stone Clarity</label><input class="input" value="{{ form.clarity }}" onChange="{{ fh.clarity }}"/></div>
               <div class="field" style="grid-column:1/-1;"><label>Stone Measurements</label><input class="input" value="{{ form.measurements }}" onChange="{{ fh.measurements }}"/></div>
               <div class="field" style="grid-column:1/-1;">
-                <label>Stone Certificate Website</label>
-                <input class="input" value="{{ form.certificate_website }}" onChange="{{ fh.certificate_website }}" placeholder="https://www.gia.edu/report-check?reportno="/>
-                <p style="font-size:11px;opacity:.6;margin:6px 0 0;">Paste the lab's verify URL ending right where the report number should go — the Certificate # above is appended to it automatically. E.g. GIA: https://www.gia.edu/report-check?reportno= · IGI: https://www.igi.org/Verify-Your-Report/?r=</p>
+                <label>Total Price</label>
+                <input class="input" value="{{ form.total_price }}" onChange="{{ fh.total_price }}"/>
+                <p style="font-size:11px;opacity:.55;margin:4px 0 0;">Used as-is if this piece has no metal variations below. If it does, each variation's own price is what customers actually see.</p>
               </div>
-              <div class="field" style="grid-column:1/-1;"><label>Total Price</label><input class="input" value="{{ form.total_price }}" onChange="{{ fh.total_price }}"/></div>
             </div>
+          </sc-if>
+
+          <sc-if value="{{ isJewelryForm }}" hint-placeholder-val="{{ false }}">
+            <h5 style="margin-top:18px;color:var(--color-accent-700);">Metal Variations</h5>
+            <p style="font-size:11px;opacity:.55;margin:4px 0 10px;">Offer this piece in more than one metal — tick each metal you offer, set its own price, and pick which uploaded photo represents it. Leave all unticked if this piece only comes in one metal.</p>
+            <sc-for list="{{ variantRows }}" as="vr" hint-placeholder-count="4">
+              <div style="border:1px solid var(--color-divider);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                  <input type="checkbox" checked="{{ vr.enabled }}" onChange="{{ vr.toggle }}"/> {{ vr.metal }}
+                </label>
+                <sc-if value="{{ vr.enabled }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+                    <div class="field"><label>Price</label><input class="input" value="{{ vr.price }}" onChange="{{ vr.setPrice }}"/></div>
+                    <div class="field">
+                      <label>Cover Photo</label>
+                      <select class="input" value="{{ vr.coverClientId }}" onChange="{{ vr.setCover }}">
+                        <option value="">— Use default cover —</option>
+                        <sc-for list="{{ vr.photoOptions }}" as="po" hint-placeholder-count="3">
+                          <option value="{{ po.clientId }}">{{ po.label }}</option>
+                        </sc-for>
+                      </select>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
           </sc-if>
 
           <sc-if value="{{ isGemstoneForm }}" hint-placeholder-val="{{ true }}">
@@ -466,6 +496,9 @@ class Component extends DCLogic {
   }
   get fieldKeys() { return Object.keys(this.emptyForm); }
 
+  get metalOptions() { return ['Yellow Gold', 'Rose Gold', 'White Gold', 'Silver']; }
+  emptyVariantRows() { return this.metalOptions.map((metal) => ({ metal, enabled: false, price: '', coverClientId: '' })); }
+
   state = {
     admin: null, activeType: 'diamond',
     products: [], errorMessage: '',
@@ -477,6 +510,7 @@ class Component extends DCLogic {
     formDirty: false, mediaDirty: false,
     categoryOptions: [], subcategoryOptions: [],
     shapeOptions: [], colorOptions: [], certOptions: [],
+    variantRows: [],
     mediaItems: [], draggingMediaId: null, mediaError: '', mediaBusy: false,
     importBusy: false, importOpen: false, importResult: null,
     newContactCount: 0, globalPriceModeLabel: 'Site Default',
@@ -572,6 +606,7 @@ class Component extends DCLogic {
       dialogOpen: true, editingId: null, form: { ...this.emptyForm },
       formDirty: false, mediaDirty: false,
       dialogError: '', mediaError: '', mediaItems: [],
+      variantRows: this.emptyVariantRows(), hadVariantsOnOpen: false,
     });
     this.loadCategories(this.state.activeType);
   }
@@ -589,10 +624,19 @@ class Component extends DCLogic {
       total_price: p.totalPrice === null || p.totalPrice === undefined ? '' : String(p.totalPrice),
       price_visibility: p.priceVisibilityOverride || '',
     };
+    const mediaItems = this.mediaFromServer(p.media);
+    const variantByMetal = new Map((p.variants || []).map((v) => [v.metal, v]));
+    const variantRows = this.metalOptions.map((metal) => {
+      const v = variantByMetal.get(metal);
+      if (!v) return { metal, enabled: false, price: '', coverClientId: '' };
+      const coverItem = v.coverMediaId ? mediaItems.find((m) => m.serverId === v.coverMediaId) : null;
+      return { metal, enabled: true, price: String(v.price), coverClientId: coverItem ? coverItem.clientId : '' };
+    });
     this.setState({
       dialogOpen: true, editingId: p.id, form,
       formDirty: false, mediaDirty: false,
-      dialogError: '', mediaError: '', mediaItems: this.mediaFromServer(p.media),
+      dialogError: '', mediaError: '', mediaItems,
+      variantRows, hadVariantsOnOpen: (p.variants || []).length > 0,
     });
     this.loadCategories(p.type);
   }
@@ -669,6 +713,11 @@ class Component extends DCLogic {
         this.setState({ editingId: productId });
       }
 
+      // Default when media wasn't touched this save — the existing items'
+      // own clientId/serverId pairs are already accurate. Reassigned below
+      // to `working` (which has the freshly resolved serverIds for any
+      // newly-uploaded files) whenever media WAS touched.
+      let finalMediaItems = this.state.mediaItems.filter((m) => !m.pendingRemove);
       if (this.state.mediaDirty) {
         for (const m of this.state.mediaItems) {
           if (m.isExisting && m.pendingRemove) {
@@ -723,6 +772,35 @@ class Component extends DCLogic {
           });
           if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'Failed to save photo/video order.'); }
         }
+        finalMediaItems = working;
+      }
+
+      // Metal variations (price + which already-uploaded photo represents
+      // each metal) always send the WHOLE desired set — same "server
+      // reconciles" pattern as media reorder above — so unchecking a metal
+      // here is how you remove it, no separate delete action needed.
+      //
+      // Skipped entirely when there's nothing enabled AND this product
+      // never had any variants to begin with — the overwhelming majority of
+      // products never touch this feature at all, and this call has no
+      // business being a dependency of an ordinary single-metal save.
+      const variantsPayload = this.state.variantRows
+        .filter((vr) => vr.enabled)
+        .map((vr) => {
+          const clientIdToServerId = new Map(finalMediaItems.map((m) => [m.clientId, m.serverId]));
+          return {
+            metal: vr.metal,
+            price: Number(vr.price) || 0,
+            coverMediaId: vr.coverClientId ? (clientIdToServerId.get(vr.coverClientId) || null) : null,
+          };
+        });
+      if (activeType === 'jewelry' && (variantsPayload.length > 0 || this.state.hadVariantsOnOpen)) {
+        const vres = await fetch(`/api/admin/products/${productId}/variants`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ variants: variantsPayload }),
+        });
+        const vjson = await vres.json();
+        if (!vres.ok) throw new Error(vjson.error || 'Failed to save metal variations.');
       }
 
       this.revokeLocalMediaUrls();
@@ -736,6 +814,19 @@ class Component extends DCLogic {
         if (fresh) this.setState({ mediaItems: this.mediaFromServer(fresh.media), mediaDirty: false });
       }
     }
+  }
+
+  toggleVariantRow(metal) {
+    this.setState({
+      variantRows: this.state.variantRows.map((vr) => (vr.metal === metal ? { ...vr, enabled: !vr.enabled } : vr)),
+      formDirty: true,
+    });
+  }
+  setVariantPrice(metal, value) {
+    this.setState({ variantRows: this.state.variantRows.map((vr) => (vr.metal === metal ? { ...vr, price: value } : vr)), formDirty: true });
+  }
+  setVariantCover(metal, clientId) {
+    this.setState({ variantRows: this.state.variantRows.map((vr) => (vr.metal === metal ? { ...vr, coverClientId: clientId } : vr)), formDirty: true });
   }
 
   async toggleStatus(p) {
@@ -1140,6 +1231,15 @@ class Component extends DCLogic {
       tileOpacity: m.clientId === draggingId ? 0.9 : 1,
     }));
 
+    const photoOptions = mediaItems.map((m, i) => ({ clientId: m.clientId, label: m.originalName || ((m.kind === 'video' ? 'Video ' : 'Photo ') + (i + 1)) }));
+    const variantRows = this.state.variantRows.map((vr) => ({
+      ...vr,
+      toggle: () => this.toggleVariantRow(vr.metal),
+      setPrice: (e) => this.setVariantPrice(vr.metal, e.target.value),
+      setCover: (e) => this.setVariantCover(vr.metal, e.target.value),
+      photoOptions,
+    }));
+
     return {
       isDiamondTab: activeType === 'diamond', isJewelryTab: activeType === 'jewelry', isGemstoneTab: activeType === 'gemstone',
       selectDiamondTab: () => this.setState({ activeType: 'diamond', categoryFilter: 'All', selectedIds: new Set() }),
@@ -1212,6 +1312,7 @@ class Component extends DCLogic {
       subcategoryOptions: this.state.subcategoryOptions,
       hasMedia: mediaItems.length > 0,
       mediaItems,
+      variantRows,
       handleMediaSelect: (e) => this.handleMediaSelect(e),
       templateUrl: `/api/admin/products/import/${activeType}/template`,
       hasProductsInTab: typeProducts.length > 0,

@@ -11,6 +11,7 @@ const { serializeProduct } = require('../lib/serializeProduct');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
 const { stripVideoAudio } = require('../lib/stripVideoAudio');
+const { METAL_OPTIONS, getVariants } = require('../lib/productVariants');
 const { writeAudit } = require('../lib/auditPostgres');
 const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns } = require('../lib/excelImportPostgres');
 const env = require('../config/env');
@@ -64,12 +65,20 @@ async function mediaFor(productId) {
   return rows.map((r) => ({ ...r, id: Number(r.id), url: toPublicMediaUrl(r.url), crop: r.crop ? JSON.parse(r.crop) : null }));
 }
 async function fullProduct(row) {
-  const [category, subcategory, media] = await Promise.all([
+  const [category, subcategory, media, rawVariants] = await Promise.all([
     categoryRow(row.category_id),
     subcategoryRow(row.subcategory_id),
     mediaFor(row.id),
+    getVariants(row.id),
   ]);
-  return serializeProduct({ ...row, id: Number(row.id) }, { category, subcategory, media });
+  // Admin always sees the real price on every variant (no masking) — only
+  // the public route masks variant prices, same as it already does for the
+  // base product's totalPrice.
+  const variants = rawVariants.map((v) => ({
+    id: Number(v.id), metal: v.metal, price: Number(v.price),
+    coverMediaId: v.cover_media_id ? Number(v.cover_media_id) : null,
+  }));
+  return serializeProduct({ ...row, id: Number(row.id) }, { category, subcategory, media, variants });
 }
 
 router.get('/', asyncRoute(async (req, res) => {
@@ -312,6 +321,41 @@ router.put('/:id/media/:mediaId/crop', asyncRoute(async (req, res) => {
   await db.query('UPDATE product_media SET crop = $1 WHERE id = $2', [stored, media.id]);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Reframed video', target: product.sku, module: 'Products' });
   res.json({ data: { id: Number(media.id), crop: stored ? JSON.parse(stored) : null } });
+}));
+
+// Replaces this product's WHOLE set of metal variations in one call — the
+// admin form always sends the complete desired list (same "send the whole
+// state, let the server reconcile" pattern as media reorder above), rather
+// than separate add/update/remove calls per row.
+router.put('/:id/variants', asyncRoute(async (req, res) => {
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  if (!product) throw new ApiError(404, 'Product not found.');
+  const variants = Array.isArray((req.body || {}).variants) ? req.body.variants : [];
+
+  const seenMetals = new Set();
+  for (const v of variants) {
+    if (!METAL_OPTIONS.includes(v.metal)) throw new ApiError(400, `metal must be one of: ${METAL_OPTIONS.join(', ')}.`);
+    if (seenMetals.has(v.metal)) throw new ApiError(400, `Duplicate metal: ${v.metal}.`);
+    seenMetals.add(v.metal);
+    if (typeof v.price !== 'number' || !Number.isFinite(v.price) || v.price < 0) throw new ApiError(400, `${v.metal} needs a valid price.`);
+    if (v.coverMediaId !== null && v.coverMediaId !== undefined) {
+      const media = await db.get('SELECT id FROM product_media WHERE id = $1 AND product_id = $2', [v.coverMediaId, product.id]);
+      if (!media) throw new ApiError(400, `${v.metal}'s selected photo doesn't belong to this product.`);
+    }
+  }
+
+  await db.transaction(async (client) => {
+    await client.query('DELETE FROM product_variants WHERE product_id = $1', [product.id]);
+    for (const v of variants) {
+      await client.query(
+        'INSERT INTO product_variants (product_id, metal, price, cover_media_id) VALUES ($1, $2, $3, $4)',
+        [product.id, v.metal, v.price, v.coverMediaId || null]
+      );
+    }
+  });
+
+  await writeAudit({ actor: req.adminUser.full_name, action: 'Updated metal variations', target: product.sku, module: 'Products' });
+  res.json({ data: await fullProduct(await db.get('SELECT * FROM products WHERE id = $1', [product.id])) });
 }));
 
 router.get('/import/:type/template', asyncRoute(async (req, res) => {

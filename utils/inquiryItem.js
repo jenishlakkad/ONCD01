@@ -11,6 +11,9 @@ export function inquiryTitle(p) {
   if (p.type === 'jewelry') {
     return p.stoneName ? `${p.stoneName} Piece` : (p.category ? p.category.name : p.sku);
   }
+  if (p.type === 'gemstone') {
+    return p.stoneName || p.sku;
+  }
   return p.title || p.sku;
 }
 
@@ -33,6 +36,16 @@ export function inquirySpecRows(p) {
       ['Gold Weight', p.goldWeightGrams ? `${p.goldWeightGrams} g` : null],
       ['Center Stone', p.stoneName],
       ['Stone Weight', p.weightCarat ? `${p.weightCarat} ct` : null],
+    ].filter(([, value]) => value).map(([label, value]) => ({ label, value }));
+  }
+  if (p.type === 'gemstone') {
+    return [
+      ['Origin', p.origin],
+      ['Weight', p.weightCarat ? `${p.weightCarat} ct` : null],
+      ['Color', p.color],
+      ['Shape', p.shape],
+      ['Clarity', p.clarity],
+      ['Certificate', [p.certificateAuthority, p.certificateNumber].filter(Boolean).join(' ') || null],
     ].filter(([, value]) => value).map(([label, value]) => ({ label, value }));
   }
   return [];

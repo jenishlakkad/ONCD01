@@ -1,7 +1,7 @@
 // Maps a DB products row (snake_case) to the camelCase shape the frontend/API consumes.
 // Price masking (if any) must already have been applied to `row` before calling this
 // (see lib/priceVisibility.js) — this function only reshapes keys, it never decides visibility.
-function serializeProduct(row, { category, subcategory, media } = {}) {
+function serializeProduct(row, { category, subcategory, media, variants } = {}) {
   return {
     id: row.id,
     sku: row.sku,
@@ -11,6 +11,11 @@ function serializeProduct(row, { category, subcategory, media } = {}) {
     featured: !!row.featured,
     category: category ? { id: category.id, name: category.name } : null,
     subcategory: subcategory ? { id: subcategory.id, name: subcategory.name } : null,
+    // Metal variations of THIS product (Etsy-style: one listing, several
+    // price+photo options) — empty unless the admin has configured any.
+    // Each entry's price has already been through the same price-visibility
+    // masking as the product's own totalPrice by the time it gets here.
+    variants: variants || [],
     weightCarat: row.weight_carat,
     shape: row.shape,
     color: row.color,

@@ -4,6 +4,7 @@ const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const { applyPriceVisibility } = require('../lib/priceVisibility');
 const { serializeProduct } = require('../lib/serializeProduct');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
+const { getVariants } = require('../lib/productVariants');
 
 // PostgreSQL counterpart to server/routes/products.js (SQLite). Parallel/
 // isolated test route file only — NOT mounted in app.js.
@@ -134,11 +135,19 @@ router.get('/:sku', asyncRoute(async (req, res) => {
   );
   if (!row) throw new ApiError(404, 'Product not found.');
 
-  const [mode, viewer, pricesEnabled] = await Promise.all([getPriceMode(), getViewer(req), getPricesEnabled()]);
+  const [mode, viewer, pricesEnabled, rawVariants] = await Promise.all([getPriceMode(), getViewer(req), getPricesEnabled(), getVariants(row.id)]);
   const mainLookup = await buildEnrichmentLookup([row]);
   const masked = applyPriceVisibility(row, mode, viewer, pricesEnabled);
   const { category, subcategory, media } = mainLookup(row);
-  const product = serializeProduct({ ...masked, id: Number(row.id) }, { category, subcategory, media });
+  // Same visibility decision as the base product's own totalPrice (price
+  // visibility is a per-PRODUCT setting, not per-variant) — a variant's
+  // price is only ever included when masked.priceVisible is true.
+  const variants = rawVariants.map((v) => ({
+    id: Number(v.id), metal: v.metal,
+    price: masked.priceVisible ? Number(v.price) : null,
+    coverMediaId: v.cover_media_id ? Number(v.cover_media_id) : null,
+  }));
+  const product = serializeProduct({ ...masked, id: Number(row.id) }, { category, subcategory, media, variants });
 
   const relatedRows = await db.all(
     `SELECT p.* FROM products p JOIN product_types pt ON pt.key = p.type

@@ -15,8 +15,22 @@
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
-.thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;background:var(--color-surface);}
-.spec-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:14px;}
+.thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;background:var(--color-surface);transition:outline-color .15s ease;}
+.thumb:hover{outline:2px solid var(--color-accent-300);outline-offset:-2px;}
+.spec-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:14px;}
+.spec-row:last-child{border-bottom:none;}
+/* Was a bare "♥" text glyph inside a near-invisible btn-ghost — easy to miss
+   next to the two solid action buttons. Gives it the same clearly-tappable,
+   circular treatment the listing cards' save button already uses. */
+.pdp-save-btn{
+  width:48px;height:48px;border-radius:999px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--color-bg);border:1px solid var(--color-divider);
+  color:var(--color-text);font-size:19px;line-height:1;cursor:pointer;
+  transition:transform .15s ease,background .15s ease,border-color .15s ease,color .15s ease;
+}
+.pdp-save-btn:hover{transform:scale(1.08);border-color:var(--color-accent-300);}
+.pdp-save-btn.saved{color:#b3273e;border-color:#f0c3cb;background:#fdf2f3;}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
 </style>
@@ -121,56 +135,60 @@ a:hover{color:var(--color-accent-700)}
       <h1 style="font-size:34px;margin-top:6px;">{{ title }}</h1>
       <p style="opacity:.7;font-size:14px;margin-top:6px;">{{ subtitle }}</p>
 
-      <div style="margin:24px 0;">
-        <div class="spec-row"><span style="opacity:.6;">Weight (Carat)</span><span>{{ weightCarat }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Shape</span><span>{{ shape }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Color</span><span>{{ color }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Clarity</span><span>{{ clarity }}</span></div>
-        <div class="spec-row"><span style="opacity:.6;">Measurements</span><span>{{ measurements }}</span></div>
-        <div class="spec-row">
-          <span style="opacity:.6;">Certificate</span>
-          <span>{{ certificateLabel }}
-            <sc-if value="{{ hasCertLink }}" hint-placeholder-val="{{ false }}">
-              <a href="{{ certLink }}" target="_blank" style="margin-left:6px;">View Certificate →</a>
-            </sc-if>
-          </span>
-        </div>
+      <!-- Price + actions sit right under the title, not buried below a
+           full spec list — what a shopper looks for first. -->
+      <div style="margin-top:24px;">
+        <sc-if value="{{ priceVisible }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:var(--font-heading);font-size:34px;font-weight:600;color:var(--color-accent-800);line-height:1.1;">{{ totalPriceLabel }}</div>
+          <div style="font-size:13px;opacity:.6;margin-top:4px;">{{ pricePerCaratLabel }} / carat</div>
+        </sc-if>
+        <sc-if value="{{ pricesLocked }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:12px;background:var(--color-surface);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
+            <div style="font-size:13px;">
+              <sc-if value="{{ isPriceCtaLogin }}" hint-placeholder-val="{{ false }}">
+                <strong>{{ priceLabel }}</strong> — <a href="Login.dc.html">Log in</a> or <a href="Register.dc.html">register</a> to view pricing.
+              </sc-if>
+              <sc-if value="{{ isPriceCtaPending }}" hint-placeholder-val="{{ false }}">
+                <strong>{{ priceLabel }}</strong> — your account doesn't currently have pricing access. <a href="Contact.dc.html">Contact us</a> if you believe this is a mistake.
+              </sc-if>
+              <sc-if value="{{ isPriceCtaContact }}" hint-placeholder-val="{{ false }}">
+                <strong>{{ priceLabel }}</strong> — <a href="Contact.dc.html">contact our sales team</a> for current pricing.
+              </sc-if>
+              <sc-if value="{{ isPriceCtaNone }}" hint-placeholder-val="{{ true }}">
+                <strong>{{ priceLabel }}</strong>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
       </div>
 
-      <sc-if value="{{ priceVisible }}" hint-placeholder-val="{{ false }}">
-        <div style="margin:24px 0;">
-          <div class="spec-row"><span style="opacity:.6;">Price / Carat</span><span>{{ pricePerCaratLabel }}</span></div>
-          <div class="spec-row"><span style="opacity:.6;">Total Price</span><span>{{ totalPriceLabel }}</span></div>
-        </div>
-      </sc-if>
-      <sc-if value="{{ pricesLocked }}" hint-placeholder-val="{{ true }}">
-        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:16px 18px;display:flex;align-items:center;gap:12px;background:var(--color-surface);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
-          <div style="font-size:13px;">
-            <sc-if value="{{ isPriceCtaLogin }}" hint-placeholder-val="{{ false }}">
-              <strong>{{ priceLabel }}</strong> — <a href="Login.dc.html">Log in</a> or <a href="Register.dc.html">register</a> to view pricing.
-            </sc-if>
-            <sc-if value="{{ isPriceCtaPending }}" hint-placeholder-val="{{ false }}">
-              <strong>{{ priceLabel }}</strong> — your account doesn't currently have pricing access. <a href="Contact.dc.html">Contact us</a> if you believe this is a mistake.
-            </sc-if>
-            <sc-if value="{{ isPriceCtaContact }}" hint-placeholder-val="{{ false }}">
-              <strong>{{ priceLabel }}</strong> — <a href="Contact.dc.html">contact our sales team</a> for current pricing.
-            </sc-if>
-            <sc-if value="{{ isPriceCtaNone }}" hint-placeholder-val="{{ true }}">
-              <strong>{{ priceLabel }}</strong>
-            </sc-if>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap;">
+        <button onClick="{{ addToCartFn }}" class="btn {{ cartBtnClass }}" style="padding:14px 24px;flex:1;min-width:140px;">{{ cartBtnLabel }}</button>
+        <button onClick="{{ openInquireNowFn }}" class="btn btn-primary" style="padding:14px 24px;flex:1;min-width:140px;">Inquire Now</button>
+        <button onClick="{{ toggleSaveFn }}" class="pdp-save-btn {{ savedClass }}" aria-label="Save item" title="Save for later">{{ heartGlyph }}</button>
+      </div>
+
+      <div class="card" style="margin-top:32px;">
+        <h5 style="color:var(--color-accent-700);margin:0;">Diamond Details</h5>
+        <div style="margin-top:8px;">
+          <div class="spec-row"><span style="opacity:.6;">Weight (Carat)</span><span>{{ weightCarat }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Shape</span><span>{{ shape }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Color</span><span>{{ color }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Clarity</span><span>{{ clarity }}</span></div>
+          <div class="spec-row"><span style="opacity:.6;">Measurements</span><span>{{ measurements }}</span></div>
+          <div class="spec-row">
+            <span style="opacity:.6;">Certificate</span>
+            <span>{{ certificateLabel }}
+              <sc-if value="{{ hasCertLink }}" hint-placeholder-val="{{ false }}">
+                <a href="{{ certLink }}" target="_blank" style="margin-left:6px;">View Certificate →</a>
+              </sc-if>
+            </span>
           </div>
         </div>
-      </sc-if>
-
-      <div style="display:flex;gap:14px;margin-top:24px;">
-        <button onClick="{{ addToCartFn }}" class="btn {{ cartBtnClass }}" style="padding:14px 28px;">{{ cartBtnLabel }}</button>
-        <button onClick="{{ openInquireNowFn }}" class="btn btn-primary" style="padding:14px 28px;">Inquire Now</button>
-        <button onClick="{{ toggleSaveFn }}" class="btn btn-ghost" style="{{ saveStyle }}padding:14px 16px;" aria-label="Save item" title="Save for later">♥</button>
       </div>
 
-      <div class="hr"></div>
-      <p style="font-size:12px;opacity:.6;">Every diamond is independently graded before listing. Certificate numbers link directly to the issuing laboratory's public verification tool.</p>
+      <p style="font-size:12px;opacity:.6;margin-top:16px;">Every diamond is independently graded before listing. Certificate numbers link directly to the issuing laboratory's public verification tool.</p>
     </div>
   </section>
 
@@ -510,7 +528,8 @@ class Component extends DCLogic {
       },
       cartBtnClass: this.state.cartItems.some((i) => i.sku === p.sku) ? 'btn-added' : 'btn-secondary',
       cartBtnLabel: this.state.cartItems.some((i) => i.sku === p.sku) ? '✓ In Cart' : 'Add to Cart',
-      saveStyle: this.state.savedSkus.has(p.sku) ? 'color:#b3273e;' : 'color:var(--color-text);opacity:.5;',
+      savedClass: this.state.savedSkus.has(p.sku) ? 'saved' : '',
+      heartGlyph: this.state.savedSkus.has(p.sku) ? '♥' : '♡',
       toggleSaveFn: () => this.toggleSaveSku(
         p.sku, `${p.weightCarat}ct ${p.shape} Diamond`,
         p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : p.priceLabel, 'diamond'
