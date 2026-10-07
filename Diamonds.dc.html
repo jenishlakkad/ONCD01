@@ -14,10 +14,93 @@
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
-.pill{border:1px solid var(--color-divider);border-radius:999px;padding:6px 16px;font-size:12px;cursor:pointer;white-space:nowrap;}
-.pill.active{border-color:var(--color-accent);color:var(--color-accent-700);}
+/* Subcategory switcher: a tinted "track" housing borderless pills (think
+   iOS segmented control) reads as one deliberate, designed component —
+   the plain individually-outlined pills from the first pass still looked
+   like loose floating tags even with a filled active state. */
+.pill-row{background:var(--color-surface);border-radius:999px;padding:6px;display:inline-flex;}
+.pill{border:none;border-radius:999px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;color:var(--color-text);transition:background .2s,color .2s,box-shadow .2s;}
+.pill:hover{background:var(--color-bg);}
+.pill.active{background:var(--color-accent);color:#fff;font-weight:600;box-shadow:var(--shadow-sm);}
+.pill-count{opacity:.6;font-size:11px;margin-left:6px;}
+.pill.active .pill-count{opacity:.85;}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
+
+/* ── Sort control ───────────────────────────────────────────────────── */
+.sort-select-wrap{display:flex;align-items:center;gap:8px;font-size:12.5px;opacity:.85;}
+.sort-select{width:auto;padding:7px 30px 7px 12px;font-size:12.5px;cursor:pointer;}
+
+/* ── Pagination (same pattern as the admin User Approval list) ───────── */
+.pager{display:flex;align-items:center;justify-content:center;gap:6px;padding:28px 0 8px;flex-wrap:wrap;}
+.pager-btn{padding:7px 14px;font-size:12.5px;}
+.pager-num{min-width:32px;height:32px;padding:0 6px;border-radius:var(--radius-md);border:1px solid transparent;background:transparent;font-size:13px;cursor:pointer;color:var(--color-text);transition:background .15s,border-color .15s;}
+.pager-num:hover{background:var(--color-surface);}
+.pager-num.active{background:var(--color-accent);color:#fff;font-weight:600;}
+.pager-ellipsis{padding:0 4px;opacity:.45;font-size:13px;}
+
+/* ── Filter sidebar, redesigned ───────────────────────────────────────
+   Desktop previously had no visual container at all — the filter list
+   just floated directly on the page background with no "Filters" title,
+   so it read as loose stray text rather than a distinct panel. Given a
+   proper card, a sticky position (so it stays in view while the results
+   column scrolls), and an explicit header with a Reset link. The mobile
+   full-screen drawer (shared aside markup, different CSS below 1024px —
+   see styles.css) already had its own header/body/footer chrome and is
+   untouched here. */
+.filters-aside-desktop-head{display:none;}
+@media (min-width:1024px){
+  .filters-aside{
+    border:1px solid var(--color-divider);
+    border-radius:var(--radius-lg);
+    padding:22px;
+    background:var(--color-bg);
+    position:sticky;
+    top:90px;
+    max-height:calc(100vh - 110px);
+    overflow-y:auto;
+  }
+  .filters-aside-desktop-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--color-divider);
+  }
+}
+/* Each filter group's heading (Shape/Color/Certification/Clarity/Carat) —
+   an icon + label instead of bare uppercase text, so the panel scans
+   faster at a glance instead of reading as a wall of identical labels. */
+.filter-group-head{display:flex;align-items:center;gap:8px;color:var(--color-text);opacity:.8;}
+.filter-group-head svg{color:var(--color-accent-700);flex:none;}
+/* Filter options, chip-style — same real <input type="radio"> group as
+   before (so keyboard/screen-reader semantics are unchanged), just
+   styled as individually-bordered pill buttons instead of a plain
+   dot+label column. Shape/Color/Clarity lists can run to 6-10 options,
+   which reads far better as a wrapping chip grid than a long vertical
+   list once you're scanning for "which one is picked". */
+.filter-chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.filter-chip{
+  position:relative;display:inline-flex;align-items:center;
+  padding:7px 14px;border:1px solid var(--color-divider);border-radius:999px;
+  font-size:12.5px;cursor:pointer;color:var(--color-text);
+  transition:background .15s,border-color .15s,color .15s;user-select:none;
+}
+.filter-chip input{position:absolute;opacity:0;width:0;height:0;margin:0;}
+.filter-chip:hover{border-color:var(--color-accent-300);}
+.filter-chip:has(input:checked){background:var(--color-accent);border-color:var(--color-accent);color:#fff;font-weight:600;}
+
+/* ── Active filter chips (above the results grid) ─────────────────────
+   Once the sidebar/drawer is closed there was previously no way to see
+   which filters were applied short of reopening it — this surfaces each
+   one as a removable chip right above the results, plus a one-click
+   "Clear all", same pattern as the sidebar's own Reset. */
+.active-filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px;}
+.active-filter-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px 6px 13px;border-radius:999px;border:none;cursor:pointer;
+  background:var(--color-accent-100);color:var(--color-accent-800);font-size:12px;font-weight:500;
+}
+.active-filter-chip svg{opacity:.65;transition:opacity .15s;}
+.active-filter-chip:hover svg{opacity:1;}
+.clear-all-link{background:none;border:none;color:var(--color-accent-700);font-size:12px;cursor:pointer;padding:6px 4px;text-decoration:underline;}
 </style>
 </helmet>
 
@@ -92,9 +175,9 @@ a:hover{color:var(--color-accent-700)}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input class="input" value="{{ search }}" onChange="{{ handleSearch }}" placeholder="Search by SKU, shape, color, clarity…" style="padding-left:38px;width:100%;box-sizing:border-box;"/>
     </div>
-    <div class="pill-row" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+    <div class="pill-row" style="gap:4px;margin-top:16px;flex-wrap:wrap;max-width:100%;">
       <sc-for list="{{ dCategories }}" as="cat" hint-placeholder-count="9">
-        <span class="pill {{ cat.activeClass }}" onClick="{{ cat.select }}">{{ cat.name }}</span>
+        <span class="pill {{ cat.activeClass }}" onClick="{{ cat.select }}">{{ cat.name }}<span class="pill-count">{{ cat.count }}</span></span>
       </sc-for>
     </div>
   </section>
@@ -105,53 +188,61 @@ a:hover{color:var(--color-accent-700)}
         <h3 style="margin:0;">Filters</h3>
         <button onClick="{{ closeFilters }}" aria-label="Close filters" style="background:none;border:none;cursor:pointer;color:var(--color-text);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
+      <div class="filters-aside-desktop-head">
+        <h4 style="margin:0;">Filters</h4>
+        <button onClick="{{ resetFilters }}" class="btn btn-ghost" style="padding:4px 6px;font-size:12px;">Reset</button>
+      </div>
       <div class="filters-aside-body">
+      <!-- Order follows how Blue Nile/James Allen and general diamond-search
+           UX guidance structure this: Shape and Carat are the two filters
+           that eliminate the most options and belong up front, Color/Clarity
+           (the two quality grades) sit in the middle, and Certification —
+           a trust/provenance filter, not a selection criterion most buyers
+           start from — moves to the end instead of sitting 2nd. -->
       <div>
-        <h6 style="opacity:.6;">Shape</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12l4 5-10 13L2 8Z"/><path d="M2 8h20M9 3 7 8l5 13 5-13-2-5"/></svg>Shape</h6>
+        <div class="filter-chip-group">
           <sc-for list="{{ shapes }}" as="s" hint-placeholder-count="5">
-            <label class="radio"><input type="radio" name="shape" checked="{{ s.checked }}" onChange="{{ s.select }}"/><span class="dot"></span>{{ s.name }}</label>
+            <label class="filter-chip"><input type="radio" name="shape" checked="{{ s.checked }}" onChange="{{ s.select }}"/>{{ s.name }}</label>
           </sc-for>
         </div>
       </div>
       <div class="hr" style="margin:0;"></div>
       <div>
-        <h6 style="opacity:.6;">Color</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-          <sc-for list="{{ colors }}" as="c" hint-placeholder-count="4">
-            <label class="radio"><input type="radio" name="color" checked="{{ c.checked }}" onChange="{{ c.select }}"/><span class="dot"></span>{{ c.name }}</label>
-          </sc-for>
-        </div>
-      </div>
-      <div class="hr" style="margin:0;"></div>
-      <div>
-        <h6 style="opacity:.6;">Certification</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-          <sc-for list="{{ certs }}" as="ct" hint-placeholder-count="3">
-            <label class="radio"><input type="radio" name="cert" checked="{{ ct.checked }}" onChange="{{ ct.select }}"/><span class="dot"></span>{{ ct.name }}</label>
-          </sc-for>
-        </div>
-      </div>
-      <div class="hr" style="margin:0;"></div>
-      <div>
-        <h6 style="opacity:.6;">Clarity</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-          <sc-for list="{{ clarities }}" as="cl" hint-placeholder-count="3">
-            <label class="radio"><input type="radio" name="clarity" checked="{{ cl.checked }}" onChange="{{ cl.select }}"/><span class="dot"></span>{{ cl.name }}</label>
-          </sc-for>
-        </div>
-      </div>
-      <div class="hr" style="margin:0;"></div>
-      <div>
-        <h6 style="opacity:.6;">Carat Weight</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M7 7h10M7 7l-3.5 7a3.5 3.5 0 0 0 7 0L7 7Zm10 0-3.5 7a3.5 3.5 0 0 0 7 0L17 7Z"/></svg>Carat Weight</h6>
+        <div class="filter-chip-group">
           <sc-for list="{{ caratRanges }}" as="cw" hint-placeholder-count="4">
-            <label class="radio"><input type="radio" name="caratRange" checked="{{ cw.checked }}" onChange="{{ cw.select }}"/><span class="dot"></span>{{ cw.name }}</label>
+            <label class="filter-chip"><input type="radio" name="caratRange" checked="{{ cw.checked }}" onChange="{{ cw.select }}"/>{{ cw.name }}</label>
           </sc-for>
         </div>
       </div>
       <div class="hr" style="margin:0;"></div>
-      <button onClick="{{ resetFilters }}" class="btn btn-ghost" style="padding-left:0;">Reset Filters</button>
+      <div>
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8 8 5 11 5 15a7 7 0 0 0 14 0c0-4-3-7-7-13Z"/></svg>Color</h6>
+        <div class="filter-chip-group">
+          <sc-for list="{{ colors }}" as="c" hint-placeholder-count="4">
+            <label class="filter-chip"><input type="radio" name="color" checked="{{ c.checked }}" onChange="{{ c.select }}"/>{{ c.name }}</label>
+          </sc-for>
+        </div>
+      </div>
+      <div class="hr" style="margin:0;"></div>
+      <div>
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Clarity</h6>
+        <div class="filter-chip-group">
+          <sc-for list="{{ clarities }}" as="cl" hint-placeholder-count="3">
+            <label class="filter-chip"><input type="radio" name="clarity" checked="{{ cl.checked }}" onChange="{{ cl.select }}"/>{{ cl.name }}</label>
+          </sc-for>
+        </div>
+      </div>
+      <div class="hr" style="margin:0;"></div>
+      <div>
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>Certification</h6>
+        <div class="filter-chip-group">
+          <sc-for list="{{ certs }}" as="ct" hint-placeholder-count="3">
+            <label class="filter-chip"><input type="radio" name="cert" checked="{{ ct.checked }}" onChange="{{ ct.select }}"/>{{ ct.name }}</label>
+          </sc-for>
+        </div>
+      </div>
       </div>
       <div class="filters-aside-footer">
         <button onClick="{{ closeFilters }}" class="btn btn-primary btn-block">Show {{ resultCount }} Results</button>
@@ -159,14 +250,35 @@ a:hover{color:var(--color-accent-700)}
     </aside>
 
     <div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:13px;opacity:.7;">
-        <span>{{ resultCount }} results</span>
-        <span class="sort-label">Sorted by: Newest</span>
-        <button onClick="{{ openFilters }}" class="btn btn-secondary filters-toggle-btn" style="padding:7px 14px;font-size:12px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-          Filters
-          <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}"><span class="filter-count-badge">{{ activeFilterCount }}</span></sc-if>
-        </button>
+      <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+        <div class="active-filters-row">
+          <sc-for list="{{ activeFilterChips }}" as="af" hint-placeholder-count="2">
+            <button class="active-filter-chip" onClick="{{ af.remove }}">{{ af.label }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          </sc-for>
+          <button class="clear-all-link" onClick="{{ resetFilters }}">Clear all</button>
+        </div>
+      </sc-if>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:13px;opacity:.7;flex-wrap:wrap;gap:12px;">
+        <span><strong style="color:var(--color-text);">{{ resultCount }}</strong> results</span>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="sort-select-wrap">
+            <span>Sort by</span>
+            <select class="input sort-select" value="{{ sortBy }}" onChange="{{ handleSort }}">
+              <option value="newest">Newest First</option>
+              <sc-if value="{{ showPriceSort }}" hint-placeholder-val="{{ true }}">
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </sc-if>
+              <option value="carat-asc">Carat: Low to High</option>
+              <option value="carat-desc">Carat: High to Low</option>
+            </select>
+          </div>
+          <button onClick="{{ openFilters }}" class="btn btn-secondary filters-toggle-btn" style="padding:7px 14px;font-size:12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            Filters
+            <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}"><span class="filter-count-badge">{{ activeFilterCount }}</span></sc-if>
+          </button>
+        </div>
       </div>
       <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
         <p style="font-size:13px;color:var(--color-accent-700);">{{ errorMessage }}</p>
@@ -175,7 +287,7 @@ a:hover{color:var(--color-accent-700)}
         <p style="font-size:13px;opacity:.65;padding:32px 0;">No diamonds match these filters right now.</p>
       </sc-if>
       <div class="product-grid">
-        <sc-for list="{{ diamonds }}" as="p" hint-placeholder-count="6">
+        <sc-for list="{{ pageDiamonds }}" as="p" hint-placeholder-count="6">
           <div class="card elev-sm product-card" onClick="{{ p.goToProduct }}" style="cursor:pointer;">
             <div class="plate product-card-media">
               <a href="{{ p.href }}" style="display:block;width:100%;height:100%;">
@@ -198,6 +310,16 @@ a:hover{color:var(--color-accent-700)}
           </div>
         </sc-for>
       </div>
+      <sc-if value="{{ hasMultiplePages }}" hint-placeholder-val="{{ false }}">
+        <div class="pager">
+          <button class="btn btn-secondary pager-btn" onClick="{{ prevPage }}" disabled="{{ !canPrevPage }}">‹ Prev</button>
+          <sc-for list="{{ pageList }}" as="pg" hint-placeholder-count="3">
+            <sc-if value="{{ pg.isEllipsis }}" hint-placeholder-val="{{ false }}"><span class="pager-ellipsis">…</span></sc-if>
+            <sc-if value="{{ pg.isPage }}" hint-placeholder-val="{{ true }}"><button class="pager-num {{ pg.activeClass }}" onClick="{{ pg.go }}">{{ pg.page }}</button></sc-if>
+          </sc-for>
+          <button class="btn btn-secondary pager-btn" onClick="{{ nextPage }}" disabled="{{ !canNextPage }}">Next ›</button>
+        </div>
+      </sc-if>
     </div>
   </section>
 
@@ -358,7 +480,9 @@ class Component extends DCLogic {
     shapeAttrs: [], colorAttrs: [], certAttrs: [],
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
     inquiryOpen: false, inquiryProduct: null, inquiryNote: '', cartNote: '',
+    sortBy: 'newest', currentPage: 1,
   };
+  pageSize = 24;
 
   async componentDidMount() {
     const cartMod = await import('./utils/cart.js');
@@ -421,6 +545,30 @@ class Component extends DCLogic {
   openInquiry(p) { this.setState({ inquiryOpen: true, inquiryProduct: p, inquiryNote: '' }); }
   closeInquiry() { this.setState({ inquiryOpen: false }); }
 
+  goToPage(p) { this.setState({ currentPage: p }); }
+  prevPage() { this.setState((s) => ({ currentPage: Math.max(1, s.currentPage - 1) })); }
+  nextPage(totalPages) { this.setState((s) => ({ currentPage: Math.min(totalPages, s.currentPage + 1) })); }
+
+  // Same windowed page-number list (with "…" gaps) as AdminUsers.dc.html —
+  // avoids rendering 10 page buttons for a 242-diamond catalog.
+  buildPageList(current, total) {
+    const pages = [];
+    const addPage = (p) => pages.push({ isPage: true, isEllipsis: false, page: p, activeClass: p === current ? 'active' : '', go: () => this.goToPage(p) });
+    const addEllipsis = () => pages.push({ isPage: false, isEllipsis: true });
+    if (total <= 7) {
+      for (let p = 1; p <= total; p++) addPage(p);
+    } else {
+      addPage(1);
+      if (current > 3) addEllipsis();
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+      for (let p = start; p <= end; p++) addPage(p);
+      if (current < total - 2) addEllipsis();
+      addPage(total);
+    }
+    return pages;
+  }
+
   async loadProducts() {
     this.setState({ loading: true, errorMessage: '' });
     try {
@@ -439,11 +587,17 @@ class Component extends DCLogic {
     const cartApproved = !!(this.state.customer && this.state.customer.status === 'approved');
     const message = cart ? cart.buildMessage(items, { customer: this.state.customer, note: this.state.cartNote }) : '';
 
+    const categoryCounts = {};
+    this.state.products.forEach((p) => {
+      const name = p.category ? p.category.name : null;
+      if (name) categoryCounts[name] = (categoryCounts[name] || 0) + 1;
+    });
     const dCategories = ['All', ...this.state.categories.map((c) => c.name)].map((name) => ({
-      name, activeClass: this.state.activeCategory === name ? 'active' : '',
-      select: () => this.setState({ activeCategory: name }),
+      name, count: name === 'All' ? this.state.products.length : (categoryCounts[name] || 0),
+      activeClass: this.state.activeCategory === name ? 'active' : '',
+      select: () => this.setState({ activeCategory: name, currentPage: 1 }),
     }));
-    const mkGroup = (names, key) => names.map((name) => ({ name, checked: this.state[key] === name, select: () => this.setState({ [key]: name }) }));
+    const mkGroup = (names, key) => names.map((name) => ({ name, checked: this.state[key] === name, select: () => this.setState({ [key]: name, currentPage: 1 }) }));
     const shapes = mkGroup(['All Shapes', ...this.state.shapeAttrs.map((a) => a.name)], 'shape');
     const colors = mkGroup(['Any', ...this.state.colorAttrs.map((a) => a.name)], 'color');
     const certs = mkGroup(['Any', ...this.state.certAttrs.map((a) => a.name)], 'cert');
@@ -468,7 +622,27 @@ class Component extends DCLogic {
       return true;
     });
 
-    const diamondData = filtered.map((p) => ({
+    // 'newest' needs no client-side sort — GET /api/products already
+    // orders by created_at DESC, id DESC, so that's the natural array
+    // order already. Price sort treats a masked/invisible price (null)
+    // as "no price" and always sorts it to the end regardless of
+    // direction, rather than letting it collapse to 0 and jump to the
+    // top of a "low to high" sort.
+    const sorted = filtered.slice();
+    if (this.state.sortBy === 'price-asc' || this.state.sortBy === 'price-desc') {
+      const dir = this.state.sortBy === 'price-asc' ? 1 : -1;
+      sorted.sort((a, b) => {
+        const av = a.priceVisible ? Number(a.totalPrice) : Infinity;
+        const bv = b.priceVisible ? Number(b.totalPrice) : Infinity;
+        if (av === Infinity || bv === Infinity) return av - bv;
+        return (av - bv) * dir;
+      });
+    } else if (this.state.sortBy === 'carat-asc' || this.state.sortBy === 'carat-desc') {
+      const dir = this.state.sortBy === 'carat-asc' ? 1 : -1;
+      sorted.sort((a, b) => ((Number(a.weightCarat) || 0) - (Number(b.weightCarat) || 0)) * dir);
+    }
+
+    const diamondData = sorted.map((p) => ({
       sku: p.sku,
       title: `${p.weightCarat}ct ${p.shape}, ${p.color}/${p.clarity}`,
       spec: [p.shape, p.certificateAuthority, p.measurements].filter(Boolean).join(' · '),
@@ -492,12 +666,39 @@ class Component extends DCLogic {
       };
     });
 
+    // Removable summary chips above the results grid — only the sidebar
+    // filters (not the category pills or search box, which already show
+    // their own current value inline) since those were the ones with no
+    // visible trace once the panel/drawer is closed.
+    const activeFilterChips = [];
+    if (this.state.shape !== 'All Shapes') activeFilterChips.push({ label: `Shape: ${this.state.shape}`, remove: () => this.setState({ shape: 'All Shapes', currentPage: 1 }) });
+    if (this.state.caratRange !== 'Any') activeFilterChips.push({ label: this.state.caratRange, remove: () => this.setState({ caratRange: 'Any', currentPage: 1 }) });
+    if (this.state.color !== 'Any') activeFilterChips.push({ label: `Color: ${this.state.color}`, remove: () => this.setState({ color: 'Any', currentPage: 1 }) });
+    if (this.state.clarity !== 'Any') activeFilterChips.push({ label: `Clarity: ${this.state.clarity}`, remove: () => this.setState({ clarity: 'Any', currentPage: 1 }) });
+    if (this.state.cert !== 'Any') activeFilterChips.push({ label: `Cert: ${this.state.cert}`, remove: () => this.setState({ cert: 'Any', currentPage: 1 }) });
+
+    // Pagination — self-healing clamp (same approach as AdminUsers.dc.html):
+    // if a filter change drops the result count below the current page
+    // number, this quietly falls back to the last valid page instead of
+    // rendering an empty grid.
+    const totalPages = Math.max(1, Math.ceil(diamondData.length / this.pageSize));
+    const currentPage = Math.min(this.state.currentPage, totalPages);
+    const pageDiamonds = diamondData.slice((currentPage - 1) * this.pageSize, currentPage * this.pageSize);
+    const showPriceSort = this.state.products.some((p) => p.priceVisible);
+
     return {
+      activeFilterChips,
       dCategories, shapes, colors, certs, clarities, caratRanges,
       search: this.state.search,
-      handleSearch: (e) => this.setState({ search: e.target.value }),
-      diamonds: diamondData, resultCount: diamondData.length,
+      handleSearch: (e) => this.setState({ search: e.target.value, currentPage: 1 }),
+      sortBy: this.state.sortBy, showPriceSort,
+      handleSort: (e) => this.setState({ sortBy: e.target.value, currentPage: 1 }),
+      diamonds: diamondData, pageDiamonds, resultCount: diamondData.length,
       isEmpty: !this.state.loading && diamondData.length === 0,
+      hasMultiplePages: totalPages > 1,
+      pageList: this.buildPageList(currentPage, totalPages),
+      canPrevPage: currentPage > 1, canNextPage: currentPage < totalPages,
+      prevPage: () => this.prevPage(), nextPage: () => this.nextPage(totalPages),
       errorMessage: this.state.errorMessage,
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       isLoggedIn: !!this.state.customer,
@@ -509,7 +710,7 @@ class Component extends DCLogic {
       accountEmail: (this.state.customer && this.state.customer.email) || '',
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
-      resetFilters: () => this.setState({ activeCategory: 'All', shape: 'All Shapes', color: 'Any', cert: 'Any', clarity: 'Any', caratRange: 'Any', search: '' }),
+      resetFilters: () => this.setState({ activeCategory: 'All', shape: 'All Shapes', color: 'Any', cert: 'Any', clarity: 'Any', caratRange: 'Any', search: '', currentPage: 1 }),
       openFilters: () => this.setState({ filtersOpen: true }),
       closeFilters: () => this.setState({ filtersOpen: false }),
       filtersOpenClass: this.state.filtersOpen ? 'open' : '',

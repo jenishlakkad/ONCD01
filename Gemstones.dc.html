@@ -14,10 +14,70 @@
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
-.pill{border:1px solid var(--color-divider);border-radius:999px;padding:6px 16px;font-size:12px;cursor:pointer;white-space:nowrap;}
-.pill.active{border-color:var(--color-accent);color:var(--color-accent-700);}
+/* Subcategory switcher: a tinted "track" housing borderless pills (think
+   iOS segmented control) reads as one deliberate, designed component. */
+.pill-row{background:var(--color-surface);border-radius:999px;padding:6px;display:inline-flex;}
+.pill{border:none;border-radius:999px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;color:var(--color-text);transition:background .2s,color .2s,box-shadow .2s;}
+.pill:hover{background:var(--color-bg);}
+.pill.active{background:var(--color-accent);color:#fff;font-weight:600;box-shadow:var(--shadow-sm);}
+.pill-count{opacity:.6;font-size:11px;margin-left:6px;}
+.pill.active .pill-count{opacity:.85;}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
+
+/* ── Sort control ───────────────────────────────────────────────────── */
+.sort-select-wrap{display:flex;align-items:center;gap:8px;font-size:12.5px;opacity:.85;}
+.sort-select{width:auto;padding:7px 30px 7px 12px;font-size:12.5px;cursor:pointer;}
+
+/* ── Pagination ─────────────────────────────────────────────────────── */
+.pager{display:flex;align-items:center;justify-content:center;gap:6px;padding:28px 0 8px;flex-wrap:wrap;}
+.pager-btn{padding:7px 14px;font-size:12.5px;}
+.pager-num{min-width:32px;height:32px;padding:0 6px;border-radius:var(--radius-md);border:1px solid transparent;background:transparent;font-size:13px;cursor:pointer;color:var(--color-text);transition:background .15s,border-color .15s;}
+.pager-num:hover{background:var(--color-surface);}
+.pager-num.active{background:var(--color-accent);color:#fff;font-weight:600;}
+.pager-ellipsis{padding:0 4px;opacity:.45;font-size:13px;}
+
+/* ── Filter sidebar, redesigned (same pattern as Diamonds.dc.html) ──── */
+.filters-aside-desktop-head{display:none;}
+@media (min-width:1024px){
+  .filters-aside{
+    border:1px solid var(--color-divider);
+    border-radius:var(--radius-lg);
+    padding:22px;
+    background:var(--color-bg);
+    position:sticky;
+    top:90px;
+    max-height:calc(100vh - 110px);
+    overflow-y:auto;
+  }
+  .filters-aside-desktop-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--color-divider);
+  }
+}
+.filter-group-head{display:flex;align-items:center;gap:8px;color:var(--color-text);opacity:.8;}
+.filter-group-head svg{color:var(--color-accent-700);flex:none;}
+.filter-chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.filter-chip{
+  position:relative;display:inline-flex;align-items:center;
+  padding:7px 14px;border:1px solid var(--color-divider);border-radius:999px;
+  font-size:12.5px;cursor:pointer;color:var(--color-text);
+  transition:background .15s,border-color .15s,color .15s;user-select:none;
+}
+.filter-chip input{position:absolute;opacity:0;width:0;height:0;margin:0;}
+.filter-chip:hover{border-color:var(--color-accent-300);}
+.filter-chip:has(input:checked){background:var(--color-accent);border-color:var(--color-accent);color:#fff;font-weight:600;}
+
+/* ── Active filter chips (above the results grid) ─────────────────────── */
+.active-filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px;}
+.active-filter-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px 6px 13px;border-radius:999px;border:none;cursor:pointer;
+  background:var(--color-accent-100);color:var(--color-accent-800);font-size:12px;font-weight:500;
+}
+.active-filter-chip svg{opacity:.65;transition:opacity .15s;}
+.active-filter-chip:hover svg{opacity:1;}
+.clear-all-link{background:none;border:none;color:var(--color-accent-700);font-size:12px;cursor:pointer;padding:6px 4px;text-decoration:underline;}
 </style>
 </helmet>
 
@@ -92,9 +152,10 @@ a:hover{color:var(--color-accent-700)}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input class="input" value="{{ search }}" onChange="{{ handleSearch }}" placeholder="Search by stone, SKU, color…" style="padding-left:38px;width:100%;box-sizing:border-box;"/>
     </div>
-    <div class="pill-row" style="display:flex;gap:14px;margin-top:16px;">
-      <span class="pill {{ natClass }}" onClick="{{ selectNat }}">Natural</span>
-      <span class="pill {{ labClass }}" onClick="{{ selectLab }}">Lab Created</span>
+    <div class="pill-row" style="gap:4px;margin-top:16px;flex-wrap:wrap;max-width:100%;">
+      <span class="pill {{ allClass }}" onClick="{{ selectAll }}">All<span class="pill-count">{{ allCount }}</span></span>
+      <span class="pill {{ natClass }}" onClick="{{ selectNat }}">Natural<span class="pill-count">{{ natCount }}</span></span>
+      <span class="pill {{ labClass }}" onClick="{{ selectLab }}">Lab Created<span class="pill-count">{{ labCount }}</span></span>
     </div>
   </section>
 
@@ -104,44 +165,46 @@ a:hover{color:var(--color-accent-700)}
         <h3 style="margin:0;">Filters</h3>
         <button onClick="{{ closeFilters }}" aria-label="Close filters" style="background:none;border:none;cursor:pointer;color:var(--color-text);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
+      <div class="filters-aside-desktop-head">
+        <h4 style="margin:0;">Filters</h4>
+        <button onClick="{{ resetFilters }}" class="btn btn-ghost" style="padding:4px 6px;font-size:12px;">Reset</button>
+      </div>
       <div class="filters-aside-body">
       <div>
-        <h6 style="opacity:.6;">Stone Type</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12l4 5-10 13L2 8Z"/><path d="M2 8h20M9 3 7 8l5 13 5-13-2-5"/></svg>Stone Type</h6>
+        <div class="filter-chip-group">
           <sc-for list="{{ stoneTypes }}" as="st" hint-placeholder-count="5">
-            <label class="radio"><input type="radio" name="stoneType" checked="{{ st.checked }}" onChange="{{ st.select }}"/><span class="dot"></span>{{ st.name }}</label>
+            <label class="filter-chip"><input type="radio" name="stoneType" checked="{{ st.checked }}" onChange="{{ st.select }}"/>{{ st.name }}</label>
           </sc-for>
         </div>
       </div>
       <div class="hr" style="margin:0;"></div>
       <div>
-        <h6 style="opacity:.6;">Color</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8 8 5 11 5 15a7 7 0 0 0 14 0c0-4-3-7-7-13Z"/></svg>Color</h6>
+        <div class="filter-chip-group">
           <sc-for list="{{ gemColors }}" as="c" hint-placeholder-count="5">
-            <label class="radio"><input type="radio" name="gemColor" checked="{{ c.checked }}" onChange="{{ c.select }}"/><span class="dot"></span>{{ c.name }}</label>
+            <label class="filter-chip"><input type="radio" name="gemColor" checked="{{ c.checked }}" onChange="{{ c.select }}"/>{{ c.name }}</label>
           </sc-for>
         </div>
       </div>
       <div class="hr" style="margin:0;"></div>
       <div>
-        <h6 style="opacity:.6;">Shape / Cut</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h18M7 7h10M9 17h6"/></svg>Shape / Cut</h6>
+        <div class="filter-chip-group">
           <sc-for list="{{ gemShapes }}" as="s" hint-placeholder-count="4">
-            <label class="radio"><input type="radio" name="gemShape" checked="{{ s.checked }}" onChange="{{ s.select }}"/><span class="dot"></span>{{ s.name }}</label>
+            <label class="filter-chip"><input type="radio" name="gemShape" checked="{{ s.checked }}" onChange="{{ s.select }}"/>{{ s.name }}</label>
           </sc-for>
         </div>
       </div>
       <div class="hr" style="margin:0;"></div>
       <div>
-        <h6 style="opacity:.6;">Certification</h6>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>Certification</h6>
+        <div class="filter-chip-group">
           <sc-for list="{{ gemCerts }}" as="ct" hint-placeholder-count="3">
-            <label class="radio"><input type="radio" name="gemCert" checked="{{ ct.checked }}" onChange="{{ ct.select }}"/><span class="dot"></span>{{ ct.name }}</label>
+            <label class="filter-chip"><input type="radio" name="gemCert" checked="{{ ct.checked }}" onChange="{{ ct.select }}"/>{{ ct.name }}</label>
           </sc-for>
         </div>
       </div>
-      <div class="hr" style="margin:0;"></div>
-      <button onClick="{{ resetFilters }}" class="btn btn-ghost" style="padding-left:0;">Reset Filters</button>
       </div>
       <div class="filters-aside-footer">
         <button onClick="{{ closeFilters }}" class="btn btn-primary btn-block">Show {{ resultCount }} Results</button>
@@ -149,14 +212,35 @@ a:hover{color:var(--color-accent-700)}
     </aside>
 
     <div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:13px;opacity:.7;">
-        <span>{{ resultCount }} results</span>
-        <span class="sort-label">Sorted by: Newest</span>
-        <button onClick="{{ openFilters }}" class="btn btn-secondary filters-toggle-btn" style="padding:7px 14px;font-size:12px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-          Filters
-          <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}"><span class="filter-count-badge">{{ activeFilterCount }}</span></sc-if>
-        </button>
+      <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+        <div class="active-filters-row">
+          <sc-for list="{{ activeFilterChips }}" as="af" hint-placeholder-count="2">
+            <button class="active-filter-chip" onClick="{{ af.remove }}">{{ af.label }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          </sc-for>
+          <button class="clear-all-link" onClick="{{ resetFilters }}">Clear all</button>
+        </div>
+      </sc-if>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:13px;opacity:.7;flex-wrap:wrap;gap:12px;">
+        <span><strong style="color:var(--color-text);">{{ resultCount }}</strong> results</span>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="sort-select-wrap">
+            <span>Sort by</span>
+            <select class="input sort-select" value="{{ sortBy }}" onChange="{{ handleSort }}">
+              <option value="newest">Newest First</option>
+              <sc-if value="{{ showPriceSort }}" hint-placeholder-val="{{ true }}">
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </sc-if>
+              <option value="carat-asc">Carat: Low to High</option>
+              <option value="carat-desc">Carat: High to Low</option>
+            </select>
+          </div>
+          <button onClick="{{ openFilters }}" class="btn btn-secondary filters-toggle-btn" style="padding:7px 14px;font-size:12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            Filters
+            <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}"><span class="filter-count-badge">{{ activeFilterCount }}</span></sc-if>
+          </button>
+        </div>
       </div>
       <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
         <p style="font-size:13px;color:var(--color-accent-700);">{{ errorMessage }}</p>
@@ -165,7 +249,7 @@ a:hover{color:var(--color-accent-700)}
         <p style="font-size:13px;opacity:.65;padding:32px 0;">No gemstones match these filters right now.</p>
       </sc-if>
       <div class="product-grid">
-        <sc-for list="{{ gems }}" as="p" hint-placeholder-count="8">
+        <sc-for list="{{ pageGems }}" as="p" hint-placeholder-count="8">
           <div class="card elev-sm product-card" onClick="{{ p.goToProduct }}" style="cursor:pointer;">
             <div class="plate product-card-media">
               <a href="{{ p.href }}" style="display:block;width:100%;height:100%;">
@@ -187,6 +271,16 @@ a:hover{color:var(--color-accent-700)}
           </div>
         </sc-for>
       </div>
+      <sc-if value="{{ hasMultiplePages }}" hint-placeholder-val="{{ false }}">
+        <div class="pager">
+          <button class="btn btn-secondary pager-btn" onClick="{{ prevPage }}" disabled="{{ !canPrevPage }}">‹ Prev</button>
+          <sc-for list="{{ pageList }}" as="pg" hint-placeholder-count="3">
+            <sc-if value="{{ pg.isEllipsis }}" hint-placeholder-val="{{ false }}"><span class="pager-ellipsis">…</span></sc-if>
+            <sc-if value="{{ pg.isPage }}" hint-placeholder-val="{{ true }}"><button class="pager-num {{ pg.activeClass }}" onClick="{{ pg.go }}">{{ pg.page }}</button></sc-if>
+          </sc-for>
+          <button class="btn btn-secondary pager-btn" onClick="{{ nextPage }}" disabled="{{ !canNextPage }}">Next ›</button>
+        </div>
+      </sc-if>
     </div>
   </section>
 
@@ -333,7 +427,9 @@ class Component extends DCLogic {
     colorAttrs: [], shapeAttrs: [], certAttrs: [],
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
     inquiryOpen: false, inquiryProduct: null, inquiryNote: '',
+    sortBy: 'newest', currentPage: 1,
   };
+  pageSize = 24;
 
   async componentDidMount() {
     const cartMod = await import('./utils/cart.js');
@@ -384,6 +480,28 @@ class Component extends DCLogic {
   openInquiry(p) { this.setState({ inquiryOpen: true, inquiryProduct: p, inquiryNote: '' }); }
   closeInquiry() { this.setState({ inquiryOpen: false }); }
 
+  goToPage(p) { this.setState({ currentPage: p }); }
+  prevPage() { this.setState((s) => ({ currentPage: Math.max(1, s.currentPage - 1) })); }
+  nextPage(totalPages) { this.setState((s) => ({ currentPage: Math.min(totalPages, s.currentPage + 1) })); }
+
+  buildPageList(current, total) {
+    const pages = [];
+    const addPage = (p) => pages.push({ isPage: true, isEllipsis: false, page: p, activeClass: p === current ? 'active' : '', go: () => this.goToPage(p) });
+    const addEllipsis = () => pages.push({ isPage: false, isEllipsis: true });
+    if (total <= 7) {
+      for (let p = 1; p <= total; p++) addPage(p);
+    } else {
+      addPage(1);
+      if (current > 3) addEllipsis();
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+      for (let p = start; p <= end; p++) addPage(p);
+      if (current < total - 2) addEllipsis();
+      addPage(total);
+    }
+    return pages;
+  }
+
   toggleCart(p) {
     if (!this.cart) return;
     if (this.cart.getCart().some((i) => i.sku === p.sku)) {
@@ -413,12 +531,15 @@ class Component extends DCLogic {
     const items = this.state.cartItems;
     const message = cart ? cart.buildMessage(items, {}) : '';
 
-    const mkGroup = (names, key) => names.map((name) => ({ name, checked: this.state[key] === name, select: () => this.setState({ [key]: name }) }));
+    const mkGroup = (names, key) => names.map((name) => ({ name, checked: this.state[key] === name, select: () => this.setState({ [key]: name, currentPage: 1 }) }));
     const stoneTypeOptions = this.filters ? this.filters.distinctValues(this.state.products, 'stoneName') : [];
     const stoneTypes = mkGroup(['Any', ...stoneTypeOptions], 'stoneType');
     const gemColors = mkGroup(['Any', ...this.state.colorAttrs.map((a) => a.name)], 'gemColor');
     const gemShapes = mkGroup(['Any', ...this.state.shapeAttrs.map((a) => a.name)], 'gemShape');
     const gemCerts = mkGroup(['Any', ...this.state.certAttrs.map((a) => a.name)], 'gemCert');
+    const allCount = this.state.products.length;
+    const natCount = this.state.products.filter((p) => p.origin === 'Natural').length;
+    const labCount = this.state.products.filter((p) => p.origin === 'Lab Created').length;
 
     const filtered = this.state.products.filter((p) => {
       if (this.state.filter === 'nat' && p.origin !== 'Natural') return false;
@@ -432,7 +553,28 @@ class Component extends DCLogic {
       ])) return false;
       return true;
     });
-    const gems = filtered.map((p) => ({
+
+    // 'newest' needs no client-side sort — GET /api/products already
+    // orders by created_at DESC. Price sort treats a masked/invisible
+    // price as "no price" and always sorts it last regardless of
+    // direction. Every gemstone has a weightCarat (unlike jewelry, where
+    // only some pieces have a center stone), so carat sort is always
+    // meaningful here.
+    const sorted = filtered.slice();
+    if (this.state.sortBy === 'price-asc' || this.state.sortBy === 'price-desc') {
+      const dir = this.state.sortBy === 'price-asc' ? 1 : -1;
+      sorted.sort((a, b) => {
+        const av = a.priceVisible ? Number(a.totalPrice) : Infinity;
+        const bv = b.priceVisible ? Number(b.totalPrice) : Infinity;
+        if (av === Infinity || bv === Infinity) return av - bv;
+        return (av - bv) * dir;
+      });
+    } else if (this.state.sortBy === 'carat-asc' || this.state.sortBy === 'carat-desc') {
+      const dir = this.state.sortBy === 'carat-asc' ? 1 : -1;
+      sorted.sort((a, b) => ((Number(a.weightCarat) || 0) - (Number(b.weightCarat) || 0)) * dir);
+    }
+
+    const gems = sorted.map((p) => ({
       name: p.stoneName, tag: p.origin,
       sku: p.sku, media: JSON.stringify(p.media || []),
       placeholder: `${p.stoneName || ''} gemstone macro`,
@@ -452,9 +594,27 @@ class Component extends DCLogic {
       };
     });
 
+    const activeFilterChips = [];
+    if (this.state.stoneType !== 'Any') activeFilterChips.push({ label: `Stone: ${this.state.stoneType}`, remove: () => this.setState({ stoneType: 'Any', currentPage: 1 }) });
+    if (this.state.gemColor !== 'Any') activeFilterChips.push({ label: `Color: ${this.state.gemColor}`, remove: () => this.setState({ gemColor: 'Any', currentPage: 1 }) });
+    if (this.state.gemShape !== 'Any') activeFilterChips.push({ label: `Shape: ${this.state.gemShape}`, remove: () => this.setState({ gemShape: 'Any', currentPage: 1 }) });
+    if (this.state.gemCert !== 'Any') activeFilterChips.push({ label: `Cert: ${this.state.gemCert}`, remove: () => this.setState({ gemCert: 'Any', currentPage: 1 }) });
+
+    const totalPages = Math.max(1, Math.ceil(gems.length / this.pageSize));
+    const currentPage = Math.min(this.state.currentPage, totalPages);
+    const pageGems = gems.slice((currentPage - 1) * this.pageSize, currentPage * this.pageSize);
+    const showPriceSort = this.state.products.some((p) => p.priceVisible);
+
     return {
-      gems, resultCount: gems.length,
+      activeFilterChips,
+      gems, pageGems, resultCount: gems.length,
       isEmpty: !this.state.loading && gems.length === 0,
+      hasMultiplePages: totalPages > 1,
+      pageList: this.buildPageList(currentPage, totalPages),
+      canPrevPage: currentPage > 1, canNextPage: currentPage < totalPages,
+      prevPage: () => this.prevPage(), nextPage: () => this.nextPage(totalPages),
+      sortBy: this.state.sortBy, showPriceSort,
+      handleSort: (e) => this.setState({ sortBy: e.target.value, currentPage: 1 }),
       errorMessage: this.state.errorMessage,
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
@@ -466,14 +626,17 @@ class Component extends DCLogic {
       closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
       accountName: (this.state.customer && this.state.customer.full_name) || '',
       accountEmail: (this.state.customer && this.state.customer.email) || '',
+      allClass: this.state.filter === 'all' ? 'active' : '',
       natClass: this.state.filter === 'nat' ? 'active' : '',
       labClass: this.state.filter === 'lab' ? 'active' : '',
-      selectNat: () => this.setState({ filter: this.state.filter === 'nat' ? 'all' : 'nat' }),
-      selectLab: () => this.setState({ filter: this.state.filter === 'lab' ? 'all' : 'lab' }),
+      allCount, natCount, labCount,
+      selectAll: () => this.setState({ filter: 'all', currentPage: 1 }),
+      selectNat: () => this.setState({ filter: 'nat', currentPage: 1 }),
+      selectLab: () => this.setState({ filter: 'lab', currentPage: 1 }),
       stoneTypes, gemColors, gemShapes, gemCerts,
       search: this.state.search,
-      handleSearch: (e) => this.setState({ search: e.target.value }),
-      resetFilters: () => this.setState({ filter: 'all', stoneType: 'Any', gemColor: 'Any', gemShape: 'Any', gemCert: 'Any', search: '' }),
+      handleSearch: (e) => this.setState({ search: e.target.value, currentPage: 1 }),
+      resetFilters: () => this.setState({ filter: 'all', stoneType: 'Any', gemColor: 'Any', gemShape: 'Any', gemCert: 'Any', search: '', currentPage: 1 }),
       openFilters: () => this.setState({ filtersOpen: true }),
       closeFilters: () => this.setState({ filtersOpen: false }),
       filtersOpenClass: this.state.filtersOpen ? 'open' : '',

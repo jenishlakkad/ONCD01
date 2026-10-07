@@ -29,6 +29,91 @@ a:hover{color:var(--color-accent-700)}
 .fav-track::-webkit-scrollbar{display:none;}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
+
+/* ── Mobile fixes ───────────────────────────────────────────────────────
+   The shared stylesheet already handles the hero height, h1/h2/h3 sizing,
+   section padding and the product grids — these cover what's specific to
+   Home's own layout and weren't caught by those generic rules.
+
+   The promo/story grids and the hero CTA row below are written mobile
+   first (the safe, single-column/wrapped state is the UNCONDITIONAL
+   default, not gated behind a max-width match) rather than relying on a
+   specific breakpoint number. minmax(320px,1fr) carries a hard 320px
+   floor that survives even when auto-fit collapses to a single column —
+   on any viewport whose content width (viewport minus side padding) is
+   narrower than 320px, that floor alone forces horizontal overflow,
+   clipped invisibly by the global overflow-x:hidden on body (no
+   scrollbar, just a silently cut-off right edge) — exactly the "banner
+   cutting from the side" symptom. A max-width query only closes that gap
+   for viewports under its own threshold; this reverses the default so
+   nothing has to match a guessed number to be safe. */
+.promo-grid,.story-grid{grid-template-columns:1fr !important;}
+@media (min-width:640px){
+  /* Only re-enable the 2-up layout once there's provably enough room;
+     auto-fit's own math still safely degrades to one column below this
+     if the exact threshold undershoots on a particular device. */
+  .promo-grid,.story-grid{grid-template-columns:repeat(auto-fit,minmax(320px,1fr)) !important;}
+}
+/* The hero's two CTAs ("Register for Trade Pricing" is long) have nowhere
+   to shrink to side by side on a narrow screen. flex-wrap is harmless at
+   desktop widths (both buttons already fit on one line there, so it never
+   triggers) and flex-basis lets each one grow to fill its row whether
+   it ends up alone (full width) or paired (roughly half each) — no
+   breakpoint number to get wrong either way. */
+.hero-cta-row{flex-wrap:wrap;}
+.hero-cta-row .btn{flex:1 1 220px;}
+@media (max-width:767px){
+  /* Trust-pill row's desktop 48px gap leaves odd, uneven gaps once it
+     wraps to 2 per row on a narrower screen. */
+  .trust-pills{gap:14px 20px !important;}
+  /* Footer's copyright + certification line packs two text blocks to
+     opposite edges with no room to shrink — wraps and centers instead of
+     the two crowding together or overlapping at the edges. */
+  .footer-bottom-row{flex-wrap:wrap;justify-content:center !important;gap:6px;text-align:center;}
+  /* Justified text reads fine at a wide desktop column but creates
+     uneven word-gaps ("rivers") once the same column narrows. */
+  .story-body{text-align:left !important;}
+
+  /* Collection tiles (Diamonds/Jewelry/Gemstones): 4/5 is a deliberate
+     portrait crop for the desktop 3-up grid, where the tiles sit side by
+     side and a tall card reads fine. Once the grid collapses to one
+     column on a narrower screen, the same ratio turns three ~550-600px
+     cards into three full-screen-high banners stacked end to end —
+     closer to three separate hero sections than a browsable list.
+     Shortened so each is a glance, matching how reference jewelry sites
+     (Tanishq/CaratLane/Mejuri) keep category tiles closer to square. */
+  .col-img{aspect-ratio:4/3 !important;}
+
+  /* Client Favorites carousel: a 280px-wide card with a square (1:1)
+     photo runs ~420-440px tall on a phone — more than half a screen for
+     a single card in a row meant for a quick side-scroll, not a full
+     product view. Narrower card + a shorter photo keeps roughly two
+     cards in view at once (one full, one peeking) the way an
+     "editor's pick" rail is meant to read, and halves the height. */
+  .fav-card{flex-basis:208px !important;}
+  .fav-img{aspect-ratio:4/3 !important;}
+}
+@media (max-width:639px){
+  /* Hero: the shared stylesheet already clamps this to 440-600px (62vh)
+     below 1024px, but on a typical phone that's still up to ~80-90% of
+     the visible screen before any real content peeks into view — the
+     banner is technically all there, you just can't see all of it at
+     once without scrolling mid-banner. Tightened further so the whole
+     hero (image, headline, both CTAs) is visible in one glance, the way
+     Blue Nile/Mejuri keep their mobile heroes well short of full-screen. */
+  .hero-section{height:clamp(360px,52vh,460px) !important;}
+}
+/* The Spotlight banner's aspect-ratio:16/6 is a desktop ratio — wide and
+   short, sized for one short line of text. Its kicker/title/body/button
+   are centered inside it via position:absolute, so on a narrow column
+   (where the same text wraps to 2-3x as many lines) the box simply isn't
+   tall enough: the title's top edge and the CTA button get clipped by
+   the box's own overflow:hidden. A flat min-height floor fixes this at
+   any width without needing per-breakpoint tuning — at desktop widths
+   the 16/6 ratio already produces a box far taller than this floor, so
+   it never engages there; it only steps in where the ratio alone would
+   otherwise be too short. */
+.spotlight-banner{min-height:400px;}
 </style>
 </helmet>
 
@@ -107,7 +192,7 @@ a:hover{color:var(--color-accent-700)}
             <div style="color:var(--color-accent-300);font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:18px;">{{ s.kicker }}</div>
             <h1 style="color:#f8f4f4;font-size:64px;font-weight:400;line-height:1.08;margin:0 0 20px;">{{ s.title }}</h1>
             <p style="color:#e8e5e3;font-size:16px;max-width:480px;margin:0 0 32px;">{{ s.sub }}</p>
-            <div style="display:flex;gap:14px;pointer-events:auto;">
+            <div class="hero-cta-row" style="display:flex;gap:14px;pointer-events:auto;">
               <a href="{{ s.href }}" class="btn btn-primary" style="border-color:var(--color-accent-300);color:var(--color-accent-300);padding:14px 28px;">{{ s.cta }}</a>
               <a href="Register.dc.html" class="btn btn-secondary" style="border-color:rgba(248,244,244,.4);color:#f8f4f4;padding:14px 28px;">Register for Trade Pricing</a>
             </div>
@@ -132,7 +217,7 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </section>
 
-  <section style="display:flex;justify-content:center;gap:48px;padding:28px clamp(20px,6vw,56px);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
+  <section class="trust-pills" style="display:flex;justify-content:center;gap:48px;padding:28px clamp(20px,6vw,56px);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
     <span class="pill">GIA &amp; IGI Certified</span>
     <span class="pill">Direct Factory Sourcing</span>
     <span class="pill">Trade &amp; Retail Inquiries</span>
@@ -141,7 +226,7 @@ a:hover{color:var(--color-accent-700)}
 
   <sc-if value="{{ showPromoBanner }}" hint-placeholder-val="{{ true }}">
   <section style="padding:clamp(20px,6vw,56px) clamp(20px,6vw,56px) 0;">
-    <div style="background:var(--color-neutral-900);border-radius:var(--radius-lg);overflow:hidden;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:stretch;">
+    <div class="promo-grid" style="background:var(--color-neutral-900);border-radius:var(--radius-lg);overflow:hidden;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:stretch;">
       <div style="padding:clamp(20px,6vw,56px);color:#f8f4f4;display:flex;flex-direction:column;justify-content:center;">
         <div style="color:var(--color-accent-400);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;">{{ promo.kicker }}</div>
         <h2 style="color:#f8f4f4;font-size:30px;font-weight:400;">{{ promo.title }}</h2>
@@ -222,7 +307,7 @@ a:hover{color:var(--color-accent-700)}
 
   <sc-if value="{{ showSpotlight }}" hint-placeholder-val="{{ true }}">
   <section style="padding:0 clamp(20px,6vw,56px) 96px;">
-    <div style="position:relative;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:16/6;">
+    <div class="spotlight-banner" style="position:relative;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:16/6;">
       <sc-if value="{{ spotlight.hasImage }}" hint-placeholder-val="{{ false }}">
         <img src="{{ spotlight.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
       </sc-if>
@@ -339,7 +424,7 @@ a:hover{color:var(--color-accent-700)}
   </sc-if>
 
   <sc-if value="{{ showStoryTeaser }}" hint-placeholder-val="{{ true }}">
-  <section style="padding:96px clamp(20px,6vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:64px;align-items:center;">
+  <section class="story-grid" style="padding:96px clamp(20px,6vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:64px;align-items:center;">
     <div class="plate" style="aspect-ratio:4/3;">
       <sc-if value="{{ storyTeaser.hasImage }}" hint-placeholder-val="{{ false }}">
         <img src="{{ storyTeaser.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
@@ -351,7 +436,7 @@ a:hover{color:var(--color-accent-700)}
     <div>
       <h6 style="color:var(--color-accent-700);">{{ storyTeaser.kicker }}</h6>
       <h2 style="font-size:34px;margin-top:8px;">{{ storyTeaser.title }}</h2>
-      <p style="opacity:.8;text-align:justify;">{{ storyTeaser.body }}</p>
+      <p class="story-body" style="opacity:.8;text-align:justify;">{{ storyTeaser.body }}</p>
       <a href="{{ storyTeaser.href }}" class="btn btn-primary" style="margin-top:8px;">{{ storyTeaser.cta }}</a>
     </div>
   </section>
@@ -426,7 +511,7 @@ a:hover{color:var(--color-accent-700)}
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+    <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
       <span>GIA · IGI · HRD Certified Partners</span>
     </div>

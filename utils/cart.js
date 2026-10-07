@@ -154,8 +154,17 @@ export function channelLink(channel, message, contacts) {
         '&body=' +
         encodeURIComponent(text)
       );
+    // Unlike wa.me/mailto, LINE's own add-friend/open-chat link
+    // (https://line.me/R/ti/p/{id} — same pattern already used correctly
+    // in Contact.dc.html) has no official query param to prefill message
+    // text, so `text` is intentionally unused here; this just opens a
+    // chat with the configured account directly instead of LINE's generic
+    // "share to any contact" sheet (line.me/R/msg/text/), which never
+    // routed to the business's own LINE ID at all — the customer would
+    // have to already have that ID as a friend and pick it manually, so
+    // in practice the inquiry never reached the configured LINE account.
     case 'line':
-      return 'https://line.me/R/msg/text/?' + encodeURIComponent(text);
+      return 'https://line.me/R/ti/p/' + (c.lineId || '@oncd');
     case 'skype':
       return 'skype:' + (c.skypeId || 'live:.cid.oncd') + '?chat&text=' + encodeURIComponent(text);
     default:

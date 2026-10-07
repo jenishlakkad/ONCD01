@@ -18,6 +18,78 @@ a:hover{color:var(--color-accent-700)}
 .side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
 .adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
 .adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
+
+/* ── Welcome banner ─────────────────────────────────────────────────── */
+.dash-welcome{
+  background:linear-gradient(135deg, var(--color-neutral-900), var(--color-accent-900));
+  color:#f8f4f4;
+  border-radius:var(--radius-lg);
+  padding:28px 32px;
+  display:flex;justify-content:space-between;align-items:center;gap:20px;
+  margin-bottom:28px;
+  flex-wrap:wrap;
+}
+.dash-welcome p{color:var(--color-neutral-300);font-size:13.5px;margin-top:6px;}
+
+/* ── Quick actions ──────────────────────────────────────────────────── */
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:36px;}
+.qa-tile{
+  position:relative;
+  display:flex;flex-direction:column;gap:12px;
+  padding:18px;
+  border:1px solid var(--color-divider);
+  border-radius:var(--radius-lg);
+  background:var(--color-bg);
+  text-decoration:none;color:var(--color-text);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.qa-tile:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--color-accent-300);}
+.qa-tile:hover .qa-icon{background:var(--color-accent);color:#fff;}
+.qa-icon{
+  width:40px;height:40px;border-radius:var(--radius-md);flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--color-accent-100);color:var(--color-accent-700);
+  transition:background .2s,color .2s;
+}
+.qa-label{font-size:13.5px;font-weight:600;line-height:1.3;}
+.qa-badge{
+  position:absolute;top:14px;right:14px;
+  background:var(--color-accent-700);color:#fff;
+  font-size:10.5px;font-weight:700;line-height:1;
+  padding:4px 7px;border-radius:999px;
+}
+
+/* ── Stat cards ─────────────────────────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;}
+.stat-card{display:flex;align-items:center;gap:16px;transition:transform .2s ease,box-shadow .2s ease;}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.stat-icon{
+  width:48px;height:48px;border-radius:50%;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--stat-color) 15%, transparent);
+  color:var(--stat-color);
+}
+.stat-value{font-family:var(--font-heading);font-size:28px;font-weight:600;line-height:1;}
+.stat-label{font-size:12px;opacity:.65;margin-top:5px;}
+
+/* ── Content cards (replace bare <h3> + <table> blocks) ────────────── */
+.dash-card{border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:var(--color-bg);overflow:hidden;}
+.dash-card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--color-divider);}
+.dash-card-head h3{margin:0;font-size:16.5px;display:flex;align-items:center;gap:10px;}
+.dash-card-head h3 svg{color:var(--color-accent-700);flex:none;}
+.dash-card .tbl-wrap{border:none;}
+.dash-card table{margin-top:0 !important;}
+.dash-card .adm-th:first-child,.dash-card .adm-td:first-child{padding-left:20px;}
+.dash-card .adm-th:last-child,.dash-card .adm-td:last-child{padding-right:20px;}
+.dash-card tbody tr{transition:background .15s;}
+.dash-card tbody tr:hover{background:var(--color-surface);}
+.dash-card tbody tr:last-child .adm-td{border-bottom:none;}
+.dash-empty{padding:44px 20px;text-align:center;font-size:13px;opacity:.6;}
+
+.dash-tables-grid{display:grid;grid-template-columns:1fr;gap:24px;margin-top:24px;}
+@media (min-width:900px){
+  .dash-tables-grid{grid-template-columns:1fr 1fr;}
+}
 </style>
 </helmet>
 
@@ -47,7 +119,7 @@ a:hover{color:var(--color-accent-700)}
   </aside>
 
   <main style="padding:32px 40px 80px;max-width:1180px;">
-    <div class="adm-page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+    <div class="adm-page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
       <div><h6 style="color:var(--color-accent-700);">Overview</h6><h1 style="font-size:28px;margin-top:6px;">Dashboard</h1></div>
       <div style="display:flex;align-items:center;gap:12px;">
         <div class="tag tag-outline">Admin: {{ adminName }}</div>
@@ -58,44 +130,136 @@ a:hover{color:var(--color-accent-700)}
       <p style="font-size:13px;color:var(--color-accent-700);margin-top:-16px;margin-bottom:16px;">{{ errorMessage }}</p>
     </sc-if>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;">
-      <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
-        <div class="card elev-sm"><div class="card-kicker">{{ s.label }}</div><div class="card-title" style="font-size:26px;margin-top:6px;">{{ s.value }}</div></div>
-      </sc-for>
+    <div class="dash-welcome">
+      <div>
+        <h2 style="color:#f8f4f4;font-size:22px;font-weight:400;">{{ greeting }}, {{ adminFirstName }}.</h2>
+        <p>{{ todayLabel }} — here's what needs your attention today.</p>
+      </div>
+      <div class="tag tag-accent" style="flex:none;">{{ pendingApprovalsCount }} awaiting approval</div>
     </div>
 
-    <h3 style="margin-top:40px;">Pending User Approvals</h3>
-    <div class="tbl-wrap"><table class="table" style="margin-top:12px;">
-      <thead><tr><th class="adm-th">Name</th><th class="adm-th">Company</th><th class="adm-th">Country</th><th class="adm-th">Status</th></tr></thead>
-      <tbody>
-        <sc-for list="{{ pendingUsers }}" as="u" hint-placeholder-count="3">
-          <tr><td class="adm-td">{{ u.name }}</td><td class="adm-td">{{ u.company }}</td><td class="adm-td">{{ u.country }}</td><td class="adm-td"><span class="tag tag-neutral">Pending</span></td></tr>
-        </sc-for>
-      </tbody>
-    </table></div>
-
-    <h3 style="margin-top:40px;">Recent Inquiries</h3>
-    <div class="tbl-wrap"><table class="table" style="margin-top:12px;">
-      <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Customer</th><th class="adm-th">Channel</th><th class="adm-th">Date</th></tr></thead>
-      <tbody>
-        <sc-for list="{{ recentInquiries }}" as="i" hint-placeholder-count="4">
-          <tr><td class="adm-td">{{ i.sku }}</td><td class="adm-td">{{ i.customer }}</td><td class="adm-td">{{ i.channel }}</td><td class="adm-td">{{ i.date }}</td></tr>
-        </sc-for>
-      </tbody>
-    </table></div>
-
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:40px;">
-      <h3 style="margin:0;">Recent Audit Activity</h3>
-      <a href="AdminAudit.dc.html" style="font-size:13px;">View full audit log & reports →</a>
+    <h6 style="color:var(--color-accent-700);margin-bottom:12px;">Quick Actions</h6>
+    <div class="qa-grid">
+      <a href="AdminProducts.dc.html" class="qa-tile">
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></div>
+        <div class="qa-label">Add Product</div>
+      </a>
+      <a href="AdminUsers.dc.html" class="qa-tile">
+        <sc-if value="{{ hasPendingApprovals }}" hint-placeholder-val="{{ false }}">
+          <span class="qa-badge">{{ pendingApprovalsCount }}</span>
+        </sc-if>
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7"/><path d="m16 13 2 2 4-4"/></svg></div>
+        <div class="qa-label">User Approvals</div>
+      </a>
+      <a href="AdminContact.dc.html" class="qa-tile">
+        <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+          <span class="qa-badge">{{ newContactCount }}</span>
+        </sc-if>
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+        <div class="qa-label">Contact Messages</div>
+      </a>
+      <a href="AdminHomepage.dc.html" class="qa-tile">
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 9v11"/></svg></div>
+        <div class="qa-label">Homepage Editor</div>
+      </a>
+      <a href="AdminCategories.dc.html" class="qa-tile">
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.6 12.3 12.3 20.6a2 2 0 0 1-2.8 0l-7-7a2 2 0 0 1 0-2.8L10.8 2.5a2 2 0 0 1 1.4-.6H19a2 2 0 0 1 2 2v6.9a2 2 0 0 1-.4 1.4Z"/><circle cx="15.5" cy="7.5" r="1.3"/></svg></div>
+        <div class="qa-label">Categories</div>
+      </a>
+      <a href="AdminSeo.dc.html" class="qa-tile">
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+        <div class="qa-label">SEO</div>
+      </a>
+      <a href="AdminAudit.dc.html" class="qa-tile">
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><path d="m9 13 2 2 4-4"/></svg></div>
+        <div class="qa-label">Audit Reports</div>
+      </a>
+      <a href="AdminSettings.dc.html" class="qa-tile">
+        <div class="qa-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></div>
+        <div class="qa-label">Settings</div>
+      </a>
     </div>
-    <div class="tbl-wrap"><table class="table" style="margin-top:12px;">
-      <thead><tr><th class="adm-th">Date</th><th class="adm-th">Actor</th><th class="adm-th">Action</th><th class="adm-th">Target</th><th class="adm-th">Module</th></tr></thead>
-      <tbody>
-        <sc-for list="{{ recentAudits }}" as="a" hint-placeholder-count="8">
-          <tr><td class="adm-td">{{ a.date }}</td><td class="adm-td">{{ a.actor }}</td><td class="adm-td">{{ a.action }}</td><td class="adm-td">{{ a.target }}</td><td class="adm-td"><span class="tag tag-neutral">{{ a.module }}</span></td></tr>
-        </sc-for>
-      </tbody>
-    </table></div>
+
+    <h6 style="color:var(--color-accent-700);margin-bottom:12px;">Snapshot</h6>
+    <div class="stat-grid">
+      <div class="card elev-sm stat-card" style="--stat-color:#b3273e;">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7"/><path d="m16 13 2 2 4-4"/></svg></div>
+        <div><div class="stat-value">{{ pendingApprovalsCount }}</div><div class="stat-label">Pending Approvals</div></div>
+      </div>
+      <div class="card elev-sm stat-card" style="--stat-color:var(--color-accent);">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
+        <div><div class="stat-value">{{ totalProductsCount }}</div><div class="stat-label">Total Products</div></div>
+      </div>
+      <div class="card elev-sm stat-card" style="--stat-color:var(--color-accent-700);">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.3 0-2.5-.3-3.6-.8L3 21l1.8-5.4a8.4 8.4 0 0 1-.8-3.6A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg></div>
+        <div><div class="stat-value">{{ inquiriesWeekCount }}</div><div class="stat-label">Inquiries This Week</div></div>
+      </div>
+      <div class="card elev-sm stat-card" style="--stat-color:var(--color-neutral-800);">
+        <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
+        <div><div class="stat-value">{{ activeTypesCount }}</div><div class="stat-label">Active Product Types</div></div>
+      </div>
+    </div>
+
+    <div class="dash-tables-grid">
+      <div class="dash-card">
+        <div class="dash-card-head">
+          <h3><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7"/><path d="m16 13 2 2 4-4"/></svg>Pending User Approvals</h3>
+          <a href="AdminUsers.dc.html" style="font-size:12.5px;">View all →</a>
+        </div>
+        <sc-if value="{{ hasPendingUsers }}" hint-placeholder-val="{{ true }}">
+          <div class="tbl-wrap"><table class="table">
+            <thead><tr><th class="adm-th">Name</th><th class="adm-th">Company</th><th class="adm-th">Country</th><th class="adm-th">Status</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ pendingUsers }}" as="u" hint-placeholder-count="3">
+                <tr><td class="adm-td">{{ u.name }}</td><td class="adm-td">{{ u.company }}</td><td class="adm-td">{{ u.country }}</td><td class="adm-td"><span class="tag tag-neutral">Pending</span></td></tr>
+              </sc-for>
+            </tbody>
+          </table></div>
+        </sc-if>
+        <sc-if value="{{ !hasPendingUsers }}" hint-placeholder-val="{{ false }}">
+          <div class="dash-empty">No pending approvals right now.</div>
+        </sc-if>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-head">
+          <h3><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.3 0-2.5-.3-3.6-.8L3 21l1.8-5.4a8.4 8.4 0 0 1-.8-3.6A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg>Recent Inquiries</h3>
+        </div>
+        <sc-if value="{{ hasRecentInquiries }}" hint-placeholder-val="{{ true }}">
+          <div class="tbl-wrap"><table class="table">
+            <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Customer</th><th class="adm-th">Channel</th><th class="adm-th">Date</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ recentInquiries }}" as="i" hint-placeholder-count="4">
+                <tr><td class="adm-td">{{ i.sku }}</td><td class="adm-td">{{ i.customer }}</td><td class="adm-td">{{ i.channel }}</td><td class="adm-td">{{ i.date }}</td></tr>
+              </sc-for>
+            </tbody>
+          </table></div>
+        </sc-if>
+        <sc-if value="{{ !hasRecentInquiries }}" hint-placeholder-val="{{ false }}">
+          <div class="dash-empty">No inquiries yet.</div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div class="dash-card" style="margin-top:24px;">
+      <div class="dash-card-head">
+        <h3><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><path d="m9 13 2 2 4-4"/></svg>Recent Audit Activity</h3>
+        <a href="AdminAudit.dc.html" style="font-size:12.5px;">View full audit log & reports →</a>
+      </div>
+      <sc-if value="{{ hasRecentAudits }}" hint-placeholder-val="{{ true }}">
+        <div class="tbl-wrap"><table class="table">
+          <thead><tr><th class="adm-th">Date</th><th class="adm-th">Actor</th><th class="adm-th">Action</th><th class="adm-th">Target</th><th class="adm-th">Module</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ recentAudits }}" as="a" hint-placeholder-count="8">
+              <tr><td class="adm-td">{{ a.date }}</td><td class="adm-td">{{ a.actor }}</td><td class="adm-td">{{ a.action }}</td><td class="adm-td">{{ a.target }}</td><td class="adm-td"><span class="tag tag-neutral">{{ a.module }}</span></td></tr>
+            </sc-for>
+          </tbody>
+        </table></div>
+      </sc-if>
+      <sc-if value="{{ !hasRecentAudits }}" hint-placeholder-val="{{ false }}">
+        <div class="dash-empty">No audit activity recorded yet.</div>
+      </sc-if>
+    </div>
   </main>
 </div>
 
@@ -129,16 +293,35 @@ class Component extends DCLogic {
     };
     const channelLabels = { whatsapp: 'WhatsApp', email: 'Email', line: 'LINE', skype: 'Skype' };
     const recentInquiries = this.state.recentInquiries.map((i) => ({ ...i, channel: channelLabels[i.channel] || i.channel, date: fmtDate(i.date) }));
+    const statValue = (label) => {
+      const s = this.state.stats.find((x) => x.label === label);
+      return s ? s.value : 0;
+    };
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const fullName = this.state.admin ? this.state.admin.fullName : '';
+    const pendingApprovalsCount = statValue('Pending Approvals');
     return {
       stats: this.state.stats,
       pendingUsers: this.state.pendingUsers,
+      hasPendingUsers: this.state.pendingUsers.length > 0,
       recentInquiries,
+      hasRecentInquiries: recentInquiries.length > 0,
       recentAudits: this.state.recentAudits,
+      hasRecentAudits: this.state.recentAudits.length > 0,
       errorMessage: this.state.errorMessage,
-      adminName: this.state.admin ? this.state.admin.fullName : '',
+      adminName: fullName,
+      adminFirstName: fullName ? fullName.split(' ')[0] : 'there',
+      greeting, todayLabel,
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,
       hasNewContact: this.state.newContactCount > 0,
+      pendingApprovalsCount,
+      hasPendingApprovals: pendingApprovalsCount > 0,
+      totalProductsCount: statValue('Total Products'),
+      inquiriesWeekCount: statValue('Inquiries This Week'),
+      activeTypesCount: statValue('Active Product Types'),
     };
   }
 }
