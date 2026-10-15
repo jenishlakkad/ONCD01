@@ -4,6 +4,8 @@ const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireAdmin = require('../middleware/requireAdminPostgres');
 const requirePermission = require('../middleware/requirePermission');
 const { writeAudit } = require('../lib/auditPostgres');
+const { loadAccountSnapshot } = require('../lib/accountSnapshot');
+const { INQUIRY_STATUSES, updateInquiryStatus } = require('../lib/messaging');
 
 // PostgreSQL counterpart to server/routes/adminUsers.js (SQLite). Parallel/
 // isolated file only — NOT mounted in app.js.
@@ -108,6 +110,27 @@ router.get('/:id/saved-items', asyncRoute(async (req, res) => {
     [customer.id]
   );
   res.json({ data: rows });
+}));
+
+// Everything the Details dialog shows (profile, cart, saved items,
+// inquiries + live product data) in one query — the same snapshot the
+// customer's own dashboard reads, so both sides always agree.
+router.get('/:id/activity', asyncRoute(async (req, res) => {
+  if (!/^\d+$/.test(String(req.params.id))) throw new ApiError(404, 'Customer not found.');
+  const snapshot = await loadAccountSnapshot(req.params.id);
+  if (!snapshot) throw new ApiError(404, 'Customer not found.');
+  res.json({ data: snapshot });
+}));
+
+// The sales desk's side of the inquiry lifecycle (same helper as the
+// Inquiries inbox). The customer sees the new status on their dashboard.
+router.put('/:id/inquiries/:inquiryId', asyncRoute(async (req, res) => {
+  const status = String((req.body || {}).status || '');
+  if (!INQUIRY_STATUSES.includes(status)) throw new ApiError(400, 'Status must be pending, replied or closed.');
+  if (!/^\d+$/.test(String(req.params.id))) throw new ApiError(404, 'Inquiry not found.');
+  const updated = await updateInquiryStatus({ id: req.params.inquiryId, status, actor: req.adminUser.full_name, customerId: req.params.id });
+  if (!updated) throw new ApiError(404, 'Inquiry not found.');
+  res.json({ data: updated });
 }));
 
 router.post('/:id/approve', setStatus('approved', 'Approved user'));

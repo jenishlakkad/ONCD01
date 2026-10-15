@@ -15,109 +15,294 @@ body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
 .nav-link{position:relative}
-.pill{border:1px solid var(--color-divider);border-radius:999px;padding:6px 16px;font-size:12px;letter-spacing:.04em;color:var(--color-text);transition:border-color .25s,color .25s;}
-.pill:hover{border-color:var(--color-accent);color:var(--color-accent-700);}
-.col-card .col-img img{transition:transform .6s ease;}
-.col-card:hover .col-img img{transform:scale(1.06);}
-.col-card:hover .col-arrow{gap:8px;}
-.fav-card{transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease;}
-.fav-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-md);border-color:var(--color-accent);}
-.fav-card .fav-img product-media{transition:transform .5s ease;}
-.fav-card:hover .fav-img product-media{transform:scale(1.07);}
-.arr-card{transition:transform .3s ease,box-shadow .3s ease;}
-.arr-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
-.fav-track::-webkit-scrollbar{display:none;}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
-/* ── Mobile fixes ───────────────────────────────────────────────────────
-   The shared stylesheet already handles the hero height, h1/h2/h3 sizing,
-   section padding and the product grids — these cover what's specific to
-   Home's own layout and weren't caught by those generic rules.
+/* ── Announcement bar ───────────────────────────────────────────────── */
+.announce{display:flex;align-items:center;justify-content:center;gap:10px 14px;flex-wrap:wrap;padding:9px 44px;font-size:12.5px;letter-spacing:.02em;text-align:center;position:relative;line-height:1.4;}
+.announce.tone-dark{background:var(--color-neutral-900);color:#f3efe6;}
+.announce.tone-gold{background:var(--color-accent-100);color:var(--color-accent-900);}
+.announce-link{font-weight:600;text-decoration:underline;text-underline-offset:3px;}
+.announce.tone-dark .announce-link{color:var(--color-accent-300);}
+.announce.tone-gold .announce-link{color:var(--color-accent-800);}
+.announce-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:18px;line-height:1;width:28px;height:28px;}
+.announce-close:hover{opacity:1;}
 
-   The promo/story grids and the hero CTA row below are written mobile
-   first (the safe, single-column/wrapped state is the UNCONDITIONAL
-   default, not gated behind a max-width match) rather than relying on a
-   specific breakpoint number. minmax(320px,1fr) carries a hard 320px
-   floor that survives even when auto-fit collapses to a single column —
-   on any viewport whose content width (viewport minus side padding) is
-   narrower than 320px, that floor alone forces horizontal overflow,
-   clipped invisibly by the global overflow-x:hidden on body (no
-   scrollbar, just a silently cut-off right edge) — exactly the "banner
-   cutting from the side" symptom. A max-width query only closes that gap
-   for viewports under its own threshold; this reverses the default so
-   nothing has to match a guessed number to be safe. */
+/* ── Hero ───────────────────────────────────────────────────────────────
+   Images crossfade over 1s, but each slide's text fades OUT fast and the
+   next slide's text fades IN only after a delay — so two headlines never
+   sit on top of each other mid-transition. Inactive slides are
+   visibility:hidden once faded, which also keeps their buttons from
+   intercepting clicks/focus meant for the visible slide. */
+.hero-section{touch-action:pan-y;background:var(--color-neutral-900);}
+.hero-slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity 1s ease,visibility 0s linear 1s;}
+.hero-slide.is-active{opacity:1;visibility:visible;z-index:1;transition:opacity 1s ease,visibility 0s linear 0s;}
+.hero-img{width:100%;height:100%;object-fit:cover;display:block;filter:sepia(.12) saturate(.9) contrast(1.03);}
+.hero-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(20,18,16,.72) 0%,rgba(20,18,16,.38) 55%,rgba(20,18,16,.22) 100%);}
+@media (min-width:768px){
+  .hero-shade{background:linear-gradient(90deg,rgba(20,18,16,.66) 0%,rgba(20,18,16,.34) 42%,rgba(20,18,16,.06) 72%),linear-gradient(0deg,rgba(20,18,16,.42) 0%,rgba(20,18,16,0) 38%);}
+}
+.hero-copy-wrap{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 clamp(20px,6vw,56px) 84px;}
+@media (min-width:768px){.hero-copy-wrap{justify-content:center;padding-bottom:0;}}
+.hero-copy{max-width:640px;opacity:0;transform:translateY(14px);transition:opacity .25s ease,transform .25s ease;}
+.hero-slide.is-active .hero-copy{opacity:1;transform:none;transition:opacity .7s ease .45s,transform .7s ease .45s;}
+.hero-kicker{color:var(--color-accent-300);font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 16px;text-shadow:0 1px 3px rgba(0,0,0,.5);font-weight:600;}
+.hero-title{color:#f8f4f4;font-size:clamp(30px,5vw,64px);font-weight:400;line-height:1.08;margin:0 0 18px;text-shadow:0 2px 18px rgba(0,0,0,.25);}
+.hero-sub{color:#ece8e4;font-size:clamp(14px,1.4vw,16px);max-width:480px;margin:0 0 28px;text-shadow:0 1px 3px rgba(0,0,0,.35);}
+.hero-cta-row{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-cta-row .btn{flex:1 1 200px;padding:14px 26px;}
+@media (min-width:768px){.hero-cta-row .btn{flex:0 1 auto;}}
+.hero-btn-primary{background:var(--color-accent);border-color:var(--color-accent);color:#fff;}
+.hero-btn-primary:hover{background:var(--color-accent-700);border-color:var(--color-accent-700);color:#fff;}
+.hero-btn-secondary{border-color:rgba(248,244,244,.55);color:#f8f4f4;background:rgba(20,18,16,.18);backdrop-filter:blur(4px);}
+.hero-btn-secondary:hover{background:rgba(248,244,244,.14);color:#fff;border-color:#f8f4f4;}
+.hero-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(248,244,244,.12);border:1px solid rgba(248,244,244,.4);color:#f8f4f4;width:44px;height:44px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:5;transition:background .25s;}
+.hero-arrow:hover{background:rgba(248,244,244,.3);}
+@media (min-width:768px){.hero-arrow{display:flex;}}
+.hero-dots{position:absolute;bottom:26px;left:0;right:0;display:flex;justify-content:center;gap:10px;z-index:5;}
+.hero-dot{width:14px;padding:10px 0;background:none;border:none;cursor:pointer;display:flex;align-items:center;transition:width .3s ease;}
+.hero-dot.is-active{width:40px;}
+.hero-dot-track{display:block;width:100%;height:4px;border-radius:2px;background:rgba(248,244,244,.4);overflow:hidden;}
+.hero-dot-fill{display:none;height:100%;width:100%;background:var(--color-accent-300);transform-origin:left center;}
+.hero-dot.is-active .hero-dot-fill{display:block;animation:heroFill linear forwards;}
+.hero-dots.is-static .hero-dot.is-active .hero-dot-fill{animation:none;}
+@keyframes heroFill{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+.hero-scroll-cue{display:none;position:absolute;left:50%;bottom:74px;transform:translateX(-50%);color:rgba(248,244,244,.75);pointer-events:none;z-index:4;animation:heroScrollCue 2s ease-in-out infinite;}
+@media (min-width:768px){.hero-scroll-cue{display:flex;}}
+@keyframes heroScrollCue{0%,100%{transform:translate(-50%,0);opacity:.6;}50%{transform:translate(-50%,8px);opacity:1;}}
+@media (max-width:639px){.hero-section{height:clamp(420px,62vh,520px) !important;min-height:0 !important;}}
+@media (prefers-reduced-motion:reduce){
+  .hero-slide,.hero-slide.is-active,.hero-copy,.hero-slide.is-active .hero-copy{transition:none !important;}
+  .hero-scroll-cue{animation:none;}
+}
+
+/* ── Section shell ──────────────────────────────────────────────────────
+   Every flow section gets the same top spacing, so the admin can reorder
+   them freely without gaps doubling or collapsing between neighbours. */
+.hs{margin-top:clamp(52px,7vw,96px);padding:0 clamp(16px,5vw,56px);}
+.hs-near{margin-top:28px;}
+.hs-flush{margin-top:0;}
+.hs-band{padding-top:clamp(52px,7vw,88px);padding-bottom:clamp(52px,7vw,88px);}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap;margin-bottom:28px;}
+.sec-head.center{flex-direction:column;align-items:center;text-align:center;}
+.sec-head.center .sec-sub{margin-left:auto;margin-right:auto;}
+.sec-kicker{font-family:var(--font-heading);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--color-accent-700);margin:0 0 8px;}
+.sec-title{font-size:clamp(25px,3vw,36px);margin:0;}
+.sec-sub{font-size:14px;opacity:.72;margin:10px 0 0;max-width:560px;}
+.see-all{font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:gap .2s;}
+.see-all:hover{gap:10px;}
+.round-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--color-divider);background:var(--color-bg);color:var(--color-text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:border-color .2s,background .2s;}
+.round-btn:hover{border-color:var(--color-accent);background:var(--color-accent-100);}
+.rail{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.rail::-webkit-scrollbar{display:none;}
+.skel{background:linear-gradient(90deg,var(--color-surface) 25%,#ebe4d4 37%,var(--color-surface) 63%);background-size:400% 100%;animation:skel 1.4s ease infinite;}
+@keyframes skel{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+
+/* ── Welcome back bar (signed-in customers) ─────────────────────────── */
+.wb{display:grid;grid-template-columns:1fr;gap:18px;background:linear-gradient(135deg,#fff 0%,var(--color-surface) 100%);border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);}
+@media (min-width:1024px){.wb{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;padding:24px 28px;}}
+.wb-hello{display:flex;gap:14px;align-items:flex-start;min-width:0;}
+.wb-avatar{width:48px;height:48px;flex:none;border-radius:50%;background:var(--color-neutral-900);color:var(--color-accent-300);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:20px;}
+.wb-title{font-family:var(--font-heading);font-size:clamp(19px,2vw,23px);margin:0;display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;}
+.wb-sub{font-size:13px;opacity:.72;margin:4px 0 0;}
+.wb-status{font-family:system-ui,-apple-system,sans-serif;font-size:11px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;}
+.wb-status.ok{background:#e6f2e8;color:#2c6a3c;}
+.wb-status.pending{background:#fbf0d6;color:#81570a;}
+.wb-status.hold{background:var(--color-neutral-100);color:var(--color-neutral-800);}
+.wb-new{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;font-weight:600;color:var(--color-accent-800);background:var(--color-accent-100);border-radius:999px;padding:6px 12px;}
+.wb-new:hover{background:var(--color-accent-300);color:var(--color-accent-900);}
+.wb-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+@media (min-width:640px){.wb-links{grid-template-columns:repeat(4,minmax(0,1fr));}}
+.wb-link{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 14px;border-radius:var(--radius-md);background:#fff;border:1px solid var(--color-divider);color:var(--color-text);text-align:left;cursor:pointer;font:inherit;transition:border-color .2s,transform .2s,box-shadow .2s;position:relative;}
+.wb-link:hover{border-color:var(--color-accent);transform:translateY(-2px);box-shadow:var(--shadow-sm);color:var(--color-text);}
+.wb-link svg{color:var(--color-accent-700);}
+.wb-link-label{font-size:12.5px;font-weight:600;}
+.wb-count{position:absolute;top:10px;right:12px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--color-accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+/* ── Trust badges ────────────────────────────────────────────────────── */
+.trust{display:flex;justify-content:center;flex-wrap:wrap;gap:14px 22px;padding-top:24px;padding-bottom:24px;border-bottom:1px solid var(--color-divider);}
+@media (min-width:768px){.trust{gap:16px 44px;}}
+.trust-badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.04em;color:var(--color-text);}
+.trust-badge svg{color:var(--color-accent-700);flex-shrink:0;}
+
+/* ── Shop by shape ───────────────────────────────────────────────────── */
+.shape-track{gap:18px;padding:4px 2px 8px;}
+@media (min-width:1024px){.shape-track{justify-content:center;flex-wrap:wrap;gap:24px 26px;overflow:visible;}}
+.shape-tile{flex:0 0 96px;scroll-snap-align:start;text-decoration:none;color:inherit;text-align:center;}
+@media (min-width:768px){.shape-tile{flex-basis:112px;}}
+.shape-tile-img{aspect-ratio:1;border-radius:50%;overflow:hidden;margin:0;border:1px solid var(--color-divider);background:var(--color-surface);transition:border-color .25s,transform .25s,box-shadow .25s;}
+.shape-tile:hover .shape-tile-img{border-color:var(--color-accent);transform:translateY(-4px);box-shadow:var(--shadow-md);}
+.shape-tile:hover{color:var(--color-accent-800);}
+.shape-tile-label{display:block;margin-top:12px;font-size:13px;font-weight:600;}
+.shape-tile-count{display:block;font-size:11px;opacity:.6;margin-top:1px;}
+
+/* ── Collections ─────────────────────────────────────────────────────── */
+.col-grid{display:grid;grid-template-columns:1fr;gap:16px;}
+.col-tile{position:relative;display:block;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:4/3;background:var(--color-neutral-800);color:#fff;isolation:isolate;}
+.col-tile:hover{color:#fff;}
+.col-tile-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s ease;}
+.col-tile:hover .col-tile-img{transform:scale(1.06);}
+.col-tile-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,18,16,0) 32%,rgba(20,18,16,.8) 100%);}
+.col-tile-body{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:clamp(18px,3vw,28px);display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.col-tile-count{font-size:11px;letter-spacing:.06em;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.3);padding:4px 10px;border-radius:999px;}
+.col-tile-title{font-family:var(--font-heading);font-size:clamp(22px,2.4vw,30px);margin:4px 0 0;color:#fff;}
+.col-tile-desc{font-size:13px;opacity:.86;margin:0;max-width:420px;line-height:1.5;}
+.col-tile-cta{font-size:13px;font-weight:600;color:var(--color-accent-300);display:inline-flex;gap:6px;align-items:center;margin-top:6px;transition:gap .25s;}
+.col-tile:hover .col-tile-cta{gap:10px;}
+@media (min-width:768px){
+  .col-grid.n-2{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .col-grid.n-3{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .col-grid.n-1 .col-tile{aspect-ratio:21/8;}
+  .col-grid.n-2 .col-tile{aspect-ratio:16/11;}
+  .col-grid.n-3 .col-tile{aspect-ratio:4/5;}
+}
+
+/* ── Featured bento ──────────────────────────────────────────────────── */
+.bento{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.bento-tile{position:relative;border-radius:var(--radius-lg);overflow:hidden;background:var(--color-neutral-800);cursor:pointer;aspect-ratio:1;isolation:isolate;}
+.bento-tile.t-lg,.bento-tile.t-wide,.bento-tile.t-full{grid-column:span 2;aspect-ratio:4/3;}
+.bento-tile.t-wide{aspect-ratio:16/9;}
+.bento-tile.t-half{aspect-ratio:3/4;}
+@media (min-width:900px){
+  .bento{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:clamp(190px,17vw,270px);gap:16px;}
+  .bento-tile{aspect-ratio:auto !important;}
+  .bento-tile.t-lg,.bento-tile.t-half{grid-column:span 2;grid-row:span 2;}
+  .bento-tile.t-wide{grid-column:span 2;grid-row:span 1;}
+  .bento-tile.t-sm{grid-column:span 1;grid-row:span 1;}
+  .bento-tile.t-full{grid-column:span 4;grid-row:span 2;}
+}
+.bento-media{position:absolute;inset:0;z-index:0;transition:transform .7s ease;}
+.bento-tile:hover .bento-media{transform:scale(1.05);}
+.bento-shade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(20,18,16,0) 38%,rgba(20,18,16,.82) 100%);}
+.bento-info{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px;color:#f8f4f4;display:flex;flex-direction:column;gap:3px;}
+@media (min-width:900px){.bento-info{padding:18px;}}
+.bento-type{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-300);font-weight:600;}
+.bento-title{font-family:var(--font-heading);font-size:14px;line-height:1.25;color:#fff;}
+.bento-title:hover{color:var(--color-accent-300);}
+.bento-tile.t-lg .bento-title,.bento-tile.t-full .bento-title,.bento-tile.t-half .bento-title{font-size:clamp(18px,2vw,26px);}
+.bento-price{font-size:12.5px;opacity:.9;}
+.bento-actions{display:none;gap:8px;margin-top:10px;}
+.bento-tile.t-lg .bento-actions,.bento-tile.t-full .bento-actions,.bento-tile.t-half .bento-actions,.bento-tile.t-wide .bento-actions{display:flex;}
+.bento-actions .btn{padding:8px 14px;font-size:12px;min-height:0;}
+.bento-actions .btn-secondary{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.5);color:#fff;}
+.bento-actions .btn-added{background:rgba(224,197,131,.25);border-color:var(--color-accent-300);color:#fff;}
+.bento-badge{position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-900);background:var(--color-accent-300);padding:4px 9px;border-radius:999px;}
+
+/* ── Product grid (balanced rows: the script shows columns x rows items) */
+.home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+@media (min-width:768px){.home-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}}
+@media (min-width:1024px){.home-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:22px;}}
+@media (min-width:1440px){.home-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:24px;}}
+.hp-card{cursor:pointer;}
+.new-badge{position:absolute;top:8px;left:8px;z-index:2;background:var(--color-neutral-900);color:var(--color-accent-300);font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border-radius:999px;}
+.skel-card{border-radius:var(--radius-md);overflow:hidden;background:#fff;box-shadow:var(--shadow-sm);}
+.skel-card .skel-media{aspect-ratio:1;}
+.skel-line{height:10px;border-radius:5px;margin:12px 14px 0;}
+
+/* ── Tabs (New Arrivals) ─────────────────────────────────────────────── */
+.tabs{display:flex;gap:8px;margin:0 0 24px;overflow-x:auto;scrollbar-width:none;padding:2px;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:none;border:1px solid var(--color-divider);background:transparent;border-radius:999px;padding:8px 18px;font-size:13px;cursor:pointer;color:var(--color-text);transition:background .2s,border-color .2s,color .2s;font-family:inherit;}
+.tab:hover{border-color:var(--color-accent);}
+.tab.is-active{background:var(--color-neutral-900);border-color:var(--color-neutral-900);color:#f8f4f4;}
+#new-arrivals{scroll-margin-top:96px;}
+
+/* ── Recently viewed ─────────────────────────────────────────────────── */
+.rv-track{gap:12px;padding:4px 2px 10px;scroll-snap-type:x proximity;}
+.rv-card{flex:0 0 220px;display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:#fff;color:inherit;text-decoration:none;scroll-snap-align:start;transition:border-color .2s,box-shadow .2s,transform .2s;}
+@media (min-width:768px){.rv-card{flex-basis:250px;}}
+.rv-card:hover{border-color:var(--color-accent);box-shadow:var(--shadow-sm);transform:translateY(-2px);color:inherit;}
+.rv-thumb{width:64px;height:64px;flex:none;border-radius:8px;overflow:hidden;background:var(--color-surface);}
+.rv-meta{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.rv-type{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600;}
+.rv-title{font-family:var(--font-heading);font-size:13.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rv-price{font-size:12px;opacity:.7;}
+.link-btn{background:none;border:none;padding:0;font:inherit;font-size:13px;color:var(--color-accent-700);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+
+/* ── Most requested (ranked carousel) ────────────────────────────────── */
+.rank-track{gap:18px;padding:6px 4px 14px;}
+.rank-card{flex:0 0 228px;scroll-snap-align:start;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
+@media (min-width:768px){.rank-card{flex-basis:262px;}}
+.rank-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+.rank-img{position:relative;aspect-ratio:1;background:var(--color-surface);}
+.rank-body{display:flex;gap:12px;align-items:flex-start;padding:14px 14px 16px;flex:1;}
+.rank-num{font-family:var(--font-heading);font-size:44px;line-height:.9;font-weight:700;color:transparent;-webkit-text-stroke:1.5px var(--color-accent);flex:none;min-width:48px;letter-spacing:-.02em;}
+.rank-num.is-top{color:var(--color-accent);}
+.rank-info{min-width:0;flex:1;display:flex;flex-direction:column;}
+.rank-kicker{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600;}
+.rank-title{font-family:var(--font-heading);font-size:14.5px;line-height:1.3;margin-top:3px;color:var(--color-text);}
+.rank-price{font-family:var(--font-heading);font-weight:600;color:var(--color-accent-700);font-size:14px;margin-top:6px;}
+.rank-info .product-card-btns{margin-top:10px;}
+
+/* ── Recommended for you ─────────────────────────────────────────────── */
+.rec-panel{background:linear-gradient(135deg,var(--color-surface) 0%,#fbf8f1 100%);border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:clamp(18px,4vw,40px);}
+.rec-reason{display:block;font-size:10.5px;line-height:1.3;color:var(--color-accent-800);background:var(--color-accent-100);border-radius:999px;padding:3px 9px;margin-bottom:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start;}
+
+/* ── Why us / testimonials ───────────────────────────────────────────── */
+.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:24px 0;}
+.why-item{padding:0 24px;border-left:1px solid var(--color-divider);}
+.why-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--color-accent-100);color:var(--color-accent-700);}
+.testi-grid{gap:16px;padding:4px 2px 8px;}
+.testi-card{flex:0 0 min(86%,340px);scroll-snap-align:start;margin:0;background:#fff;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:26px 24px;display:flex;flex-direction:column;gap:18px;}
+@media (min-width:900px){.testi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;}.testi-card{flex:none;}}
+.testi-mark{color:var(--color-accent-300);}
+.testi-quote{font-family:var(--font-heading);font-size:16px;line-height:1.6;margin:0;flex:1;}
+.testi-who{display:flex;align-items:center;gap:12px;}
+.testi-avatar{width:40px;height:40px;flex:none;border-radius:50%;background:var(--color-accent-100);color:var(--color-accent-800);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-family:var(--font-heading);}
+.testi-name{font-size:14px;font-weight:600;display:block;}
+.testi-role{font-size:12px;opacity:.65;display:block;}
+
+/* ── Promo / spotlight / story / bands ───────────────────────────────── */
 .promo-grid,.story-grid{grid-template-columns:1fr !important;}
-@media (min-width:640px){
-  /* Only re-enable the 2-up layout once there's provably enough room;
-     auto-fit's own math still safely degrades to one column below this
-     if the exact threshold undershoots on a particular device. */
-  .promo-grid,.story-grid{grid-template-columns:repeat(auto-fit,minmax(320px,1fr)) !important;}
-}
-/* The hero's two CTAs ("Register for Trade Pricing" is long) have nowhere
-   to shrink to side by side on a narrow screen. flex-wrap is harmless at
-   desktop widths (both buttons already fit on one line there, so it never
-   triggers) and flex-basis lets each one grow to fill its row whether
-   it ends up alone (full width) or paired (roughly half each) — no
-   breakpoint number to get wrong either way. */
-.hero-cta-row{flex-wrap:wrap;}
-.hero-cta-row .btn{flex:1 1 220px;}
+@media (min-width:768px){.promo-grid,.story-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}}
+/* Explicit heights instead of aspect-ratio: combined with a min-height (or
+   a grid row stretching it), an aspect-ratio makes the browser derive a
+   matching minimum WIDTH — ~1067px for the old 16/6 + 400px banner —
+   which pushed both banners past the right edge on phones and tablets. */
+.spotlight-banner{height:clamp(400px,36vw,540px);}
+.promo-plate{aspect-ratio:4/3;}
+@media (min-width:768px){.promo-plate{aspect-ratio:auto;min-height:340px;height:100%;}}
+.story-body{text-align:left;}
+@media (min-width:768px){.story-body{text-align:justify;}}
+.trade-band{background:var(--color-neutral-900);color:var(--color-neutral-100);text-align:center;padding-left:clamp(16px,5vw,56px);padding-right:clamp(16px,5vw,56px);}
+/* position:relative contains the visually-hidden label: <body> (not the
+   window) is this site's scroll container, so an absolutely positioned
+   element with no positioned ancestor would stretch the root element and
+   give the window a second, phantom scroll range. */
+.news-form{display:flex;gap:10px;max-width:440px;margin:0 auto;position:relative;}
+.news-form .input{flex:1;min-width:0;}
+@media (max-width:479px){.news-form{flex-direction:column;}}
+.news-msg{font-size:13px;margin-top:12px;}
+.news-msg.ok{color:#2c6a3c;}
+.news-msg.err{color:#a3302f;}
+.end-spacer{height:clamp(52px,7vw,96px);}
+
+/* ── Floating back-to-top ────────────────────────────────────────────── */
+.scroll-top-btn{position:fixed;bottom:28px;right:28px;width:44px;height:44px;border-radius:50%;background:var(--color-neutral-900);color:#f8f4f4;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-md);z-index:40;transition:background .25s,transform .25s;}
+.scroll-top-btn:hover{background:var(--color-accent-800);transform:translateY(-3px);}
+@media (max-width:639px){.scroll-top-btn{bottom:18px;right:16px;width:40px;height:40px;}}
+
 @media (max-width:767px){
-  /* Trust-pill row's desktop 48px gap leaves odd, uneven gaps once it
-     wraps to 2 per row on a narrower screen. */
-  .trust-pills{gap:14px 20px !important;}
-  /* Footer's copyright + certification line packs two text blocks to
-     opposite edges with no room to shrink — wraps and centers instead of
-     the two crowding together or overlapping at the edges. */
+  /* Footer's copyright + certification line wraps and centers instead of
+     the two text blocks crowding together at the edges. */
   .footer-bottom-row{flex-wrap:wrap;justify-content:center !important;gap:6px;text-align:center;}
-  /* Justified text reads fine at a wide desktop column but creates
-     uneven word-gaps ("rivers") once the same column narrows. */
-  .story-body{text-align:left !important;}
-
-  /* Collection tiles (Diamonds/Jewelry/Gemstones): 4/5 is a deliberate
-     portrait crop for the desktop 3-up grid, where the tiles sit side by
-     side and a tall card reads fine. Once the grid collapses to one
-     column on a narrower screen, the same ratio turns three ~550-600px
-     cards into three full-screen-high banners stacked end to end —
-     closer to three separate hero sections than a browsable list.
-     Shortened so each is a glance, matching how reference jewelry sites
-     (Tanishq/CaratLane/Mejuri) keep category tiles closer to square. */
-  .col-img{aspect-ratio:4/3 !important;}
-
-  /* Client Favorites carousel: a 280px-wide card with a square (1:1)
-     photo runs ~420-440px tall on a phone — more than half a screen for
-     a single card in a row meant for a quick side-scroll, not a full
-     product view. Narrower card + a shorter photo keeps roughly two
-     cards in view at once (one full, one peeking) the way an
-     "editor's pick" rail is meant to read, and halves the height. */
-  .fav-card{flex-basis:208px !important;}
-  .fav-img{aspect-ratio:4/3 !important;}
+  .why-item{padding:0 16px;}
 }
-@media (max-width:639px){
-  /* Hero: the shared stylesheet already clamps this to 440-600px (62vh)
-     below 1024px, but on a typical phone that's still up to ~80-90% of
-     the visible screen before any real content peeks into view — the
-     banner is technically all there, you just can't see all of it at
-     once without scrolling mid-banner. Tightened further so the whole
-     hero (image, headline, both CTAs) is visible in one glance, the way
-     Blue Nile/Mejuri keep their mobile heroes well short of full-screen. */
-  .hero-section{height:clamp(360px,52vh,460px) !important;}
-}
-/* The Spotlight banner's aspect-ratio:16/6 is a desktop ratio — wide and
-   short, sized for one short line of text. Its kicker/title/body/button
-   are centered inside it via position:absolute, so on a narrow column
-   (where the same text wraps to 2-3x as many lines) the box simply isn't
-   tall enough: the title's top edge and the CTA button get clipped by
-   the box's own overflow:hidden. A flat min-height floor fixes this at
-   any width without needing per-breakpoint tuning — at desktop widths
-   the 16/6 ratio already produces a box far taller than this floor, so
-   it never engages there; it only steps in where the ratio alone would
-   otherwise be too short. */
-.spotlight-banner{min-height:400px;}
 </style>
 </helmet>
 
 <div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
+
+  <sc-if value="{{ showAnnouncement }}" hint-placeholder-val="{{ false }}">
+    <div class="announce {{ announceToneClass }}" role="region" aria-label="Announcement">
+      <span>{{ announceText }}</span>
+      <sc-if value="{{ announceHasLink }}" hint-placeholder-val="{{ false }}">
+        <a href="{{ announceHref }}" class="announce-link">{{ announceLinkLabel }}</a>
+      </sc-if>
+      <button onClick="{{ dismissAnnouncement }}" class="announce-close" aria-label="Dismiss announcement">×</button>
+    </div>
+  </sc-if>
 
   <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
     <div class="nav-brand" style="letter-spacing:.1em;">ONCD</div>
@@ -142,7 +327,7 @@ a:hover{color:var(--color-accent-700)}
     <a class="nav-link" href="About.dc.html">About</a>
     <a class="nav-link" href="Contact.dc.html">Contact</a>
     <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
-      <button onClick="{{ toggleCart }}" style="position:relative;background:none;border:none;cursor:pointer;color:var(--color-text);display:flex;">
+      <button onClick="{{ toggleCart }}" aria-label="Cart" style="position:relative;background:none;border:none;cursor:pointer;color:var(--color-text);display:flex;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
           <span style="position:absolute;top:-8px;right:-10px;background:var(--color-accent);color:#fff;font-size:10px;border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;">{{ cartCount }}</span>
@@ -177,290 +362,524 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </nav>
 
-  <section class="hero-section" style="position:relative;height:88vh;min-height:560px;overflow:hidden;">
+  <section class="hero-section" style="position:relative;height:88vh;min-height:560px;overflow:hidden;" aria-roledescription="carousel" aria-label="Highlights" onMouseEnter="{{ heroPause }}" onMouseLeave="{{ heroResume }}" onFocus="{{ heroFocus }}" onBlur="{{ heroBlur }}" onPointerDown="{{ heroPointerDown }}" onPointerUp="{{ heroPointerUp }}">
     <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
-      <div style="position:absolute;inset:0;opacity:{{ s.opacity }};transition:opacity 1s ease;">
+      <div class="hero-slide {{ s.activeClass }}" aria-roledescription="slide" aria-label="{{ s.positionLabel }}">
         <sc-if value="{{ s.hasImage }}" hint-placeholder-val="{{ false }}">
-          <img src="{{ s.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;filter:sepia(.12) saturate(.9) contrast(1.03);"/>
+          <img src="{{ s.imageUrl }}" alt="" class="hero-img"/>
         </sc-if>
-        <sc-if value="{{ !s.hasImage }}" hint-placeholder-val="{{ true }}">
-          <div style="width:100%;height:100%;background:var(--color-neutral-900);"></div>
-        </sc-if>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(32,31,29,.15), rgba(32,31,29,.55));pointer-events:none;"></div>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 clamp(20px,6vw,56px);pointer-events:none;">
-          <div style="max-width:640px;">
-            <div style="color:var(--color-accent-300);font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:18px;">{{ s.kicker }}</div>
-            <h1 style="color:#f8f4f4;font-size:64px;font-weight:400;line-height:1.08;margin:0 0 20px;">{{ s.title }}</h1>
-            <p style="color:#e8e5e3;font-size:16px;max-width:480px;margin:0 0 32px;">{{ s.sub }}</p>
-            <div class="hero-cta-row" style="display:flex;gap:14px;pointer-events:auto;">
-              <a href="{{ s.href }}" class="btn btn-primary" style="border-color:var(--color-accent-300);color:var(--color-accent-300);padding:14px 28px;">{{ s.cta }}</a>
-              <a href="Register.dc.html" class="btn btn-secondary" style="border-color:rgba(248,244,244,.4);color:#f8f4f4;padding:14px 28px;">Register for Trade Pricing</a>
+        <div class="hero-shade"></div>
+        <div class="hero-copy-wrap">
+          <div class="hero-copy">
+            <sc-if value="{{ s.kicker }}" hint-placeholder-val="{{ true }}">
+              <p class="hero-kicker">{{ s.kicker }}</p>
+            </sc-if>
+            <sc-if value="{{ s.isFirst }}" hint-placeholder-val="{{ true }}">
+              <h1 class="hero-title">{{ s.title }}</h1>
+            </sc-if>
+            <sc-if value="{{ !s.isFirst }}" hint-placeholder-val="{{ false }}">
+              <h2 class="hero-title">{{ s.title }}</h2>
+            </sc-if>
+            <sc-if value="{{ s.sub }}" hint-placeholder-val="{{ true }}">
+              <p class="hero-sub">{{ s.sub }}</p>
+            </sc-if>
+            <div class="hero-cta-row">
+              <sc-if value="{{ s.cta }}" hint-placeholder-val="{{ true }}">
+                <a href="{{ s.href }}" class="btn hero-btn-primary">{{ s.cta }}</a>
+              </sc-if>
+              <sc-if value="{{ heroSecondaryShow }}" hint-placeholder-val="{{ true }}">
+                <a href="{{ heroSecondaryHref }}" class="btn hero-btn-secondary">{{ heroSecondaryLabel }}</a>
+              </sc-if>
             </div>
           </div>
         </div>
       </div>
     </sc-for>
 
-    <button onClick="{{ heroPrev }}" class="hero-nav-btn" style="position:absolute;left:20px;top:50%;transform:translateY(-50%);background:rgba(248,244,244,.12);border:1px solid rgba(248,244,244,.4);color:#f8f4f4;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:background .25s;" style-hover="background:rgba(248,244,244,.3);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/></svg>
-    </button>
-    <button onClick="{{ heroNext }}" class="hero-nav-btn" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:rgba(248,244,244,.12);border:1px solid rgba(248,244,244,.4);color:#f8f4f4;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:background .25s;" style-hover="background:rgba(248,244,244,.3);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
-    </button>
-
-    <div style="position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;gap:10px;z-index:5;">
-      <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
-        <button onClick="{{ s.goTo }}" aria-label="Go to slide" style="width:{{ s.dotWidth }};padding:10px 0;background:none;border:none;cursor:pointer;display:flex;align-items:center;">
-          <span style="display:block;width:100%;height:4px;border-radius:2px;background:{{ s.dotColor }};transition:all .3s;"></span>
-        </button>
-      </sc-for>
-    </div>
-  </section>
-
-  <section class="trust-pills" style="display:flex;justify-content:center;gap:48px;padding:28px clamp(20px,6vw,56px);border-bottom:1px solid var(--color-divider);flex-wrap:wrap;">
-    <span class="pill">GIA &amp; IGI Certified</span>
-    <span class="pill">Direct Factory Sourcing</span>
-    <span class="pill">Trade &amp; Retail Inquiries</span>
-    <span class="pill">Worldwide Shipping</span>
-  </section>
-
-  <sc-if value="{{ showPromoBanner }}" hint-placeholder-val="{{ true }}">
-  <section style="padding:clamp(20px,6vw,56px) clamp(20px,6vw,56px) 0;">
-    <div class="promo-grid" style="background:var(--color-neutral-900);border-radius:var(--radius-lg);overflow:hidden;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:stretch;">
-      <div style="padding:clamp(20px,6vw,56px);color:#f8f4f4;display:flex;flex-direction:column;justify-content:center;">
-        <div style="color:var(--color-accent-400);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;">{{ promo.kicker }}</div>
-        <h2 style="color:#f8f4f4;font-size:30px;font-weight:400;">{{ promo.title }}</h2>
-        <p style="opacity:.75;margin:14px 0 24px;max-width:360px;">{{ promo.body }}</p>
-        <a href="{{ promo.href }}" class="btn btn-primary" style="border-color:var(--color-accent-400);color:var(--color-accent-400);width:fit-content;">{{ promo.cta }}</a>
+    <sc-if value="{{ heroHasMultiple }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ heroPrev }}" class="hero-arrow" style="left:20px;" aria-label="Previous slide">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <button onClick="{{ heroNext }}" class="hero-arrow" style="right:20px;" aria-label="Next slide">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <div class="hero-dots {{ heroDotsClass }}">
+        <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
+          <button onClick="{{ s.goTo }}" class="hero-dot {{ s.activeClass }}" aria-label="{{ s.dotLabel }}" aria-current="{{ s.ariaCurrent }}">
+            <span class="hero-dot-track"><span key="{{ heroCycle }}" class="hero-dot-fill" style="animation-duration:{{ heroIntervalSec }}s;animation-play-state:{{ heroPlayState }};"></span></span>
+          </button>
+        </sc-for>
       </div>
-      <div class="plate promo-plate" style="aspect-ratio:4/3;margin:0;border:0;">
-        <sc-if value="{{ promo.hasImage }}" hint-placeholder-val="{{ false }}">
-          <img src="{{ promo.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-        </sc-if>
-        <sc-if value="{{ !promo.hasImage }}" hint-placeholder-val="{{ true }}">
-          <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-        </sc-if>
-      </div>
-    </div>
-  </section>
-  </sc-if>
-
-  <section style="padding:96px clamp(20px,6vw,56px);">
-    <div style="text-align:center;max-width:640px;margin:0 auto clamp(20px,6vw,56px);">
-      <h6 style="color:var(--color-accent-700);">Our Collections</h6>
-      <h2 style="font-size:36px;margin-top:8px;">Three Houses, One Standard</h2>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;">
-      <sc-for list="{{ collections }}" as="c" hint-placeholder-count="3">
-        <a href="{{ c.href }}" class="col-card" style="text-decoration:none;color:inherit;display:block;">
-          <div class="plate col-img" style="aspect-ratio:4/5;overflow:hidden;">
-            <sc-if value="{{ c.hasImage }}" hint-placeholder-val="{{ false }}">
-              <img src="{{ c.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-            </sc-if>
-            <sc-if value="{{ !c.hasImage }}" hint-placeholder-val="{{ true }}">
-              <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-            </sc-if>
-          </div>
-          <h3 style="margin-top:20px;font-size:24px;">{{ c.title }}</h3>
-          <p style="opacity:.75;font-size:14px;margin:6px 0 12px;">{{ c.desc }}</p>
-          <span class="col-arrow" style="font-size:13px;color:var(--color-accent-700);display:inline-flex;align-items:center;gap:4px;transition:gap .25s;">View Collection <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg></span>
-        </a>
-      </sc-for>
-    </div>
-  </section>
-
-  <sc-if value="{{ showNewArrivals }}" hint-placeholder-val="{{ true }}">
-  <section style="padding:0 clamp(20px,6vw,56px) 96px;">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:36px;">
-      <div>
-        <h6 style="color:var(--color-accent-700);">Fresh to the House</h6>
-        <h2 style="font-size:32px;margin-top:8px;">New Arrivals</h2>
-      </div>
-      <a href="Diamonds.dc.html" style="font-size:13px;">See all diamonds →</a>
-    </div>
-    <div class="product-grid">
-      <sc-for list="{{ arrivals }}" as="p" hint-placeholder-count="4">
-        <div class="card elev-sm arr-card product-card" onClick="{{ p.goToProduct }}" style="cursor:pointer;">
-          <div class="plate product-card-media">
-            <a href="{{ p.href }}" style="display:block;width:100%;height:100%;">
-              <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
-            </a>
-            <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
-          </div>
-          <div class="product-card-body">
-            <div class="card-kicker product-card-kicker">{{ p.sku }}</div>
-            <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
-            <p class="card-body product-card-spec">{{ p.spec }}</p>
-            <div class="product-card-price-row">
-              <span class="product-card-price">{{ p.priceLabel }}</span>
-            </div>
-            <div class="product-card-btns">
-              <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
-              <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
-            </div>
-          </div>
-        </div>
-      </sc-for>
-    </div>
-  </section>
-  </sc-if>
-
-  <sc-if value="{{ showSpotlight }}" hint-placeholder-val="{{ true }}">
-  <section style="padding:0 clamp(20px,6vw,56px) 96px;">
-    <div class="spotlight-banner" style="position:relative;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:16/6;">
-      <sc-if value="{{ spotlight.hasImage }}" hint-placeholder-val="{{ false }}">
-        <img src="{{ spotlight.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-      </sc-if>
-      <sc-if value="{{ !spotlight.hasImage }}" hint-placeholder-val="{{ true }}">
-        <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-      </sc-if>
-      <div style="position:absolute;inset:0;background:linear-gradient(90deg, rgba(32,31,29,.78), rgba(32,31,29,.1));pointer-events:none;"></div>
-      <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 clamp(20px,5vw,48px);">
-        <div style="max-width:440px;">
-          <div style="color:var(--color-accent-300);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;">{{ spotlight.kicker }}</div>
-          <h2 style="color:#f8f4f4;font-size:28px;font-weight:400;">{{ spotlight.title }}</h2>
-          <p style="color:#e8e5e3;font-size:14px;margin:12px 0 20px;">{{ spotlight.body }}</p>
-          <a href="{{ spotlight.href }}" class="btn btn-secondary" style="border-color:rgba(248,244,244,.4);color:#f8f4f4;width:fit-content;">{{ spotlight.cta }}</a>
-        </div>
-      </div>
-    </div>
-  </section>
-  </sc-if>
-
-  <sc-if value="{{ showFavorites }}" hint-placeholder-val="{{ true }}">
-  <section style="padding:0 clamp(20px,6vw,56px) 96px;">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:36px;">
-      <div>
-        <h6 style="color:var(--color-accent-700);">Client Favorites</h6>
-        <h2 style="font-size:32px;margin-top:8px;">Most Requested This Season</h2>
-      </div>
-      <div style="display:flex;gap:10px;">
-        <button onClick="{{ favPrev }}" class="btn btn-secondary btn-icon" style="border-radius:50%;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/></svg>
-        </button>
-        <button onClick="{{ favNext }}" class="btn btn-secondary btn-icon" style="border-radius:50%;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
-        </button>
-      </div>
-    </div>
-    <div ref="{{ favRef }}" class="fav-track" style="display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;">
-      <sc-for list="{{ favorites }}" as="p" hint-placeholder-count="6">
-        <div class="card fav-card product-card" onClick="{{ p.goToProduct }}" style="flex:0 0 280px;scroll-snap-align:start;padding:0;overflow:hidden;border-radius:var(--radius-md);cursor:{{ p.cardCursor }};">
-          <div class="plate fav-img" style="aspect-ratio:1;margin:0;border-width:0;overflow:hidden;position:relative;">
-            <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
-            <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
-          </div>
-          <div style="padding:16px;">
-            <div class="card-kicker">{{ p.tag }}</div>
-            <div class="card-title" style="margin-top:4px;">{{ p.title }}</div>
-            <div class="product-card-price-row" style="padding-top:10px;">
-              <span class="product-card-price" style="font-size:13px;">{{ p.priceLabel }}</span>
-            </div>
-            <sc-if value="{{ p.isGemstone }}" hint-placeholder-val="{{ false }}">
-              <div class="product-card-btns single">
-                <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
-              </div>
-            </sc-if>
-            <sc-if value="{{ p.isClickable }}" hint-placeholder-val="{{ true }}">
-              <div class="product-card-btns">
-                <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
-                <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
-              </div>
-            </sc-if>
-          </div>
-        </div>
-      </sc-for>
-    </div>
-  </section>
-  </sc-if>
-
-  <sc-if value="{{ showGemHighlights }}" hint-placeholder-val="{{ true }}">
-  <section style="padding:0 clamp(20px,6vw,56px) 96px;">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:36px;">
-      <div>
-        <h6 style="color:var(--color-accent-700);">Rare Color</h6>
-        <h2 style="font-size:32px;margin-top:8px;">Gemstone Highlights</h2>
-      </div>
-      <a href="Gemstones.dc.html" style="font-size:13px;">See all gemstones →</a>
-    </div>
-    <div class="product-grid">
-      <sc-for list="{{ gemHighlights }}" as="g" hint-placeholder-count="4">
-        <div class="card elev-sm arr-card product-card">
-          <div class="plate product-card-media">
-            <product-media media="{{ g.media }}" shape="rect" hover-video placeholder="{{ g.placeholder }}" style="width:100%;height:100%;"></product-media>
-            <button onClick="{{ g.toggleSave }}" class="product-card-save {{ g.savedClass }}" aria-label="Save item" title="Save for later">{{ g.heartGlyph }}</button>
-          </div>
-          <div class="product-card-body">
-            <div class="card-kicker product-card-kicker">{{ g.tag }}</div>
-            <div class="card-title product-card-title">{{ g.title }}</div>
-            <div class="product-card-price-row">
-              <span class="product-card-price">{{ g.priceLabel }}</span>
-            </div>
-            <div class="product-card-btns single">
-              <button onClick="{{ g.addToCart }}" class="btn {{ g.cartBtnClass }}">{{ g.cartBtnLabel }}</button>
-            </div>
-          </div>
-        </div>
-      </sc-for>
-    </div>
-  </section>
-  </sc-if>
-
-  <sc-if value="{{ showWhyUs }}" hint-placeholder-val="{{ true }}">
-  <section style="background:var(--color-surface);padding:96px clamp(20px,6vw,56px);">
-    <div style="text-align:center;max-width:640px;margin:0 auto clamp(20px,6vw,56px);">
-      <h6 style="color:var(--color-accent-700);">Why ONCD</h6>
-      <h2 style="font-size:36px;margin-top:8px;">Trusted by Trade, Loved by Collectors</h2>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px 0;">
-      <sc-for list="{{ whyUs }}" as="w" hint-placeholder-count="4">
-        <div style="padding:0 28px;border-left:1px solid var(--color-divider);">
-          <h4 style="font-size:19px;">{{ w.title }}</h4>
-          <p style="font-size:13px;opacity:.75;margin:0;">{{ w.desc }}</p>
-        </div>
-      </sc-for>
-    </div>
-  </section>
-  </sc-if>
-
-  <sc-if value="{{ showStoryTeaser }}" hint-placeholder-val="{{ true }}">
-  <section class="story-grid" style="padding:96px clamp(20px,6vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:64px;align-items:center;">
-    <div class="plate" style="aspect-ratio:4/3;">
-      <sc-if value="{{ storyTeaser.hasImage }}" hint-placeholder-val="{{ false }}">
-        <img src="{{ storyTeaser.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-      </sc-if>
-      <sc-if value="{{ !storyTeaser.hasImage }}" hint-placeholder-val="{{ true }}">
-        <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-      </sc-if>
-    </div>
-    <div>
-      <h6 style="color:var(--color-accent-700);">{{ storyTeaser.kicker }}</h6>
-      <h2 style="font-size:34px;margin-top:8px;">{{ storyTeaser.title }}</h2>
-      <p class="story-body" style="opacity:.8;text-align:justify;">{{ storyTeaser.body }}</p>
-      <a href="{{ storyTeaser.href }}" class="btn btn-primary" style="margin-top:8px;">{{ storyTeaser.cta }}</a>
-    </div>
-  </section>
-  </sc-if>
-
-  <section style="background:var(--color-neutral-900);color:var(--color-neutral-100);padding:80px clamp(20px,6vw,56px);text-align:center;">
-    <h2 style="color:#f8f4f4;font-size:32px;font-weight:400;">Trade Accounts Unlock Full Pricing</h2>
-    <p style="opacity:.75;max-width:480px;margin:16px auto 32px;">Register your business to view carat pricing, download certificates and send inquiries directly to our sales desk.</p>
-    <a href="Register.dc.html" class="btn btn-primary" style="border-color:var(--color-accent-400);color:var(--color-accent-400);padding:14px 32px;">Create a Trade Account</a>
-  </section>
-
-  <sc-if value="{{ showNewsletter }}" hint-placeholder-val="{{ true }}">
-  <section style="background:var(--color-bg);padding:72px clamp(20px,6vw,56px);text-align:center;border-bottom:1px solid var(--color-divider);">
-    <h6 style="color:var(--color-accent-700);">Stay Informed</h6>
-    <h2 style="font-size:28px;margin-top:8px;">Join the Trade Circle</h2>
-    <p style="opacity:.7;max-width:440px;margin:12px auto 24px;">New arrivals, certified parcels and private sale notices — sent to approved trade accounts only.</p>
-    <form onSubmit="{{ handleNewsletter }}" style="display:flex;gap:10px;max-width:420px;margin:0 auto;">
-      <input class="input" type="email" placeholder="you@company.com" required=""/>
-      <button type="submit" class="btn btn-primary" style="flex:none;">Subscribe</button>
-    </form>
-    <sc-if value="{{ newsletterSent }}" hint-placeholder-val="{{ false }}">
-      <p style="color:var(--color-accent-700);font-size:13px;margin-top:12px;">Thank you — you're on the list.</p>
     </sc-if>
+    <div class="hero-scroll-cue" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
   </section>
+
+  <sc-for list="{{ flowSections }}" as="sec" hint-placeholder-count="0">
+
+    <sc-if value="{{ sec.view === 'welcomeBar' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs hs-near" aria-label="Your account">
+        <div class="wb">
+          <div class="wb-hello">
+            <div class="wb-avatar" aria-hidden="true">{{ welcomeInitial }}</div>
+            <div style="min-width:0;">
+              <h2 class="wb-title"><span>{{ welcomeGreeting }}</span> <span class="wb-status {{ welcomeStatusClass }}">{{ welcomeStatusLabel }}</span></h2>
+              <sc-if value="{{ sec.subtitle }}" hint-placeholder-val="{{ true }}">
+                <p class="wb-sub">{{ sec.subtitle }}</p>
+              </sc-if>
+              <sc-if value="{{ welcomeShowNew }}" hint-placeholder-val="{{ false }}">
+                <a href="#new-arrivals" class="wb-new">✦ {{ welcomeNewLabel }} <span aria-hidden="true">→</span></a>
+              </sc-if>
+            </div>
+          </div>
+          <div class="wb-links">
+            <button onClick="{{ toggleCart }}" class="wb-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <span class="wb-link-label">Inquiry Cart</span>
+              <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}"><span class="wb-count">{{ cartCount }}</span></sc-if>
+            </button>
+            <a href="Dashboard.dc.html?tab=saved" class="wb-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.3 5 6.9 5c2 0 3.6 1.1 5.1 3 1.5-1.9 3.1-3 5.1-3 3.6 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21Z"/></svg>
+              <span class="wb-link-label">Saved Items</span>
+              <sc-if value="{{ welcomeHasSaved }}" hint-placeholder-val="{{ false }}"><span class="wb-count">{{ welcomeSavedCount }}</span></sc-if>
+            </a>
+            <a href="Dashboard.dc.html?tab=inquiries" class="wb-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+              <span class="wb-link-label">Inquiry History</span>
+            </a>
+            <a href="Dashboard.dc.html?tab=overview" class="wb-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+              <span class="wb-link-label">My Account</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'trustBar' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs hs-flush trust" aria-label="Why buyers trust us">
+        <sc-for list="{{ trustBadges }}" as="b" hint-placeholder-count="4">
+          <span class="trust-badge">
+            <sc-if value="{{ b.icon === 'shield' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'gem' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20M10 3 8 9l4 12 4-12-2-6"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'globe' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'truck' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'lock' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'factory' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V9l4-3 4 3v4l4-3 4 3v8"/><path d="M3 21h18"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'award' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="6"/><path d="m9 14-2 7 5-3 5 3-2-7"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'handshake' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m11 17 2 2a1 1 0 0 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 0 0 3-3l-3.9-3.9a3 3 0 0 0-4.2 0l-.9.9a1 1 0 1 1-3-3l2.8-2.8a5.8 5.8 0 0 1 7.1-.9l.5.3a2 2 0 0 0 1.4.3L21 4"/><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'refresh' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'headset' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 14v3a2 2 0 0 1-2 2h-2v-6h4M3 14v3a2 2 0 0 0 2 2h2v-6H3"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'star' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></svg></sc-if>
+            <sc-if value="{{ b.icon === 'check' }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+            {{ b.label }}
+          </span>
+        </sc-for>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'shapePicker' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="shape-heading">
+        <div class="sec-head center">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="shape-heading">{{ sec.title }}</h2>
+          </div>
+        </div>
+        <div class="rail shape-track">
+          <sc-if value="{{ feedLoading }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ skeletonShapes }}" as="k" hint-placeholder-count="0">
+              <div class="shape-tile" aria-hidden="true"><div class="shape-tile-img skel"></div><span class="skel" style="display:block;height:10px;border-radius:5px;margin:14px 18px 0;"></span></div>
+            </sc-for>
+          </sc-if>
+          <sc-for list="{{ shapeTiles }}" as="sh" hint-placeholder-count="8">
+            <a href="{{ sh.href }}" class="shape-tile">
+              <div class="shape-tile-img">
+                <product-media media="{{ sh.media }}" shape="rect" fit="cover" placeholder="{{ sh.name }}" style="width:100%;height:100%;"></product-media>
+              </div>
+              <span class="shape-tile-label">{{ sh.name }}</span>
+              <sc-if value="{{ sh.showCount }}" hint-placeholder-val="{{ true }}"><span class="shape-tile-count">{{ sh.countLabel }}</span></sc-if>
+            </a>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'promoBanner' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs">
+        <div class="promo-grid" style="background:var(--color-neutral-900);border-radius:var(--radius-lg);overflow:hidden;display:grid;align-items:stretch;">
+          <div style="padding:clamp(24px,6vw,56px);color:#f8f4f4;display:flex;flex-direction:column;justify-content:center;">
+            <sc-if value="{{ promo.kicker }}" hint-placeholder-val="{{ true }}"><div style="color:var(--color-accent-400);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;">{{ promo.kicker }}</div></sc-if>
+            <h2 style="color:#f8f4f4;font-size:clamp(24px,2.6vw,32px);font-weight:400;margin:0;">{{ promo.title }}</h2>
+            <p style="opacity:.78;margin:14px 0 24px;max-width:380px;">{{ promo.body }}</p>
+            <sc-if value="{{ promo.cta }}" hint-placeholder-val="{{ true }}"><a href="{{ promo.href }}" class="btn btn-primary" style="background:var(--color-accent);border-color:var(--color-accent);color:#fff;width:fit-content;">{{ promo.cta }}</a></sc-if>
+          </div>
+          <div class="plate promo-plate" style="margin:0;border:0;border-radius:0;">
+            <sc-if value="{{ promo.hasImage }}" hint-placeholder-val="{{ false }}">
+              <img src="{{ promo.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+            </sc-if>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'collections' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="collections-heading">
+        <div class="sec-head center">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="collections-heading">{{ sec.title }}</h2>
+          </div>
+        </div>
+        <div class="col-grid {{ collectionsGridClass }}">
+          <sc-for list="{{ collections }}" as="c" hint-placeholder-count="3">
+            <a href="{{ c.href }}" class="col-tile">
+              <sc-if value="{{ c.hasImage }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ c.imageUrl }}" alt="" class="col-tile-img"/>
+              </sc-if>
+              <div class="col-tile-shade"></div>
+              <div class="col-tile-body">
+                <sc-if value="{{ c.hasCount }}" hint-placeholder-val="{{ false }}"><span class="col-tile-count">{{ c.countLabel }}</span></sc-if>
+                <h3 class="col-tile-title">{{ c.title }}</h3>
+                <p class="col-tile-desc">{{ c.desc }}</p>
+                <span class="col-tile-cta">Explore {{ c.title }} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg></span>
+              </div>
+            </a>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'featured' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="featured-heading">
+        <div class="sec-head">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="featured-heading">{{ sec.title }}</h2>
+            <sc-if value="{{ sec.subtitle }}" hint-placeholder-val="{{ true }}"><p class="sec-sub">{{ sec.subtitle }}</p></sc-if>
+          </div>
+        </div>
+        <div class="bento">
+          <sc-for list="{{ featuredItems }}" as="p" hint-placeholder-count="5">
+            <div class="bento-tile {{ p.tileClass }}" onClick="{{ p.goToProduct }}">
+              <div class="bento-media">
+                <product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
+              </div>
+              <div class="bento-shade"></div>
+              <sc-if value="{{ p.isLead }}" hint-placeholder-val="{{ false }}"><span class="bento-badge">★ Featured</span></sc-if>
+              <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+              <div class="bento-info">
+                <span class="bento-type">{{ p.typeLabel }}</span>
+                <a href="{{ p.href }}" class="bento-title">{{ p.title }}</a>
+                <sc-if value="{{ p.priceLabel }}" hint-placeholder-val="{{ true }}"><span class="bento-price">{{ p.priceLabel }}</span></sc-if>
+                <div class="bento-actions">
+                  <button onClick="{{ p.addToCart }}" class="btn {{ p.bentoCartClass }}">{{ p.cartBtnLabel }}</button>
+                  <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'newArrivals' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" id="new-arrivals" aria-labelledby="arrivals-heading">
+        <div class="sec-head">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="arrivals-heading">{{ sec.title }}</h2>
+          </div>
+          <sc-if value="{{ arrivalsHasCta }}" hint-placeholder-val="{{ false }}">
+            <a href="{{ arrivalsCtaHref }}" class="see-all">{{ arrivalsCtaLabel }} <span aria-hidden="true">→</span></a>
+          </sc-if>
+        </div>
+        <sc-if value="{{ arrivalsShowTabs }}" hint-placeholder-val="{{ false }}">
+          <div class="tabs" role="tablist" aria-label="Product type">
+            <sc-for list="{{ arrivalTabs }}" as="t" hint-placeholder-count="3">
+              <button role="tab" aria-selected="{{ t.selected }}" class="tab {{ t.activeClass }}" onClick="{{ t.select }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div class="home-grid">
+          <sc-if value="{{ feedLoading }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ skeletonCards }}" as="k" hint-placeholder-count="0">
+              <div class="skel-card" aria-hidden="true"><div class="skel skel-media"></div><div class="skel skel-line"></div><div class="skel skel-line" style="width:55%;margin-bottom:16px;"></div></div>
+            </sc-for>
+          </sc-if>
+          <sc-for list="{{ arrivalItems }}" as="p" hint-placeholder-count="4">
+            <div class="card elev-sm product-card hp-card" onClick="{{ p.goToProduct }}">
+              <div class="plate product-card-media">
+                <a href="{{ p.href }}" aria-label="{{ p.title }}" style="display:block;width:100%;height:100%;">
+                  <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
+                </a>
+                <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if>
+                <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+              </div>
+              <div class="product-card-body">
+                <div class="card-kicker product-card-kicker">{{ p.sku }}</div>
+                <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
+                <p class="card-body product-card-spec">{{ p.spec }}</p>
+                <div class="product-card-price-row"><span class="product-card-price">{{ p.priceLabel }}</span></div>
+                <div class="product-card-btns">
+                  <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
+                  <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'recentlyViewed' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="recent-heading">
+        <div class="sec-head">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="recent-heading">{{ sec.title }}</h2>
+          </div>
+          <button onClick="{{ clearHistory }}" class="link-btn">Clear history</button>
+        </div>
+        <div class="rail rv-track">
+          <sc-for list="{{ recentItems }}" as="p" hint-placeholder-count="5">
+            <a href="{{ p.href }}" class="rv-card">
+              <div class="rv-thumb"><product-media media="{{ p.media }}" shape="rect" fit="cover" placeholder="{{ p.sku }}" style="width:100%;height:100%;"></product-media></div>
+              <div class="rv-meta">
+                <span class="rv-type">{{ p.typeLabel }}</span>
+                <span class="rv-title">{{ p.title }}</span>
+                <span class="rv-price">{{ p.priceLabel }}</span>
+              </div>
+            </a>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'spotlight' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs">
+        <div class="spotlight-banner" style="position:relative;border-radius:var(--radius-lg);overflow:hidden;background:var(--color-neutral-800);">
+          <sc-if value="{{ spotlight.hasImage }}" hint-placeholder-val="{{ false }}">
+            <img src="{{ spotlight.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;"/>
+          </sc-if>
+          <div style="position:absolute;inset:0;background:linear-gradient(90deg, rgba(32,31,29,.8), rgba(32,31,29,.12));pointer-events:none;"></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 clamp(20px,5vw,48px);">
+            <div style="max-width:460px;">
+              <sc-if value="{{ spotlight.kicker }}" hint-placeholder-val="{{ true }}"><div style="color:var(--color-accent-300);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;">{{ spotlight.kicker }}</div></sc-if>
+              <h2 style="color:#f8f4f4;font-size:clamp(22px,2.4vw,30px);font-weight:400;margin:0;">{{ spotlight.title }}</h2>
+              <p style="color:#e8e5e3;font-size:14px;margin:12px 0 20px;">{{ spotlight.body }}</p>
+              <sc-if value="{{ spotlight.cta }}" hint-placeholder-val="{{ true }}"><a href="{{ spotlight.href }}" class="btn btn-secondary" style="border-color:rgba(248,244,244,.5);color:#f8f4f4;width:fit-content;">{{ spotlight.cta }}</a></sc-if>
+            </div>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'favorites' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="requested-heading">
+        <div class="sec-head">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="requested-heading">{{ sec.title }}</h2>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ favPrev }}" class="round-btn" aria-label="Scroll back">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <button onClick="{{ favNext }}" class="round-btn" aria-label="Scroll forward">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div ref="{{ favRef }}" class="rail rank-track">
+          <sc-for list="{{ requestedItems }}" as="p" hint-placeholder-count="6">
+            <div class="rank-card" onClick="{{ p.goToProduct }}">
+              <div class="rank-img">
+                <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
+                <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+              </div>
+              <div class="rank-body">
+                <span class="rank-num {{ p.rankClass }}" aria-label="{{ p.rankAria }}">{{ p.rankLabel }}</span>
+                <div class="rank-info">
+                  <span class="rank-kicker">{{ p.typeLabel }}</span>
+                  <a href="{{ p.href }}" class="rank-title">{{ p.title }}</a>
+                  <sc-if value="{{ p.priceLabel }}" hint-placeholder-val="{{ true }}"><span class="rank-price">{{ p.priceLabel }}</span></sc-if>
+                  <div class="product-card-btns">
+                    <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
+                    <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'recommended' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="rec-heading">
+        <div class="rec-panel">
+          <div class="sec-head">
+            <div>
+              <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+              <h2 class="sec-title" id="rec-heading">{{ sec.title }}</h2>
+              <sc-if value="{{ sec.subtitle }}" hint-placeholder-val="{{ true }}"><p class="sec-sub">{{ sec.subtitle }}</p></sc-if>
+            </div>
+          </div>
+          <div class="home-grid">
+            <sc-for list="{{ recommendedItems }}" as="p" hint-placeholder-count="4">
+              <div class="card elev-sm product-card hp-card" onClick="{{ p.goToProduct }}">
+                <div class="plate product-card-media">
+                  <a href="{{ p.href }}" aria-label="{{ p.title }}" style="display:block;width:100%;height:100%;">
+                    <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
+                  </a>
+                  <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if>
+                  <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+                </div>
+                <div class="product-card-body">
+                  <span class="rec-reason" title="{{ p.reasonLabel }}">✦ {{ p.reasonLabel }}</span>
+                  <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
+                  <p class="card-body product-card-spec">{{ p.spec }}</p>
+                  <div class="product-card-price-row"><span class="product-card-price">{{ p.priceLabel }}</span></div>
+                  <div class="product-card-btns">
+                    <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
+                    <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'gemHighlights' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="gems-heading">
+        <div class="sec-head">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="gems-heading">{{ sec.title }}</h2>
+          </div>
+          <sc-if value="{{ sec.ctaLabel }}" hint-placeholder-val="{{ true }}">
+            <a href="Gemstones.dc.html" class="see-all">{{ sec.ctaLabel }} <span aria-hidden="true">→</span></a>
+          </sc-if>
+        </div>
+        <div class="home-grid">
+          <sc-for list="{{ gemItems }}" as="p" hint-placeholder-count="4">
+            <div class="card elev-sm product-card hp-card" onClick="{{ p.goToProduct }}">
+              <div class="plate product-card-media">
+                <a href="{{ p.href }}" aria-label="{{ p.title }}" style="display:block;width:100%;height:100%;">
+                  <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
+                </a>
+                <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if>
+                <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+              </div>
+              <div class="product-card-body">
+                <div class="card-kicker product-card-kicker">{{ p.sku }}</div>
+                <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
+                <p class="card-body product-card-spec">{{ p.spec }}</p>
+                <div class="product-card-price-row"><span class="product-card-price">{{ p.priceLabel }}</span></div>
+                <div class="product-card-btns">
+                  <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
+                  <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'whyUs' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs hs-band" style="background:var(--color-surface);" aria-labelledby="why-heading">
+        <div class="sec-head center" style="margin-bottom:clamp(28px,5vw,48px);">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="why-heading">{{ sec.title }}</h2>
+          </div>
+        </div>
+        <div class="why-grid">
+          <sc-for list="{{ whyUs }}" as="w" hint-placeholder-count="4">
+            <div class="why-item">
+              <span class="why-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+              <h3 style="font-size:19px;margin:14px 0 6px;">{{ w.title }}</h3>
+              <p style="font-size:13px;opacity:.75;margin:0;">{{ w.desc }}</p>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'testimonials' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" aria-labelledby="testi-heading">
+        <div class="sec-head center">
+          <div>
+            <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+            <h2 class="sec-title" id="testi-heading">{{ sec.title }}</h2>
+          </div>
+        </div>
+        <div class="rail testi-grid">
+          <sc-for list="{{ testimonials }}" as="t" hint-placeholder-count="3">
+            <figure class="testi-card">
+              <svg class="testi-mark" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 7H6a3 3 0 0 0-3 3v4h4v4h3v-8H7a1 1 0 0 1 1-1h2Zm11 0h-4a3 3 0 0 0-3 3v4h4v4h3v-8h-3a1 1 0 0 1 1-1h2Z"/></svg>
+              <blockquote class="testi-quote">{{ t.quote }}</blockquote>
+              <figcaption class="testi-who">
+                <span class="testi-avatar" aria-hidden="true">{{ t.initial }}</span>
+                <span><span class="testi-name">{{ t.name }}</span><sc-if value="{{ t.role }}" hint-placeholder-val="{{ true }}"><span class="testi-role">{{ t.role }}</span></sc-if></span>
+              </figcaption>
+            </figure>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'storyTeaser' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs story-grid" style="display:grid;gap:clamp(28px,5vw,64px);align-items:center;">
+        <div class="plate" style="aspect-ratio:4/3;margin:0;">
+          <sc-if value="{{ storyTeaser.hasImage }}" hint-placeholder-val="{{ false }}">
+            <img src="{{ storyTeaser.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+          </sc-if>
+        </div>
+        <div>
+          <sc-if value="{{ storyTeaser.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ storyTeaser.kicker }}</p></sc-if>
+          <h2 class="sec-title">{{ storyTeaser.title }}</h2>
+          <p class="story-body" style="opacity:.8;margin:14px 0 20px;">{{ storyTeaser.body }}</p>
+          <sc-if value="{{ storyTeaser.cta }}" hint-placeholder-val="{{ true }}"><a href="{{ storyTeaser.href }}" class="btn btn-primary">{{ storyTeaser.cta }}</a></sc-if>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'tradeCta' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs hs-band trade-band" aria-labelledby="trade-heading">
+        <h2 id="trade-heading" style="color:#f8f4f4;font-size:clamp(24px,3vw,32px);font-weight:400;margin:0;">{{ sec.title }}</h2>
+        <sc-if value="{{ sec.subtitle }}" hint-placeholder-val="{{ true }}"><p style="opacity:.78;max-width:500px;margin:16px auto 30px;">{{ sec.subtitle }}</p></sc-if>
+        <sc-if value="{{ sec.ctaLabel }}" hint-placeholder-val="{{ true }}"><a href="{{ tradeCtaHref }}" class="btn btn-primary" style="background:var(--color-accent);border-color:var(--color-accent);color:#fff;padding:14px 32px;">{{ sec.ctaLabel }}</a></sc-if>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ sec.view === 'newsletter' }}" hint-placeholder-val="{{ false }}">
+      <section class="hs" style="text-align:center;border-bottom:1px solid var(--color-divider);padding-bottom:clamp(52px,7vw,88px);" aria-labelledby="news-heading">
+        <sc-if value="{{ sec.kicker }}" hint-placeholder-val="{{ true }}"><p class="sec-kicker">{{ sec.kicker }}</p></sc-if>
+        <h2 class="sec-title" id="news-heading">{{ sec.title }}</h2>
+        <sc-if value="{{ sec.subtitle }}" hint-placeholder-val="{{ true }}"><p style="opacity:.72;max-width:460px;margin:12px auto 24px;">{{ sec.subtitle }}</p></sc-if>
+        <sc-if value="{{ !newsletterDone }}" hint-placeholder-val="{{ true }}">
+          <form onSubmit="{{ handleNewsletter }}" class="news-form">
+            <label for="news-email" class="sr-only">Email address</label>
+            <input id="news-email" class="input" type="email" placeholder="you@company.com" required="" autocomplete="email" value="{{ newsletterEmail }}" onChange="{{ handleNewsletterEmail }}"/>
+            <button type="submit" class="btn btn-primary" style="flex:none;" disabled="{{ newsletterBusy }}">{{ newsletterButtonLabel }}</button>
+          </form>
+        </sc-if>
+        <sc-if value="{{ newsletterMessage }}" hint-placeholder-val="{{ false }}">
+          <p class="news-msg {{ newsletterMessageClass }}" role="status">{{ newsletterMessage }}</p>
+        </sc-if>
+      </section>
+    </sc-if>
+
+  </sc-for>
+
+  <sc-if value="{{ showEndSpacer }}" hint-placeholder-val="{{ true }}">
+    <div class="end-spacer"></div>
   </sc-if>
 
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
@@ -517,12 +936,18 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </footer>
 
+  <sc-if value="{{ showScrollTop }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ scrollToTop }}" class="scroll-top-btn" aria-label="Back to top">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+  </sc-if>
+
   <sc-if value="{{ cartOpen }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed;inset:0;background:rgba(45,43,43,.5);z-index:100;display:flex;justify-content:flex-end;" onClick="{{ closeCartBg }}">
       <div style="background:var(--color-bg);width:min(420px,100%);height:100%;padding:28px;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);" onClick="{{ stop }}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
           <h3 style="margin:0;">Inquiry Cart</h3>
-          <button onClick="{{ toggleCart }}" style="background:none;border:none;cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          <button onClick="{{ toggleCart }}" aria-label="Close cart" style="background:none;border:none;cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
         </div>
         <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
           <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:16px;">
@@ -533,7 +958,7 @@ a:hover{color:var(--color-accent-700)}
                   <div style="font-size:14px;font-family:var(--font-heading);font-weight:600;">{{ it.name }}</div>
                   <div style="font-size:12px;opacity:.7;margin-top:4px;">Qty {{ it.qty }} · {{ it.priceLabel }}</div>
                 </div>
-                <button onClick="{{ it.remove }}" style="background:none;border:none;cursor:pointer;color:var(--color-text);opacity:.5;height:fit-content;">×</button>
+                <button onClick="{{ it.remove }}" aria-label="Remove item" style="background:none;border:none;cursor:pointer;color:var(--color-text);opacity:.5;height:fit-content;">×</button>
               </div>
             </sc-for>
           </div>
@@ -555,7 +980,8 @@ a:hover{color:var(--color-accent-700)}
             <button onClick="{{ clearCartFn }}" class="btn btn-ghost btn-block" style="margin-top:12px;">Clear Cart</button>
           </div>
         </sc-if>
-        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ !hasCartItems }}" hint-placeholder-val="{{ true }}">
+          <p style="font-size:13px;opacity:.65;">Your inquiry cart is empty. Add pieces with “+ Cart” to inquire about several at once.</p>
         </sc-if>
       </div>
     </div>
@@ -605,70 +1031,170 @@ a:hover{color:var(--color-accent-700)}
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+const TYPE_LABEL = { diamond: 'Diamond', jewelry: 'Jewelry', gemstone: 'Gemstone' };
+const TYPE_TAB_LABEL = { all: 'All', diamond: 'Diamonds', jewelry: 'Jewelry', gemstone: 'Gemstones' };
+const LISTING_PAGE = { diamond: 'Diamonds.dc.html', jewelry: 'Jewelry.dc.html', gemstone: 'Gemstones.dc.html' };
+const DETAIL_PAGE = { diamond: 'DiamondProduct.dc.html', jewelry: 'JewelryProduct.dc.html', gemstone: 'GemstoneProduct.dc.html' };
+// Matches the .home-grid breakpoints in the stylesheet above, so a section
+// set to N rows always shows complete rows (no half-empty last row).
+const gridColumnsFor = (w) => (w >= 1440 ? 5 : w >= 1024 ? 4 : w >= 768 ? 3 : 2);
+// Tile shapes for the Featured mosaic by item count — each combination
+// fills the 4-column desktop grid exactly.
+const BENTO_LAYOUTS = {
+  1: ['t-full'],
+  2: ['t-half', 't-half'],
+  3: ['t-lg', 't-wide', 't-wide'],
+  4: ['t-lg', 't-wide', 't-sm', 't-sm'],
+  5: ['t-lg', 't-sm', 't-sm', 't-sm', 't-sm'],
+};
+const ANNOUNCE_DISMISS_KEY = 'oncd_announcement_dismissed';
+
 class Component extends DCLogic {
   state = {
-    cartOpen: false, cartItems: [], heroIndex: 0, newsletterSent: false,
-    showDiamonds: true, showJewelry: true, showGemstones: true,
+    cartOpen: false, cartItems: [], showDiamonds: true, showJewelry: true, showGemstones: true,
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false, savedSkus: new Set(),
-    slides: [], sections: {}, diamonds: [], jewelry: [], gemstones: [],
-    blocks: {}, collections: [], whyUsBullets: [],
+    homeLoaded: false, slides: [], sectionList: [], blocks: {}, collections: [], whyUsBullets: [],
+    feed: null, feedLoading: true, personal: null,
+    heroIndex: 0, heroPaused: false, heroCycle: 0,
+    arrivalsTab: null, gridCols: gridColumnsFor(typeof window !== 'undefined' ? window.innerWidth : 1440),
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
-    inquiryOpen: false, inquiryProduct: null, inquiryNote: '', cartNote: '',
+    inquiryOpen: false, inquiryProduct: null, inquiryNote: '', cartNote: '', showScrollTop: false,
+    newsletterEmail: '', newsletterStatus: 'idle', newsletterError: '',
+    announcementDismissed: (() => { try { return localStorage.getItem(ANNOUNCE_DISMISS_KEY) || ''; } catch { return ''; } })(),
   };
   favRef = React.createRef();
+  reducedMotion = typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   async componentDidMount() {
     const cartMod = await import('./utils/cart.js');
     this.cart = cartMod;
     this.refreshCart();
+    // Dashboard.dc.html's "Review & send inquiry" links here with ?cart=open.
+    if (new URLSearchParams(window.location.search).get('cart') === 'open') this.setState({ cartOpen: true });
     this._onChange = () => this.refreshCart();
     window.addEventListener('aurum-cart-change', this._onChange);
     window.addEventListener('storage', this._onChange);
-    this._heroTimer = setInterval(() => this.setState((s) => ({ heroIndex: (s.heroIndex + 1) % Math.max(this.state.slides.length, 1) })), 6000);
+    this._onScroll = () => {
+      const show = window.scrollY > 600;
+      if (show !== this.state.showScrollTop) this.setState({ showScrollTop: show });
+    };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._onResize = () => {
+      const cols = gridColumnsFor(window.innerWidth);
+      if (cols !== this.state.gridCols) this.setState({ gridCols: cols });
+    };
+    window.addEventListener('resize', this._onResize);
 
-    const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
-    fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
+    this.recent = await import('./utils/recentlyViewed.js');
+    const previousVisit = this.recent.touchVisit();
+
+    import('./utils/productTypes.js').then((m) => m.fetchProductTypeVisibility())
+      .then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
     import('./utils/seo.js').then((m) => m.applySeo('home'));
     import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
+    import('./utils/inquiryItem.js').then((m) => { this.inquiryHelpers = m; this.forceUpdate(); });
+
+    // Independent requests, each rendering its part of the page as soon as
+    // it lands instead of the whole page waiting on the slowest one.
+    fetch('/api/homepage', { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((json) => {
+        const d = json.data;
+        this.setState({
+          homeLoaded: true, slides: d.slides || [], sectionList: d.sectionList || [],
+          blocks: d.blocks || {}, collections: d.collections || [], whyUsBullets: d.whyUs || [],
+        }, () => this.restartHeroTimer());
+      })
+      .catch((err) => { console.error('[home] failed to load content', err); this.setState({ homeLoaded: true }); });
+
+    const feedUrl = '/api/homepage/feed' + (previousVisit ? '?since=' + encodeURIComponent(previousVisit) : '');
+    fetch(feedUrl, { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((json) => this.setState({ feed: json.data || null, feedLoading: false }))
+      .catch((err) => { console.error('[home] failed to load products', err); this.setState({ feedLoading: false }); });
+
     import('./utils/customerAuth.js').then((m) => {
       this.logoutCustomer = m.logoutCustomer;
-      m.fetchCustomerSession().then((me) => {
+      m.fetchCustomerSession().then(async (me) => {
         this.setState({ customer: me });
         // Saved items are customer-only server state — skip the guaranteed
         // 401 this would otherwise fire for every guest visit.
-        if (me) import('./utils/savedItems.js').then((sm) => sm.getSavedSkus()).then((skus) => this.setState({ savedSkus: skus }));
+        let saved = new Set();
+        if (me) {
+          saved = await import('./utils/savedItems.js').then((sm) => sm.getSavedSkus());
+          this.setState({ savedSkus: saved });
+        }
+        this.loadPersonal(saved);
       });
     });
-    this.inquiryHelpers = await import('./utils/inquiryItem.js');
-
-    try {
-      const [homeRes, diamondRes, jewelryRes, gemRes] = await Promise.all([
-        fetch('/api/homepage', { credentials: 'same-origin' }),
-        fetch('/api/products?type=diamond', { credentials: 'same-origin' }),
-        fetch('/api/products?type=jewelry', { credentials: 'same-origin' }),
-        fetch('/api/products?type=gemstone', { credentials: 'same-origin' }),
-      ]);
-      const home = await homeRes.json();
-      const diamonds = await diamondRes.json();
-      const jewelry = await jewelryRes.json();
-      const gemstones = await gemRes.json();
-      this.setState({
-        slides: home.data.slides, sections: home.data.sections,
-        blocks: home.data.blocks || {}, collections: home.data.collections || [], whyUsBullets: home.data.whyUs || [],
-        diamonds: diamonds.data, jewelry: jewelry.data, gemstones: gemstones.data,
-      });
-    } catch (err) {
-      console.error('[home] failed to load content', err);
-    }
   }
+
   componentWillUnmount() {
     window.removeEventListener('aurum-cart-change', this._onChange);
     window.removeEventListener('storage', this._onChange);
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onResize);
     clearInterval(this._heroTimer);
   }
-  goToHero(i) { this.setState({ heroIndex: i }); }
-  favScroll(dir) { const el = this.favRef.current; if (el) el.scrollBy({ left: dir * 320, behavior: 'smooth' }); }
+
+  // Recently viewed + recommendations are built from SKUs this browser
+  // already holds; nothing is requested at all for a first-time visitor.
+  loadPersonal(savedSkus) {
+    const viewed = this.recent ? this.recent.getRecentlyViewed() : [];
+    const cartSkus = this.cart ? this.cart.getCart().map((i) => i.sku) : [];
+    const saved = [...(savedSkus || [])];
+    if (!viewed.length && !cartSkus.length && !saved.length) {
+      this.setState({ personal: { products: {}, recentlyViewed: [], recommended: [] } });
+      return;
+    }
+    const qs = new URLSearchParams();
+    viewed.slice(0, 12).forEach((s) => qs.append('viewed', s));
+    cartSkus.slice(0, 12).forEach((s) => qs.append('cart', s));
+    saved.slice(0, 12).forEach((s) => qs.append('saved', s));
+    fetch('/api/homepage/personal?' + qs.toString(), { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((json) => this.setState({ personal: json.data || null }))
+      .catch(() => this.setState({ personal: null }));
+  }
+
+  sectionMap() {
+    const map = {};
+    for (const s of this.state.sectionList) map[s.key] = s;
+    return map;
+  }
+
+  // ---- Hero slider ----
+  heroSettings() {
+    const hero = this.sectionMap().hero;
+    return hero ? hero.settings : { autoplay: true, intervalSeconds: 6, memberCta: true };
+  }
+  heroAutoplay() {
+    return !!this.heroSettings().autoplay && !this.reducedMotion && this.state.slides.length > 1;
+  }
+  restartHeroTimer() {
+    clearInterval(this._heroTimer);
+    if (!this.heroAutoplay() || this.state.heroPaused) return;
+    const ms = Math.max(3, Number(this.heroSettings().intervalSeconds) || 6) * 1000;
+    this._heroTimer = setInterval(() => {
+      this.setState((s) => ({ heroIndex: (s.heroIndex + 1) % Math.max(this.state.slides.length, 1), heroCycle: s.heroCycle + 1 }));
+    }, ms);
+  }
+  heroGo(index) {
+    const n = Math.max(this.state.slides.length, 1);
+    this.setState((s) => ({ heroIndex: ((index % n) + n) % n, heroCycle: s.heroCycle + 1 }), () => this.restartHeroTimer());
+  }
+  heroPause() {
+    if (this.state.heroPaused) return;
+    clearInterval(this._heroTimer);
+    this.setState({ heroPaused: true });
+  }
+  heroResume() {
+    if (!this.state.heroPaused) return;
+    this.setState((s) => ({ heroPaused: false, heroCycle: s.heroCycle + 1 }), () => this.restartHeroTimer());
+  }
+
+  // ---- Cart / saved / inquiry ----
   refreshCart() {
     const items = this.cart.getCart().map((it) => ({ ...it, remove: () => { this.cart.removeFromCart(it.sku); this.refreshCart(); } }));
     this.setState({ cartItems: items });
@@ -695,120 +1221,307 @@ class Component extends DCLogic {
   }
   openInquiry(p) { this.setState({ inquiryOpen: true, inquiryProduct: p, inquiryNote: '' }); }
   closeInquiry() { this.setState({ inquiryOpen: false }); }
+  favScroll(dir) { const el = this.favRef.current; if (el) el.scrollBy({ left: dir * 300, behavior: 'smooth' }); }
+
+  async submitNewsletter(e) {
+    e.preventDefault();
+    const email = this.state.newsletterEmail.trim();
+    if (!email) return;
+    this.setState({ newsletterStatus: 'busy', newsletterError: '' });
+    try {
+      const res = await fetch('/api/homepage/newsletter', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not subscribe right now. Please try again.');
+      this.setState({ newsletterStatus: json.data.alreadySubscribed ? 'already' : 'done', newsletterEmail: '' });
+    } catch (err) {
+      this.setState({ newsletterStatus: 'error', newsletterError: err.message });
+    }
+  }
+
+  // ---- Product presentation ----
+  cardTitle(p) {
+    if (p.type === 'diamond') {
+      const grade = [p.color, p.clarity].filter(Boolean).join('/');
+      return `${p.weightCarat ? p.weightCarat + 'ct ' : ''}${p.shape || 'Diamond'}${grade ? ', ' + grade : ''}`;
+    }
+    if (p.type === 'jewelry') return p.stoneName ? `${p.stoneName} Piece` : (p.category ? p.category.name : p.sku);
+    return `${p.stoneName || 'Gemstone'}${p.weightCarat ? ', ' + p.weightCarat + 'ct' : ''}`;
+  }
+  priceLabelFor(p) {
+    if (p.priceVisible && p.totalPrice != null) return '$' + Number(p.totalPrice).toLocaleString();
+    if (p.priceVisible && p.pricePerCarat != null) return '$' + Number(p.pricePerCarat).toLocaleString() + '/ct';
+    return p.priceLabel || '';
+  }
+  specFor(p) {
+    if (p.type === 'diamond') return [p.shape, p.certificateAuthority].filter(Boolean).join(' · ');
+    if (p.type === 'jewelry') return [p.category && p.category.name, p.goldPurity, p.metal].filter(Boolean).join(' · ');
+    return [p.origin, p.shape, p.certificateAuthority].filter(Boolean).join(' · ');
+  }
+  decorate(p, newBadgeDays) {
+    const title = this.cardTitle(p);
+    const priceLabel = this.priceLabelFor(p);
+    const href = `${DETAIL_PAGE[p.type] || 'Home.dc.html'}?sku=${encodeURIComponent(p.sku)}`;
+    const inCart = this.state.cartItems.some((i) => i.sku === p.sku);
+    const isSaved = this.state.savedSkus.has(p.sku);
+    const created = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+    return {
+      sku: p.sku, title, priceLabel, href,
+      typeLabel: TYPE_LABEL[p.type] || '',
+      spec: this.specFor(p),
+      media: JSON.stringify(p.media || []),
+      placeholder: `${p.shape || p.stoneName || ''} ${TYPE_LABEL[p.type] || ''}`.trim(),
+      isNew: !!created && Date.now() - created < (newBadgeDays || 14) * 86400000,
+      savedClass: isSaved ? 'saved' : '',
+      heartGlyph: isSaved ? '♥' : '♡',
+      toggleSave: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleSaveSku(p.sku, title, priceLabel, p.type); },
+      addToCart: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleCart({ sku: p.sku, title, priceLabel, product: p }); },
+      openInquire: (e) => { e.preventDefault(); e.stopPropagation(); this.openInquiry(p); },
+      goToProduct: () => { window.location.href = href; },
+      cartBtnClass: inCart ? 'btn-added' : 'btn-secondary',
+      bentoCartClass: inCart ? 'btn-added' : 'btn-secondary',
+      cartBtnLabel: inCart ? '✓ In Cart' : '+ Cart',
+    };
+  }
 
   renderVals() {
     const cart = this.cart;
     const items = this.state.cartItems;
-    const cartApproved = !!(this.state.customer && this.state.customer.status === 'approved');
-    const message = cart ? cart.buildMessage(items, { customer: this.state.customer, note: this.state.cartNote }) : '';
-    const priceLabelFor = (p) => (p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : p.priceLabel);
+    const customer = this.state.customer;
+    const isLoggedIn = !!customer;
+    const cartApproved = !!(customer && customer.status === 'approved');
+    const message = cart ? cart.buildMessage(items, { customer, note: this.state.cartNote }) : '';
+    const cfg = this.sectionMap();
+    const feed = this.state.feed;
+    const personal = this.state.personal;
+    const product = (sku) => (feed && feed.products[sku]) || (personal && personal.products[sku]) || null;
+    const cols = this.state.gridCols;
+    const newBadgeDays = cfg.newArrivals ? cfg.newArrivals.settings.newBadgeDays : 14;
+    const deco = (p) => this.decorate(p, newBadgeDays);
+    const typeOn = { diamond: this.state.showDiamonds, jewelry: this.state.showJewelry, gemstone: this.state.showGemstones };
 
-    const collections = this.state.collections.map((c) => ({
-      title: c.title, desc: c.description, href: c.href, imageUrl: c.imageUrl, hasImage: !!c.imageUrl,
+    // Hero
+    const slides = this.state.slides;
+    const heroIndex = Math.min(this.state.heroIndex, Math.max(slides.length - 1, 0));
+    const heroSlides = slides.map((s, i) => ({
+      ...s, hasImage: !!s.imageUrl, isFirst: i === 0,
+      activeClass: i === heroIndex ? 'is-active' : '',
+      positionLabel: `${i + 1} of ${slides.length}`,
+      dotLabel: `Show slide ${i + 1} of ${slides.length}`,
+      ariaCurrent: i === heroIndex ? 'true' : 'false',
+      goTo: () => this.heroGo(i),
     }));
+    const heroCfg = cfg.hero || { settings: { memberCta: true }, ctaLabel: 'Register for Trade Pricing', ctaHref: 'Register.dc.html' };
+    const heroSecondary = isLoggedIn
+      ? (heroCfg.settings.memberCta ? { show: true, label: 'My Account', href: 'Dashboard.dc.html?tab=overview' } : { show: false })
+      : { show: !!heroCfg.ctaLabel, label: heroCfg.ctaLabel, href: heroCfg.ctaHref || 'Register.dc.html' };
 
-    const arrivals = this.state.diamonds.slice(0, 4).map((p) => {
-      const title = `${p.weightCarat}ct ${p.shape}, ${p.color}/${p.clarity}`;
-      const priceLabel = priceLabelFor(p);
-      const href = `DiamondProduct.dc.html?sku=${encodeURIComponent(p.sku)}`;
-      const cartItem = this.state.cartItems.find((i) => i.sku === p.sku);
+    // Announcement
+    const ann = cfg.announcement;
+    const showAnnouncement = !!(ann && ann.enabled && ann.title && this.state.announcementDismissed !== ann.title);
+
+    // Welcome bar
+    const fullName = (customer && customer.full_name) || '';
+    const firstName = fullName.split(' ')[0] || '';
+    const status = customer && customer.status;
+    const newSince = feed && feed.newSince;
+    const welcomeNewTotal = newSince ? newSince.total : 0;
+    const welcomeShowNew = !!(cfg.welcomeBar && cfg.welcomeBar.settings.showNewSince && welcomeNewTotal > 0);
+
+    // Shapes
+    const shapeCfg = cfg.shapePicker;
+    const shapeTiles = (feed ? feed.shapeTiles : []).map((t) => {
+      const rep = product(t.sku);
       return {
-        sku: p.sku, title, priceLabel, href,
-        spec: [p.shape, p.certificateAuthority].filter(Boolean).join(' · '),
-        media: JSON.stringify(p.media || []), placeholder: `${p.shape || ''} diamond macro`,
-        savedClass: this.state.savedSkus.has(p.sku) ? 'saved' : '',
-        heartGlyph: this.state.savedSkus.has(p.sku) ? '♥' : '♡',
-        toggleSave: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleSaveSku(p.sku, title, priceLabel, 'diamond'); },
-        addToCart: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleCart({ sku: p.sku, title, priceLabel, product: p }); },
-        openInquire: (e) => { e.preventDefault(); e.stopPropagation(); this.openInquiry(p); },
-        goToProduct: () => { window.location.href = href; },
-        cartBtnClass: cartItem ? 'btn-added' : 'btn-secondary',
-        cartBtnLabel: cartItem ? '✓ In Cart' : '+ Cart',
+        name: t.name, href: `Diamonds.dc.html?shape=${encodeURIComponent(t.name)}`,
+        media: JSON.stringify((rep && rep.media) || []),
+        showCount: !!(shapeCfg && shapeCfg.settings.showCounts), countLabel: `${t.count} available`,
       };
     });
 
-    const heroData = this.state.slides.map((s) => ({ ...s, hasImage: !!s.imageUrl }));
-    const heroSlides = heroData.map((s, i) => ({
-      ...s,
-      opacity: i === this.state.heroIndex ? 1 : 0,
-      dotWidth: i === this.state.heroIndex ? '28px' : '14px',
-      dotColor: i === this.state.heroIndex ? 'var(--color-accent-300)' : 'rgba(248,244,244,.4)',
-      goTo: () => this.goToHero(i),
-    }));
-
-    const favSource = [
-      ...this.state.jewelry.slice(0, 2).map((p) => ({ p, type: 'jewelry' })),
-      ...this.state.diamonds.slice(0, 2).map((p) => ({ p, type: 'diamond' })),
-      ...this.state.gemstones.slice(0, 2).map((p) => ({ p, type: 'gemstone' })),
-    ];
-    const favorites = favSource.map(({ p, type }) => {
-      const title = type === 'diamond' ? `${p.weightCarat}ct ${p.shape}, ${p.color}/${p.clarity}` : (type === 'gemstone' ? p.stoneName : (p.category ? p.category.name : p.sku));
-      const priceLabel = priceLabelFor(p);
-      const isGemstone = type === 'gemstone';
-      const href = isGemstone ? 'Gemstones.dc.html' : `${type === 'diamond' ? 'DiamondProduct' : 'JewelryProduct'}.dc.html?sku=${encodeURIComponent(p.sku)}`;
-      const cartItem = this.state.cartItems.find((i) => i.sku === p.sku);
+    // Collections (a switched-off product type's tile is dropped, matching
+    // how the nav and footer already hide it)
+    const counts = feed ? feed.counts.byType : null;
+    const showColCounts = !!(cfg.collections && cfg.collections.settings.showCounts);
+    const collections = this.state.collections.filter((c) => typeOn[c.key] !== false).map((c) => {
+      const n = counts ? counts[c.key] || 0 : 0;
       return {
-        tag: p.sku, title, priceLabel, href, isClickable: !isGemstone, isGemstone,
-        cardCursor: isGemstone ? 'default' : 'pointer',
-        media: JSON.stringify(p.media || []), placeholder: p.sku,
-        savedClass: this.state.savedSkus.has(p.sku) ? 'saved' : '',
-        heartGlyph: this.state.savedSkus.has(p.sku) ? '♥' : '♡',
-        toggleSave: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleSaveSku(p.sku, title, priceLabel, type); },
-        addToCart: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleCart({ sku: p.sku, title, priceLabel, product: p }); },
-        openInquire: (e) => { e.preventDefault(); e.stopPropagation(); this.openInquiry(p); },
-        goToProduct: isGemstone ? () => {} : () => { window.location.href = href; },
-        cartBtnClass: cartItem ? 'btn-added' : (isGemstone ? 'btn-primary' : 'btn-secondary'),
-        cartBtnLabel: cartItem ? '✓ In Cart' : '+ Cart',
+        title: c.title, desc: c.description, href: c.href, imageUrl: c.imageUrl, hasImage: !!c.imageUrl,
+        hasCount: showColCounts && n > 0, countLabel: `${n} ${n === 1 ? c.title.replace(/s$/, '') : c.title}`,
       };
     });
 
+    // Featured mosaic
+    const featuredList = (feed ? feed.featured : []).map(product).filter(Boolean).slice(0, 5);
+    const layout = BENTO_LAYOUTS[featuredList.length] || [];
+    const featuredItems = featuredList.map((p, i) => ({ ...deco(p), tileClass: layout[i] || 't-sm', isLead: i === 0 }));
+
+    // New arrivals with type tabs
+    const arrCfg = cfg.newArrivals;
+    const arrRows = arrCfg ? arrCfg.settings.rows : 2;
+    const arrivals = feed ? feed.newArrivals : { all: [] };
+    const tabKeys = ['all', 'diamond', 'jewelry', 'gemstone'].filter((k) => k === 'all' || (typeOn[k] !== false && (arrivals[k] || []).length > 0));
+    const defaultTab = arrCfg ? arrCfg.settings.type : 'all';
+    let activeTab = this.state.arrivalsTab || defaultTab;
+    if (!tabKeys.includes(activeTab)) activeTab = 'all';
+    const showTabs = !!(arrCfg && arrCfg.settings.tabs) && tabKeys.length > 2;
+    const arrivalItems = (arrivals[activeTab] || []).map(product).filter(Boolean).slice(0, cols * arrRows).map(deco);
+    const arrivalTabs = tabKeys.map((k) => ({
+      label: TYPE_TAB_LABEL[k], selected: k === activeTab ? 'true' : 'false', activeClass: k === activeTab ? 'is-active' : '',
+      select: () => this.setState({ arrivalsTab: k }),
+    }));
+
+    // Most requested
+    const requestedItems = (feed ? feed.mostRequested : []).map(product).filter(Boolean).map((p, i) => ({
+      ...deco(p), rankLabel: String(i + 1).padStart(2, '0'), rankAria: `Ranked number ${i + 1}`, rankClass: i === 0 ? 'is-top' : '',
+    }));
+
+    // Personal
+    const recentItems = (personal ? personal.recentlyViewed : []).map(product).filter(Boolean).map(deco);
+    const recRows = cfg.recommended ? cfg.recommended.settings.rows : 1;
+    const recommendedItems = (personal ? personal.recommended : []).slice(0, cols * recRows).map((r) => {
+      const p = product(r.sku);
+      if (!p) return null;
+      const seed = r.basedOn ? product(r.basedOn) : null;
+      const reasonLabel = r.reason === 'similar' && seed ? `Similar to ${this.cardTitle(seed)}` : `New in ${TYPE_TAB_LABEL[p.type] || 'the collection'}`;
+      return { ...deco(p), reasonLabel };
+    }).filter(Boolean);
+
+    // Gemstones
+    const gemRows = cfg.gemHighlights ? cfg.gemHighlights.settings.rows : 1;
+    const gemItems = (feed ? feed.gemHighlights : []).map(product).filter(Boolean).slice(0, cols * gemRows).map(deco);
+
+    // Content blocks
     const blk = this.state.blocks;
-    const promo = { ...(blk.promo || {}), hasImage: !!(blk.promo && blk.promo.imageUrl) };
-    const spotlight = { ...(blk.spotlight || {}), hasImage: !!(blk.spotlight && blk.spotlight.imageUrl) };
-    const storyTeaser = { ...(blk.storyTeaser || {}), hasImage: !!(blk.storyTeaser && blk.storyTeaser.imageUrl) };
-
-    const gemHighlights = this.state.gemstones.slice(0, 4).map((p) => {
-      const title = `${p.stoneName || ''}, ${p.weightCarat}ct`;
-      const priceLabel = priceLabelFor(p);
-      const cartItem = this.state.cartItems.find((i) => i.sku === p.sku);
-      return {
-        tag: p.sku, title, priceLabel,
-        href: 'Gemstones.dc.html', media: JSON.stringify(p.media || []), placeholder: `${p.stoneName || ''} gemstone macro`,
-        savedClass: this.state.savedSkus.has(p.sku) ? 'saved' : '',
-        heartGlyph: this.state.savedSkus.has(p.sku) ? '♥' : '♡',
-        toggleSave: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleSaveSku(p.sku, title, priceLabel, 'gemstone'); },
-        addToCart: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleCart({ sku: p.sku, title, priceLabel, product: p }); },
-        cartBtnClass: cartItem ? 'btn-added' : 'btn-primary',
-        cartBtnLabel: cartItem ? '✓ In Cart' : '+ Cart',
-      };
-    });
+    const block = (key) => ({ ...(blk[key] || {}), hasImage: !!(blk[key] && blk[key].imageUrl) });
+    const promo = block('promo');
+    const spotlight = block('spotlight');
+    const storyTeaser = block('storyTeaser');
+    const hasBlock = (b) => !!(b.title || b.hasImage);
 
     const whyUs = this.state.whyUsBullets.map((w) => ({ title: w.title, desc: w.description }));
+    const testimonials = (cfg.testimonials ? cfg.testimonials.settings.items : []).map((t) => ({
+      ...t, initial: (t.name || '?').trim().charAt(0).toUpperCase(),
+    }));
+    const trustBadges = cfg.trustBar ? cfg.trustBar.settings.items : [];
+    const tradeCfg = cfg.tradeCta;
 
-    const sec = this.state.sections;
+    // Which enabled sections actually have something to show right now.
+    const feedLoading = this.state.feedLoading;
+    const hasContent = {
+      welcomeBar: !!fullName,
+      trustBar: trustBadges.length > 0,
+      shapePicker: feedLoading || shapeTiles.length > 0,
+      promoBanner: hasBlock(promo),
+      collections: collections.length > 0,
+      featured: featuredItems.length > 0,
+      newArrivals: feedLoading || arrivalItems.length > 0,
+      recentlyViewed: recentItems.length > 0,
+      spotlight: hasBlock(spotlight),
+      favorites: requestedItems.length >= 3,
+      recommended: recommendedItems.length > 0,
+      gemHighlights: gemItems.length > 0,
+      whyUs: whyUs.length > 0,
+      testimonials: testimonials.length > 0,
+      storyTeaser: hasBlock(storyTeaser),
+      tradeCta: !!(tradeCfg && tradeCfg.title) && (tradeCfg.settings.audience === 'everyone' || !isLoggedIn),
+      newsletter: true,
+    };
+    const flowSections = this.state.homeLoaded
+      ? this.state.sectionList.filter((s) => s.key !== 'announcement' && s.key !== 'hero').map((s) => ({
+        ...s, view: s.enabled && hasContent[s.key] ? s.key : '',
+      }))
+      : [];
+    const visibleKeys = flowSections.filter((s) => s.view).map((s) => s.view);
+    const lastKey = visibleKeys[visibleKeys.length - 1];
+
+    const nl = this.state.newsletterStatus;
+    const newsletterMessage = nl === 'done' ? "Thank you — you're subscribed." : nl === 'already' ? "You're already on the list — thank you!" : nl === 'error' ? this.state.newsletterError : '';
+
     return {
-      collections, arrivals, whyUs, heroSlides, favorites, promo, spotlight, storyTeaser, gemHighlights,
+      showAnnouncement,
+      announceText: ann ? ann.title : '',
+      announceHasLink: !!(ann && ann.ctaLabel && ann.ctaHref),
+      announceHref: ann ? ann.ctaHref : '', announceLinkLabel: ann ? ann.ctaLabel : '',
+      announceToneClass: ann && ann.settings.tone === 'gold' ? 'tone-gold' : 'tone-dark',
+      dismissAnnouncement: () => {
+        try { localStorage.setItem(ANNOUNCE_DISMISS_KEY, ann ? ann.title : ''); } catch {}
+        this.setState({ announcementDismissed: ann ? ann.title : '' });
+      },
+
+      heroSlides, heroCycle: this.state.heroCycle,
+      heroHasMultiple: slides.length > 1,
+      heroIntervalSec: Math.max(3, Number(this.heroSettings().intervalSeconds) || 6),
+      heroPlayState: this.state.heroPaused ? 'paused' : 'running',
+      heroDotsClass: this.heroAutoplay() ? '' : 'is-static',
+      heroSecondaryShow: heroSecondary.show, heroSecondaryLabel: heroSecondary.label || '', heroSecondaryHref: heroSecondary.href || '',
+      heroPrev: () => this.heroGo(heroIndex - 1),
+      heroNext: () => this.heroGo(heroIndex + 1),
+      heroPause: () => this.heroPause(),
+      heroResume: () => this.heroResume(),
+      heroFocus: () => this.heroPause(),
+      heroBlur: (e) => { if (!e.currentTarget.contains(e.relatedTarget)) this.heroResume(); },
+      heroPointerDown: (e) => { this._swipeX = e.clientX; },
+      heroPointerUp: (e) => {
+        if (this._swipeX == null) return;
+        const dx = e.clientX - this._swipeX;
+        this._swipeX = null;
+        if (Math.abs(dx) > 50) this.heroGo(heroIndex + (dx < 0 ? 1 : -1));
+      },
+
+      flowSections, showEndSpacer: lastKey !== 'newsletter' && lastKey !== 'tradeCta',
+      feedLoading,
+      skeletonShapes: [1, 2, 3, 4, 5, 6, 7, 8],
+      skeletonCards: Array.from({ length: cols }, (_, i) => i),
+
+      welcomeGreeting: `${(cfg.welcomeBar && cfg.welcomeBar.title) || 'Welcome back'}${firstName ? ', ' + firstName : ''}`,
+      welcomeInitial: (firstName.charAt(0) || '?').toUpperCase(),
+      welcomeStatusLabel: status === 'approved' ? '✓ Approved trade account' : status === 'pending' ? 'Approval pending' : 'Account on hold',
+      welcomeStatusClass: status === 'approved' ? 'ok' : status === 'pending' ? 'pending' : 'hold',
+      welcomeShowNew,
+      welcomeNewLabel: `${welcomeNewTotal} new ${welcomeNewTotal === 1 ? 'piece' : 'pieces'} since your last visit`,
+      welcomeHasSaved: this.state.savedSkus.size > 0, welcomeSavedCount: this.state.savedSkus.size,
+
+      trustBadges, shapeTiles,
+      collections, collectionsGridClass: `n-${Math.min(collections.length, 3)}`,
+      featuredItems,
+      arrivalItems, arrivalTabs, arrivalsShowTabs: showTabs,
+      arrivalsHasCta: !!(arrCfg && arrCfg.ctaLabel) && activeTab !== 'all',
+      arrivalsCtaLabel: arrCfg ? `${arrCfg.ctaLabel} ${TYPE_TAB_LABEL[activeTab].toLowerCase()}` : '',
+      arrivalsCtaHref: LISTING_PAGE[activeTab] || 'Diamonds.dc.html',
+      recentItems,
+      clearHistory: () => { if (this.recent) this.recent.clearRecentlyViewed(); this.setState({ personal: null }); },
+      requestedItems, recommendedItems, gemItems,
+      promo, spotlight, storyTeaser, whyUs, testimonials,
+      tradeCtaHref: (tradeCfg && tradeCfg.ctaHref) || 'Register.dc.html',
+      favRef: this.favRef,
+      favPrev: () => this.favScroll(-1),
+      favNext: () => this.favScroll(1),
+
+      newsletterEmail: this.state.newsletterEmail,
+      handleNewsletterEmail: (e) => this.setState({ newsletterEmail: e.target.value, newsletterStatus: nl === 'error' ? 'idle' : nl }),
+      handleNewsletter: (e) => this.submitNewsletter(e),
+      newsletterBusy: nl === 'busy',
+      newsletterButtonLabel: nl === 'busy' ? 'Subscribing…' : ((cfg.newsletter && cfg.newsletter.ctaLabel) || 'Subscribe'),
+      newsletterDone: nl === 'done' || nl === 'already',
+      newsletterMessage,
+      newsletterMessageClass: nl === 'error' ? 'err' : 'ok',
+
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
-      isLoggedIn: !!this.state.customer,
+      isLoggedIn,
       handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },
       accountMenuOpen: this.state.accountMenuOpen,
       toggleAccountMenu: (e) => { e.preventDefault(); e.stopPropagation(); this.setState({ accountMenuOpen: !this.state.accountMenuOpen }); },
       closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
-      accountName: (this.state.customer && this.state.customer.full_name) || '',
-      accountEmail: (this.state.customer && this.state.customer.email) || '',
+      accountName: fullName,
+      accountEmail: (customer && customer.email) || '',
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
-      showPromoBanner: sec.promoBanner !== false, showNewArrivals: sec.newArrivals !== false,
-      showSpotlight: sec.spotlight !== false, showFavorites: sec.favorites !== false,
-      showGemHighlights: sec.gemHighlights !== false, showNewsletter: sec.newsletter !== false,
-      showWhyUs: sec.whyUs !== false, showStoryTeaser: sec.storyTeaser !== false,
-      newsletterSent: this.state.newsletterSent,
-      handleNewsletter: (e) => { e.preventDefault(); this.setState({ newsletterSent: true }); },
-      favRef: this.favRef,
-      heroPrev: () => this.setState((s) => ({ heroIndex: (s.heroIndex + this.state.slides.length - 1) % Math.max(this.state.slides.length, 1) })),
-      heroNext: () => this.setState((s) => ({ heroIndex: (s.heroIndex + 1) % Math.max(this.state.slides.length, 1) })),
-      favPrev: () => this.favScroll(-1),
-      favNext: () => this.favScroll(1),
+      showScrollTop: this.state.showScrollTop,
+      scrollToTop: () => window.scrollTo({ top: 0, behavior: this.reducedMotion ? 'auto' : 'smooth' }),
+
       cartOpen: this.state.cartOpen,
       cartItems: items,
       hasCartItems: items.length > 0,

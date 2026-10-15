@@ -485,6 +485,12 @@ class Component extends DCLogic {
   pageSize = 24;
 
   async componentDidMount() {
+    // Lets Home's "Shop by Shape" row (and any other future link) deep-link
+    // straight into a pre-filtered view, e.g. Diamonds.dc.html?shape=Oval —
+    // matched against the same shape attribute names the filter itself uses.
+    const shapeParam = new URLSearchParams(window.location.search).get('shape');
+    if (shapeParam) this.setState({ shape: shapeParam });
+
     const cartMod = await import('./utils/cart.js');
     this.cart = cartMod;
     this.refreshCart();
@@ -644,7 +650,9 @@ class Component extends DCLogic {
 
     const diamondData = sorted.map((p) => ({
       sku: p.sku,
-      title: `${p.weightCarat}ct ${p.shape}, ${p.color}/${p.clarity}`,
+      // Most stones have no clarity on record — join only the grades that
+      // exist instead of printing "Fancy White/null".
+      title: `${p.weightCarat}ct ${p.shape}` + ([p.color, p.clarity].filter(Boolean).length ? `, ${[p.color, p.clarity].filter(Boolean).join('/')}` : ''),
       spec: [p.shape, p.certificateAuthority, p.measurements].filter(Boolean).join(' · '),
       media: JSON.stringify(p.media || []),
       placeholder: `${p.shape || ''} diamond macro shot`,

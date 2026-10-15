@@ -400,6 +400,7 @@ class Component extends DCLogic {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load.');
       this.setState({ loading: false, product: json.data });
+      import('./utils/recentlyViewed.js').then((m) => m.recordView(json.data.sku)).catch(() => {});
     } catch {
       this.setState({ loading: false, notFound: true });
     }
@@ -476,7 +477,8 @@ class Component extends DCLogic {
       select: () => this.setState({ activeIndex: i }),
     }));
     const related = (p.related || []).map((r) => {
-      const title = `${r.weightCarat}ct ${r.shape}, ${r.color}/${r.clarity}`;
+      const grade = [r.color, r.clarity].filter(Boolean).join('/');
+      const title = `${r.weightCarat}ct ${r.shape}` + (grade ? `, ${grade}` : '');
       const priceLabel = r.priceVisible ? '$' + Number(r.totalPrice).toLocaleString() : r.priceLabel;
       return {
         sku: r.sku, title, priceLabel,

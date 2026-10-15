@@ -18,9 +18,18 @@ if (!connectionString) {
 // Supabase's Session Pooler terminates TLS with a certificate that isn't in
 // Node's default trust store, so rejectUnauthorized must be false — same
 // setting already proven to connect in migrate-to-postgres.js.
+//
+// Opening a connection to Supabase costs ~1.2s (TLS + pooler handshake)
+// versus ~150ms for a query on a warm one. pg's default idleTimeoutMillis
+// (10s) closed connections between almost every page view, so a refresh
+// after a short pause paid that 1.2s again. Holding idle connections for
+// 5 minutes (plus TCP keep-alive so they survive NAT/firewall idling)
+// keeps normal browsing on warm connections.
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
+  idleTimeoutMillis: 5 * 60 * 1000,
+  keepAlive: true,
 });
 
 // A pooled client can emit 'error' outside of any query (e.g. the backend

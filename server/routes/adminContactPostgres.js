@@ -5,6 +5,7 @@ const requireAdmin = require('../middleware/requireAdminPostgres');
 const requirePermission = require('../middleware/requirePermission');
 const { sendMail } = require('../lib/mailer');
 const { writeAudit } = require('../lib/auditPostgres');
+const { getMessagingSchema, NEWSLETTER_SUBJECT, siteOrigin } = require('../lib/messaging');
 
 // PostgreSQL counterpart to server/routes/adminContact.js (SQLite). Parallel/
 // isolated file only — NOT mounted in app.js.
@@ -47,12 +48,22 @@ async function messageRow(id) {
 // folds unquoted identifiers to lowercase. ORDER BY created_at is a
 // TIMESTAMPTZ column (not text), so no COLLATE is needed here.
 async function repliesFor(id) {
+  const schema = await getMessagingSchema();
   const rows = await db.all(
-    'SELECT id, admin_name AS "adminName", body, created_at AS "createdAt" FROM contact_message_replies WHERE message_id = $1 ORDER BY created_at',
+    `SELECT id, admin_name AS "adminName", body, created_at AS "createdAt", ${schema.contactReplies ? 'sender' : "'admin' AS sender"}
+     FROM contact_message_replies WHERE message_id = $1 ORDER BY created_at, id`,
     [id]
   );
-  // contact_message_replies.id is BIGINT -> Number(...).
   return rows.map((r) => ({ ...r, id: Number(r.id) }));
+}
+
+// The registered account behind a message: linked when it was sent while
+// signed in, otherwise matched on the account email.
+async function customerFor(row) {
+  const c = row.customer_id
+    ? await db.get('SELECT id, full_name, company_name, status FROM customers WHERE id = $1', [row.customer_id])
+    : await db.get('SELECT id, full_name, company_name, status FROM customers WHERE lower(email) = lower($1)', [row.email]);
+  return c ? { id: Number(c.id), name: c.full_name, company: c.company_name || '', status: c.status } : null;
 }
 
 function serialize(row, { replies } = {}) {
@@ -65,33 +76,49 @@ function serialize(row, { replies } = {}) {
     subject: row.subject, message: row.message,
     status: row.status, adminNotes: row.admin_notes,
     createdAt: row.created_at, updatedAt: row.updated_at,
+    kind: row.subject === NEWSLETTER_SUBJECT ? 'newsletter' : 'message',
     replies: replies || undefined,
   };
 }
 
 router.get('/', asyncRoute(async (req, res) => {
-  const rows = await db.all('SELECT * FROM contact_messages ORDER BY created_at DESC, id DESC');
-  // Independent per-row reply-count reads — same N+1 pattern as the SQLite
-  // source (a reused prepared statement executed per row); parallelized with
-  // Promise.all since these are independent reads with no ordering
-  // dependency, same reasoning used for the enrichment fan-outs elsewhere in
-  // this migration. COUNT(*) always returns BIGINT in PostgreSQL -> Number(...).
-  const data = await Promise.all(rows.map(async (r) => {
-    const count = await db.get('SELECT COUNT(*) AS n FROM contact_message_replies WHERE message_id = $1', [r.id]);
-    return { ...serialize(r), replyCount: Number(count.n) };
-  }));
-  res.json({ data });
+  const schema = await getMessagingSchema();
+  const lastSender = schema.contactReplies
+    ? `(SELECT r.sender FROM contact_message_replies r WHERE r.message_id = cm.id ORDER BY r.created_at DESC, r.id DESC LIMIT 1)`
+    : `CASE WHEN EXISTS (SELECT 1 FROM contact_message_replies r WHERE r.message_id = cm.id) THEN 'admin' END`;
+  const rows = await db.all(
+    `SELECT cm.*,
+            (SELECT COUNT(*) FROM contact_message_replies r WHERE r.message_id = cm.id) AS reply_count,
+            ${lastSender} AS last_sender,
+            c.id AS acct_id, c.full_name AS acct_name, c.company_name AS acct_company
+     FROM contact_messages cm
+     LEFT JOIN customers c ON c.id = COALESCE(cm.customer_id, (SELECT x.id FROM customers x WHERE lower(x.email) = lower(cm.email) LIMIT 1))
+     ORDER BY COALESCE(cm.updated_at, cm.created_at) DESC, cm.id DESC`
+  );
+  res.json({
+    data: rows.map((r) => ({
+      ...serialize(r), replyCount: Number(r.reply_count), lastSender: r.last_sender || null,
+      customer: r.acct_id ? { id: Number(r.acct_id), name: r.acct_name, company: r.acct_company || '' } : null,
+    })),
+  });
 }));
 
+// Sidebar badges on every admin page: unread contact messages (newsletter
+// signups aren't conversations, so they don't count) and inquiries waiting
+// for the desk.
 router.get('/new-count', asyncRoute(async (req, res) => {
-  const row = await db.get("SELECT COUNT(*) AS n FROM contact_messages WHERE status = 'new'");
-  res.json({ data: { count: Number(row.n) } });
+  const row = await db.get(
+    `SELECT (SELECT COUNT(*) FROM contact_messages WHERE status = 'new' AND subject <> $1) AS n,
+            (SELECT COUNT(*) FROM inquiries WHERE status = 'pending') AS inquiries`,
+    [NEWSLETTER_SUBJECT]
+  );
+  res.json({ data: { count: Number(row.n), inquiries: Number(row.inquiries) } });
 }));
 
 router.get('/:id', asyncRoute(async (req, res) => {
   const row = await messageRow(req.params.id);
   if (!row) throw new ApiError(404, 'Message not found.');
-  res.json({ data: serialize(row, { replies: await repliesFor(row.id) }) });
+  res.json({ data: { ...serialize(row, { replies: await repliesFor(row.id) }), customer: await customerFor(row) } });
 }));
 
 router.put('/:id', asyncRoute(async (req, res) => {
@@ -113,7 +140,7 @@ router.put('/:id', asyncRoute(async (req, res) => {
   // Fires unconditionally, even when sets.length === 0 (no-op update) —
   // preserved exactly, not gated on an actual change having occurred.
   await writeAudit({ actor: req.adminUser.full_name, action: 'Updated contact message', target: row.subject, module: 'Contact' });
-  res.json({ data: serialize(row, { replies: await repliesFor(row.id) }) });
+  res.json({ data: { ...serialize(row, { replies: await repliesFor(row.id) }), customer: await customerFor(row) } });
 }));
 
 router.post('/:id/reply', asyncRoute(async (req, res) => {
@@ -129,11 +156,17 @@ router.post('/:id/reply', asyncRoute(async (req, res) => {
   await db.query('INSERT INTO contact_message_replies (message_id, admin_name, body) VALUES ($1, $2, $3)', [existing.id, req.adminUser.full_name, body]);
   await db.query("UPDATE contact_messages SET status = 'replied', updated_at = NOW() WHERE id = $1", [existing.id]);
 
-  await sendMail({ to: existing.email, subject: `Re: ${existing.subject}`, text: body });
+  // Registered customers can read and answer the whole thread in their
+  // account, so the email links there.
+  const account = await customerFor(existing);
+  const link = account
+    ? `\n\nView and reply to this conversation in your account:\n${siteOrigin(req)}/Dashboard.dc.html?tab=messages&message=${existing.id}`
+    : '';
+  await sendMail({ to: existing.email, subject: `Re: ${existing.subject}`, text: `${body}${link}` });
 
   await writeAudit({ actor: req.adminUser.full_name, action: 'Replied to contact message', target: existing.subject, module: 'Contact' });
   const row = await messageRow(existing.id);
-  res.json({ data: serialize(row, { replies: await repliesFor(row.id) }) });
+  res.json({ data: { ...serialize(row, { replies: await repliesFor(row.id) }), customer: account } });
 }));
 
 router.delete('/:id', asyncRoute(async (req, res) => {

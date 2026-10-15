@@ -103,6 +103,11 @@ a:hover{color:var(--color-accent-700)}
         <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
       </sc-if>
     </a>
+    <a href="AdminInquiries.dc.html" class="side-item">Inquiries
+      <sc-if value="{{ hasNewInquiry }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newInquiryCount }}</span>
+      </sc-if>
+    </a>
     <a href="AdminProducts.dc.html" class="side-item">Products</a>
     <a href="AdminCategories.dc.html" class="side-item">Categories</a>
     <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
@@ -224,13 +229,14 @@ a:hover{color:var(--color-accent-700)}
       <div class="dash-card">
         <div class="dash-card-head">
           <h3><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.3 0-2.5-.3-3.6-.8L3 21l1.8-5.4a8.4 8.4 0 0 1-.8-3.6A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg>Recent Inquiries</h3>
+          <a href="AdminInquiries.dc.html" style="font-size:12.5px;">{{ inquiriesLinkLabel }}</a>
         </div>
         <sc-if value="{{ hasRecentInquiries }}" hint-placeholder-val="{{ true }}">
           <div class="tbl-wrap"><table class="table">
-            <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Customer</th><th class="adm-th">Channel</th><th class="adm-th">Date</th></tr></thead>
+            <thead><tr><th class="adm-th">Inquiry</th><th class="adm-th">Customer</th><th class="adm-th">Channel</th><th class="adm-th">Status</th><th class="adm-th">Date</th></tr></thead>
             <tbody>
               <sc-for list="{{ recentInquiries }}" as="i" hint-placeholder-count="4">
-                <tr><td class="adm-td">{{ i.sku }}</td><td class="adm-td">{{ i.customer }}</td><td class="adm-td">{{ i.channel }}</td><td class="adm-td">{{ i.date }}</td></tr>
+                <tr><td class="adm-td"><a href="{{ i.href }}">{{ i.label }}</a><div style="font-size:11px;opacity:.55;">{{ i.sku }}</div></td><td class="adm-td">{{ i.customer }}</td><td class="adm-td">{{ i.channel }}</td><td class="adm-td"><span class="tag {{ i.tagClass }}">{{ i.statusLabel }}</span></td><td class="adm-td">{{ i.date }}</td></tr>
               </sc-for>
             </tbody>
           </table></div>
@@ -274,7 +280,7 @@ class Component extends DCLogic {
     const me = await fetchAdminSession();
     if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
     this.setState({ admin: me });
-    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newContactCount: c.contact, newInquiryCount: c.inquiries })));
     try {
       const res = await fetch('/api/admin/dashboard/stats', { credentials: 'same-origin' });
       const json = await res.json();
@@ -292,7 +298,12 @@ class Component extends DCLogic {
       return isNaN(dt) ? d : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
     const channelLabels = { whatsapp: 'WhatsApp', email: 'Email', line: 'LINE', skype: 'Skype' };
-    const recentInquiries = this.state.recentInquiries.map((i) => ({ ...i, channel: channelLabels[i.channel] || i.channel, date: fmtDate(i.date) }));
+    const statusLabels = { pending: 'Awaiting reply', replied: 'Replied', closed: 'Closed' };
+    const recentInquiries = this.state.recentInquiries.map((i) => ({
+      ...i, channel: channelLabels[i.channel] || i.channel, date: fmtDate(i.date),
+      label: i.ref || `#${i.id}`, href: `AdminInquiries.dc.html?id=${i.id}`,
+      statusLabel: statusLabels[i.status] || i.status || '', tagClass: i.status === 'pending' ? 'tag-accent' : 'tag-neutral',
+    }));
     const statValue = (label) => {
       const s = this.state.stats.find((x) => x.label === label);
       return s ? s.value : 0;
@@ -308,6 +319,7 @@ class Component extends DCLogic {
       hasPendingUsers: this.state.pendingUsers.length > 0,
       recentInquiries,
       hasRecentInquiries: recentInquiries.length > 0,
+      inquiriesLinkLabel: this.state.newInquiryCount ? `${this.state.newInquiryCount} awaiting reply →` : 'Open inbox →',
       recentAudits: this.state.recentAudits,
       hasRecentAudits: this.state.recentAudits.length > 0,
       errorMessage: this.state.errorMessage,
@@ -317,6 +329,8 @@ class Component extends DCLogic {
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,
       hasNewContact: this.state.newContactCount > 0,
+      newInquiryCount: this.state.newInquiryCount || 0,
+      hasNewInquiry: this.state.newInquiryCount > 0,
       pendingApprovalsCount,
       hasPendingApprovals: pendingApprovalsCount > 0,
       totalProductsCount: statValue('Total Products'),

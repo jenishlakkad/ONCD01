@@ -102,11 +102,16 @@ a:hover{color:var(--color-accent-700)}
         <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;text-align:center;">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="2" style="margin:0 auto 16px;"><path d="M5 13l4 4L19 7"/></svg>
           <h3>Message Sent</h3>
-          <p style="opacity:.75;font-size:14px;">Thank you — our sales desk will reach out shortly.</p>
+          <p style="opacity:.75;font-size:14px;">{{ sentLine }}</p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;">
+            <sc-if value="{{ isLoggedIn }}" hint-placeholder-val="{{ false }}">
+              <a href="Dashboard.dc.html?tab=messages" class="btn btn-primary">View in My Account</a>
+            </sc-if>
+            <button class="btn btn-secondary" onClick="{{ sendAnother }}">Send another message</button>
+          </div>
         </div>
       </sc-if>
-      <sc-if value="{{ submitted }}" hint-placeholder-val="{{ true }}">
-      </sc-if>
+      <sc-if value="{{ !submitted }}" hint-placeholder-val="{{ true }}">
       <form onSubmit="{{ handleSubmit }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:32px;display:flex;flex-direction:column;gap:16px;">
         <p style="font-size:12px;opacity:.6;margin:-6px 0 4px;">All fields are required — this helps us respond only to genuine inquiries.</p>
         <div class="field"><label>Full Name</label><input class="input" value="{{ form.fullName }}" onChange="{{ fh.fullName }}" required=""/></div>
@@ -118,7 +123,11 @@ a:hover{color:var(--color-accent-700)}
           <p style="font-size:13px;color:var(--color-accent-700);">{{ formError }}</p>
         </sc-if>
         <button type="submit" class="btn btn-primary btn-block" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <sc-if value="{{ isLoggedIn }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:12px;opacity:.65;margin:0;text-align:center;">Our reply will appear in <a href="Dashboard.dc.html?tab=messages">My Account → Messages</a>, where you can answer it too.</p>
+        </sc-if>
       </form>
+      </sc-if>
     </div>
   </section>
 
@@ -201,7 +210,7 @@ class Component extends DCLogic {
       this.logoutCustomer = m.logoutCustomer;
       m.fetchCustomerSession().then((me) => {
         if (!me) return;
-        this.setState({ customer: me, form: { ...this.state.form, fullName: me.full_name || '', email: me.email || '' } });
+        this.setState({ customer: me, form: { ...this.state.form, fullName: me.full_name || '', email: me.email || '', phone: this.state.form.phone || me.mobile || '' } });
       });
     });
   }
@@ -218,7 +227,7 @@ class Component extends DCLogic {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to send message.');
-      this.setState({ submitted: true, submitting: false, form: this.emptyForm });
+      this.setState({ submitted: true, submitting: false, sentTo: this.state.form.email, form: this.emptyForm });
     } catch (err) {
       this.setState({ submitting: false, formError: err.message });
     }
@@ -230,6 +239,13 @@ class Component extends DCLogic {
     Object.keys(this.emptyForm).forEach((k) => { fh[k] = (e) => this.setFormField(k, e.target.value); });
     return {
       submitted: this.state.submitted,
+      sentLine: this.state.customer && this.state.customer.id
+        ? 'Thank you — our sales desk will reply shortly. You will get an email, and the conversation is saved in your account.'
+        : `Thank you — our sales desk will reply to ${this.state.sentTo || 'your email'} shortly.`,
+      sendAnother: () => {
+        const me = this.state.customer && this.state.customer.id ? this.state.customer : null;
+        this.setState({ submitted: false, form: me ? { ...this.emptyForm, fullName: me.full_name || '', email: me.email || '', phone: me.mobile || '' } : this.emptyForm });
+      },
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       isLoggedIn: !!this.state.customer,
       handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },

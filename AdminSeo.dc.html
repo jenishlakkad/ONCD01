@@ -29,6 +29,11 @@ a:hover{color:var(--color-accent-700)}
         <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
       </sc-if>
     </a>
+    <a href="AdminInquiries.dc.html" class="side-item">Inquiries
+      <sc-if value="{{ hasNewInquiry }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newInquiryCount }}</span>
+      </sc-if>
+    </a>
     <a href="AdminProducts.dc.html" class="side-item">Products</a>
     <a href="AdminCategories.dc.html" class="side-item">Categories</a>
     <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
@@ -85,7 +90,7 @@ class Component extends DCLogic {
     const me = await fetchAdminSession();
     if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
     this.setState({ admin: me });
-    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newContactCount: c.contact, newInquiryCount: c.inquiries })));
     this.loadAll();
   }
 
@@ -145,6 +150,8 @@ class Component extends DCLogic {
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,
       hasNewContact: this.state.newContactCount > 0,
+      newInquiryCount: this.state.newInquiryCount || 0,
+      hasNewInquiry: this.state.newInquiryCount > 0,
     };
   }
 }

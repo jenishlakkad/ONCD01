@@ -4,6 +4,7 @@
 // every page triggers after a mutation).
 
 import { inquiryTitle, inquirySpecRows, inquiryPriceLabel } from './inquiryItem.js';
+import { refFor, rememberNote, pendingFor } from './inquiryRef.js';
 
 const KEY = 'aurum_cart_v1';
 
@@ -99,7 +100,10 @@ export function buildMessage(items, opts) {
   opts = opts || {};
   if (!items || !items.length) return '';
   const header = opts.header || "Hello, I'd like to inquire about the following items:";
-  const lines = [header];
+  // The reference ties this message to the inquiry stored for the sales
+  // desk (see utils/inquiryRef.js); the note is remembered for submitInquiry.
+  rememberNote(items, opts.note);
+  const lines = [header, '', `Reference: ${bold(refFor(items))}`];
 
   const groups = new Map();
   for (const it of items) {
@@ -174,18 +178,30 @@ export function channelLink(channel, message, contacts) {
 
 // Fire-and-forget: records the inquiry server-side so admin can see it,
 // without blocking the WhatsApp/Email/LINE/Skype deep link the button also opens.
+// Sends the same reference that's printed in the message, plus the note the
+// customer typed, so the stored inquiry matches what the desk receives.
+// Fires 'oncd-inquiry-sent' with {id, ref} once it's stored.
 export function submitInquiry(items, channel) {
   if (!items || !items.length) return;
+  const { ref, note } = pendingFor(items);
   try {
     fetch('/api/inquiries', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
+      keepalive: true,
       body: JSON.stringify({
         items: items.map((i) => ({ sku: i.sku, name: i.name, qty: i.qty, priceLabel: i.priceLabel })),
-        channel,
+        channel, ref, note,
       }),
-    }).catch((err) => console.error('[cart] failed to record inquiry', err));
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json && json.data) {
+          try { window.dispatchEvent(new CustomEvent('oncd-inquiry-sent', { detail: json.data })); } catch {}
+        }
+      })
+      .catch((err) => console.error('[cart] failed to record inquiry', err));
   } catch (err) {
     console.error('[cart] failed to record inquiry', err);
   }

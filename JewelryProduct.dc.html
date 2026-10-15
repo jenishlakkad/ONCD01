@@ -428,6 +428,7 @@ class Component extends DCLogic {
       if (!res.ok) throw new Error(json.error || 'Failed to load.');
       const variants = json.data.variants || [];
       this.setState({ loading: false, product: json.data, selectedVariantMetal: variants.length ? variants[0].metal : null });
+      import('./utils/recentlyViewed.js').then((m) => m.recordView(json.data.sku)).catch(() => {});
     } catch {
       this.setState({ loading: false, notFound: true });
     }

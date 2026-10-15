@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db/postgres');
+const { getMessagingSchema } = require('../lib/messaging');
 const { asyncRoute } = require('../middleware/errorHandler');
 const requireAdmin = require('../middleware/requireAdminPostgres');
 const requirePermission = require('../middleware/requirePermission');
@@ -30,8 +31,9 @@ router.get('/stats', asyncRoute(async (req, res) => {
     "SELECT full_name AS name, company_name AS company, country FROM customers WHERE status = 'pending' ORDER BY created_at DESC"
   );
 
+  const schema = await getMessagingSchema();
   const recentInquiriesRaw = await db.all(
-    `SELECT i.id, i.channel, i.created_at AS date,
+    `SELECT i.id, i.channel, i.status, ${schema.inquiryRefs ? 'i.ref' : 'NULL AS ref'}, i.created_at AS date,
             COALESCE(c.full_name, i.guest_name, 'Guest') AS customer,
             (SELECT sku FROM inquiry_items WHERE inquiry_id = i.id ORDER BY id LIMIT 1) AS sku
      FROM inquiries i LEFT JOIN customers c ON c.id = i.customer_id

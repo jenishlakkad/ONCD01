@@ -126,12 +126,11 @@ router.put('/:id', asyncRoute(async (req, res) => {
   const row = await db.get('SELECT * FROM products WHERE id = $1', [existing.id]);
 
   const statusChanged = b.status && b.status !== existing.status;
-  await writeAudit({
-    actor: req.adminUser.full_name,
-    action: statusChanged ? (b.status === 'hidden' ? 'Hid product' : 'Updated product') : 'Updated product',
-    target: row.sku,
-    module: 'Products',
-  });
+  const featuredChanged = b.featured !== undefined && !!b.featured !== !!existing.featured;
+  let action = 'Updated product';
+  if (statusChanged) action = b.status === 'hidden' ? 'Hid product' : 'Updated product';
+  else if (featuredChanged && cols.length === 1) action = b.featured ? 'Featured product on homepage' : 'Removed product from homepage Featured';
+  await writeAudit({ actor: req.adminUser.full_name, action, target: row.sku, module: 'Products' });
   res.json({ data: await fullProduct(row) });
 }));
 

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./product-media.js"></script>
 </head>
 <body>
 <x-dc>
@@ -53,6 +54,20 @@ a:hover{color:var(--color-accent-700)}
 .ud-spec-row span:last-child{text-align:right;font-weight:500;}
 .ud-card{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:4px 14px;margin-top:10px;background:var(--color-surface);}
 .ud-inquiry-card{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:12px 14px;background:var(--color-surface);}
+.ud-summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.ud-chip{font-size:12px;padding:5px 11px;border-radius:999px;background:var(--color-surface);border:1px solid var(--color-divider);}
+.ud-chip strong{font-weight:700;}
+.ud-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--color-divider);font-size:13px;}
+.ud-item:first-child{border-top:none;}
+.ud-thumb{width:36px;height:36px;border-radius:6px;overflow:hidden;background:var(--color-bg);border:1px solid var(--color-divider);flex:none;}
+.ud-gone{font-size:11px;opacity:.6;}
+.ud-status{padding:5px 8px;font-size:12px;border:1px solid var(--color-divider);border-radius:var(--radius-sm);background:var(--color-bg);color:var(--color-text);font:inherit;font-size:12px;}
+.ud-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;}
+.ud-pill-pending{background:#fbf1de;color:#8a5a12;}
+.ud-pill-replied{background:#e3f1e6;color:#25653a;}
+.ud-pill-new{background:var(--color-accent);color:#fff;}
+.ud-pill-in_progress{background:#fbf1de;color:#8a5a12;}
+.ud-pill-closed{background:var(--color-bg);border:1px solid var(--color-divider);opacity:.75;}
 </style>
 </helmet>
 
@@ -64,6 +79,11 @@ a:hover{color:var(--color-accent-700)}
     <a href="AdminContact.dc.html" class="side-item">Contact Messages
       <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
         <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminInquiries.dc.html" class="side-item">Inquiries
+      <sc-if value="{{ hasNewInquiry }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newInquiryCount }}</span>
       </sc-if>
     </a>
     <a href="AdminProducts.dc.html" class="side-item">Products</a>
@@ -177,6 +197,16 @@ a:hover{color:var(--color-accent-700)}
             </div>
           </div>
 
+          <div class="ud-summary">
+            <span class="ud-chip"><strong>{{ inquiryCount }}</strong> {{ inquiryWord }}</span>
+            <span class="ud-chip"><strong>{{ inqPending }}</strong> awaiting reply</span>
+            <span class="ud-chip"><strong>{{ inqReplied }}</strong> replied</span>
+            <span class="ud-chip"><strong>{{ inqClosed }}</strong> closed</span>
+            <span class="ud-chip"><strong>{{ savedCount }}</strong> saved</span>
+            <span class="ud-chip"><strong>{{ cartCount }}</strong> in cart</span>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;margin-left:auto;" onClick="{{ refreshDetails }}" disabled="{{ detailLoading }}">{{ refreshLabel }}</button>
+          </div>
+
           <div class="ud-section">
             <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 9v11"/></svg>Registration Info</h5>
             <div class="ud-card">
@@ -193,11 +223,101 @@ a:hover{color:var(--color-accent-700)}
             </sc-if>
           </div>
 
+
           <div class="ud-section">
-            <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Current Cart ({{ cartCount }})</h5>
+            <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.3 0-2.5-.3-3.6-.8L3 21l1.8-5.4a8.4 8.4 0 0 1-.8-3.6A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg><span>{{ inquiryHeading }}</span></h5>
+            <p style="font-size:12px;opacity:.6;margin-top:4px;">Changing a status updates the customer's own Inquiry History.</p>
             <sc-if value="{{ detailLoading }}" hint-placeholder-val="{{ false }}">
               <p style="font-size:12px;opacity:.6;margin-top:8px;">Loading…</p>
             </sc-if>
+            <sc-if value="{{ hasInquiries }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+                <sc-for list="{{ inquiryRows }}" as="inq" hint-placeholder-count="2">
+                  <div class="ud-inquiry-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                      <span style="font-size:12.5px;"><a href="{{ inq.href }}"><strong>{{ inq.label }}</strong></a> <span style="opacity:.65;">· {{ inq.date }} · {{ inq.channelLabel }}</span></span>
+                      <span style="display:flex;align-items:center;gap:8px;">
+                        <span class="ud-pill {{ inq.pillClass }}">{{ inq.status }}</span>
+                        <select class="ud-status" value="{{ inq.rawStatus }}" onChange="{{ inq.setStatus }}" disabled="{{ inq.saving }}" aria-label="Change inquiry status">
+                          <option value="pending">Awaiting reply</option>
+                          <option value="replied">Replied</option>
+                          <option value="closed">Closed</option>
+                        </select>
+                      </span>
+                    </div>
+                    <sc-if value="{{ inq.hasThread }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:8px;font-size:12.5px;padding:8px 10px;border-radius:8px;background:var(--color-bg);border:1px solid var(--color-divider);">
+                        <span style="opacity:.6;">{{ inq.threadLine }}</span>
+                        <div style="margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ inq.lastLine }}</div>
+                      </div>
+                    </sc-if>
+                    <div style="margin-top:8px;">
+                      <sc-for list="{{ inq.items }}" as="it" hint-placeholder-count="2">
+                        <div class="ud-item">
+                          <div class="ud-thumb"><product-media media="{{ it.media }}" shape="rect" fit="cover" placeholder="" style="width:100%;height:100%;"></product-media></div>
+                          <div style="flex:1;min-width:0;">
+                            <sc-if value="{{ it.available }}" hint-placeholder-val="{{ true }}"><a href="{{ it.href }}" target="_blank" rel="noopener">{{ it.name }}</a></sc-if>
+                            <sc-if value="{{ !it.available }}" hint-placeholder-val="{{ false }}"><span>{{ it.name }}</span> <span class="ud-gone">· no longer listed</span></sc-if>
+                            <div style="font-size:11.5px;opacity:.6;">{{ it.sku }}</div>
+                          </div>
+                          <div style="text-align:right;font-size:12px;flex:none;">Qty {{ it.qty }}<div style="opacity:.6;">{{ it.priceLabel }}</div></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="margin-top:8px;text-align:right;"><a href="{{ inq.href }}" style="font-size:12.5px;font-weight:500;">{{ inq.openLabel }}</a></div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ hasNoInquiries }}" hint-placeholder-val="{{ true }}">
+              <p style="font-size:12px;opacity:.6;margin-top:8px;">No inquiries sent yet.</p>
+            </sc-if>
+          </div>
+
+          <div class="ud-section">
+            <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>{{ contactHeading }}</span></h5>
+            <sc-if value="{{ hasContact }}" hint-placeholder-val="{{ false }}">
+              <div class="ud-card" style="padding:4px 14px;">
+                <sc-for list="{{ contactRows }}" as="cm" hint-placeholder-count="2">
+                  <div class="ud-item">
+                    <div style="flex:1;min-width:0;">
+                      <a href="{{ cm.href }}">{{ cm.subject }}</a>
+                      <div style="font-size:11.5px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ cm.meta }}</div>
+                    </div>
+                    <span class="ud-pill {{ cm.pillClass }}">{{ cm.statusLabel }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ !hasContact }}" hint-placeholder-val="{{ true }}">
+              <p style="font-size:12px;opacity:.6;margin-top:8px;">No contact-form messages from this customer.</p>
+            </sc-if>
+          </div>
+
+          <div class="ud-section">
+            <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>{{ savedHeading }}</span></h5>
+            <sc-if value="{{ hasSaved }}" hint-placeholder-val="{{ false }}">
+              <div class="ud-card" style="padding:4px 14px;">
+                <sc-for list="{{ savedRows }}" as="s" hint-placeholder-count="2">
+                  <div class="ud-item">
+                    <div class="ud-thumb"><product-media media="{{ s.media }}" shape="rect" fit="cover" placeholder="" style="width:100%;height:100%;"></product-media></div>
+                    <div style="flex:1;min-width:0;">
+                      <sc-if value="{{ s.available }}" hint-placeholder-val="{{ true }}"><a href="{{ s.href }}" target="_blank" rel="noopener">{{ s.name }}</a></sc-if>
+                      <sc-if value="{{ !s.available }}" hint-placeholder-val="{{ false }}"><span>{{ s.name }}</span> <span class="ud-gone">· no longer listed</span></sc-if>
+                      <div style="font-size:11.5px;opacity:.6;">{{ s.sku }} · saved {{ s.date }}</div>
+                    </div>
+                    <div style="font-size:12px;flex:none;">{{ s.priceLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ hasNoSaved }}" hint-placeholder-val="{{ true }}">
+              <p style="font-size:12px;opacity:.6;margin-top:8px;">No saved items.</p>
+            </sc-if>
+          </div>
+
+          <div class="ud-section">
+            <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span>{{ cartHeading }}</span></h5>
             <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ false }}">
               <div class="tbl-wrap"><table class="table" style="margin-top:8px;">
                 <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Name</th><th class="adm-th">Qty</th><th class="adm-th">Price</th></tr></thead>
@@ -210,47 +330,6 @@ a:hover{color:var(--color-accent-700)}
             </sc-if>
             <sc-if value="{{ hasNoCart }}" hint-placeholder-val="{{ true }}">
               <p style="font-size:12px;opacity:.6;margin-top:8px;">Cart is empty.</p>
-            </sc-if>
-          </div>
-
-          <div class="ud-section">
-            <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>Saved Items ({{ savedCount }})</h5>
-            <sc-if value="{{ hasSaved }}" hint-placeholder-val="{{ false }}">
-              <div class="tbl-wrap"><table class="table" style="margin-top:8px;">
-                <thead><tr><th class="adm-th">SKU</th><th class="adm-th">Name</th><th class="adm-th">Price</th></tr></thead>
-                <tbody>
-                  <sc-for list="{{ savedRows }}" as="s" hint-placeholder-count="2">
-                    <tr><td class="adm-td">{{ s.sku }}</td><td class="adm-td">{{ s.name }}</td><td class="adm-td">{{ s.priceLabel }}</td></tr>
-                  </sc-for>
-                </tbody>
-              </table></div>
-            </sc-if>
-            <sc-if value="{{ hasNoSaved }}" hint-placeholder-val="{{ true }}">
-              <p style="font-size:12px;opacity:.6;margin-top:8px;">No saved items.</p>
-            </sc-if>
-          </div>
-
-          <div class="ud-section">
-            <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.3 0-2.5-.3-3.6-.8L3 21l1.8-5.4a8.4 8.4 0 0 1-.8-3.6A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg>Inquiry History ({{ inquiryCount }} sent, {{ inquiryItemsTotal }} products total)</h5>
-            <sc-if value="{{ hasInquiries }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
-                <sc-for list="{{ inquiryRows }}" as="inq" hint-placeholder-count="2">
-                  <div class="ud-inquiry-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;opacity:.7;">
-                      <span>{{ inq.date }} · {{ inq.channelLabel }}</span>
-                      <span class="tag {{ inq.tagClass }}">{{ inq.status }}</span>
-                    </div>
-                    <div style="margin-top:6px;font-size:13px;">
-                      <sc-for list="{{ inq.items }}" as="it" hint-placeholder-count="2">
-                        <div>{{ it.sku }} — {{ it.name }} (Qty {{ it.qty }})</div>
-                      </sc-for>
-                    </div>
-                  </div>
-                </sc-for>
-              </div>
-            </sc-if>
-            <sc-if value="{{ hasNoInquiries }}" hint-placeholder-val="{{ true }}">
-              <p style="font-size:12px;opacity:.6;margin-top:8px;">No inquiries sent yet.</p>
             </sc-if>
           </div>
 
@@ -272,7 +351,7 @@ a:hover{color:var(--color-accent-700)}
 class Component extends DCLogic {
   state = {
     admin: null, users: [], errorMessage: '', newContactCount: 0,
-    detailOpen: false, detailCustomer: null, cart: [], inquiries: [], savedItems: [], detailLoading: false, detailError: '',
+    detailOpen: false, detailCustomer: null, cart: [], inquiries: [], savedItems: [], detailProducts: {}, contactMessages: [], detailLoading: false, detailError: '', inqSaving: {},
     searchTerm: '', currentPage: 1,
   };
   pageSize = 10;
@@ -283,7 +362,7 @@ class Component extends DCLogic {
     const me = await fetchAdminSession();
     if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
     this.setState({ admin: me });
-    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newContactCount: c.contact, newInquiryCount: c.inquiries })));
     this.loadUsers();
   }
 
@@ -293,22 +372,59 @@ class Component extends DCLogic {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load users.');
       this.setState({ users: json.data, errorMessage: '' });
+      // Deep link from the Inquiries inbox / Contact Messages: open that
+      // customer's Details straight away.
+      const wanted = Number(new URLSearchParams(window.location.search).get('customer'));
+      if (wanted && !this._deepLinked) {
+        this._deepLinked = true;
+        const u = json.data.find((x) => x.id === wanted);
+        if (u) { this.setState({ searchTerm: u.email }); this.openDetails(u); }
+      }
     } catch (err) {
       this.setState({ errorMessage: err.message });
     }
   }
 
   openDetails(u) {
-    this.setState({ detailOpen: true, detailCustomer: u, cart: [], inquiries: [], savedItems: [], detailLoading: true, detailError: '' });
-    Promise.all([
-      fetch(`/api/admin/customers/${u.id}/cart`, { credentials: 'same-origin' }).then((r) => r.json()),
-      fetch(`/api/admin/customers/${u.id}/inquiries`, { credentials: 'same-origin' }).then((r) => r.json()),
-      fetch(`/api/admin/customers/${u.id}/saved-items`, { credentials: 'same-origin' }).then((r) => r.json()),
-    ]).then(([cartJson, inqJson, savedJson]) => {
-      this.setState({ cart: cartJson.data || [], inquiries: inqJson.data || [], savedItems: savedJson.data || [], detailLoading: false });
-    }).catch((err) => {
+    this.setState({ detailOpen: true, detailCustomer: u, cart: [], inquiries: [], savedItems: [], detailProducts: {}, contactMessages: [], detailError: '', inqSaving: {} });
+    this.loadDetails(u.id);
+  }
+
+  // One request for the whole dialog — the same snapshot the customer's own
+  // dashboard reads (GET /api/account/dashboard), so both always agree.
+  async loadDetails(id) {
+    this.setState({ detailLoading: true, detailError: '' });
+    try {
+      const res = await fetch(`/api/admin/customers/${id}/activity`, { credentials: 'same-origin' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load details.');
+      if (!this.state.detailCustomer || this.state.detailCustomer.id !== id) return;
+      const d = json.data;
+      this.setState({ detailCustomer: d.me, cart: d.cart, inquiries: d.inquiries, savedItems: d.saved, detailProducts: d.products, contactMessages: d.contactMessages || [], detailLoading: false });
+    } catch (err) {
       this.setState({ detailLoading: false, detailError: err.message || 'Failed to load details.' });
-    });
+    }
+  }
+
+  async setInquiryStatus(inq, status) {
+    const customer = this.state.detailCustomer;
+    if (!customer || status === inq.status) return;
+    const previous = inq.status;
+    const patch = (value) => this.setState((s) => ({ inquiries: s.inquiries.map((i) => (i.id === inq.id ? { ...i, status: value } : i)) }));
+    patch(status);
+    this.setState((s) => ({ inqSaving: { ...s.inqSaving, [inq.id]: true }, detailError: '' }));
+    try {
+      const res = await fetch(`/api/admin/customers/${customer.id}/inquiries/${inq.id}`, {
+        method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Could not update the inquiry.');
+    } catch (err) {
+      patch(previous);
+      this.setState({ detailError: err.message });
+    } finally {
+      this.setState((s) => { const inqSaving = { ...s.inqSaving }; delete inqSaving[inq.id]; return { inqSaving }; });
+    }
   }
 
   closeDetails() { this.setState({ detailOpen: false }); }
@@ -404,11 +520,34 @@ class Component extends DCLogic {
 
     const channelLabels = { whatsapp: 'WhatsApp', email: 'Email', line: 'LINE', skype: 'Skype' };
     const cartRows = this.state.cart;
+    const DETAIL_PAGE = { diamond: 'DiamondProduct.dc.html', jewelry: 'JewelryProduct.dc.html', gemstone: 'GemstoneProduct.dc.html' };
+    const products = this.state.detailProducts || {};
+    const live = (sku) => {
+      const p = products[sku];
+      return p
+        ? { available: true, href: `${DETAIL_PAGE[p.type] || 'Home.dc.html'}?sku=${encodeURIComponent(sku)}`, media: JSON.stringify(p.media || []) }
+        : { available: false, href: '#', media: '[]' };
+    };
+    const toTime = (d) => fmtDate(d);
     const inquiryRows = this.state.inquiries.map((inq) => ({
+      label: inq.ref || `#${inq.id}`, href: `AdminInquiries.dc.html?id=${inq.id}`,
+      hasThread: !!(inq.messages && inq.messages.length) || !!inq.note,
+      threadLine: inq.messages && inq.messages.length
+        ? `${inq.messages.length} message${inq.messages.length === 1 ? '' : 's'} · last ${toTime(inq.messages[inq.messages.length - 1].createdAt)}`
+        : 'Note from the customer',
+      lastLine: inq.messages && inq.messages.length
+        ? `${inq.messages[inq.messages.length - 1].sender === 'admin' ? 'Desk' : 'Customer'}: ${inq.messages[inq.messages.length - 1].body}`
+        : inq.note || '',
+      openLabel: inq.status === 'pending' ? 'Reply in Inquiries →' : 'Open conversation →',
+      id: inq.id, rawStatus: inq.status,
       date: fmtDate(inq.createdAt), channelLabel: channelLabels[inq.channel] || inq.channel,
-      status: statusLabel(inq.status), tagClass: inq.status === 'replied' ? 'tag-accent' : 'tag-neutral',
-      items: inq.items,
+      status: { pending: 'Awaiting reply', replied: 'Replied', closed: 'Closed' }[inq.status] || statusLabel(inq.status), pillClass: `ud-pill-${inq.status}`,
+      saving: !!this.state.inqSaving[inq.id],
+      setStatus: (e) => this.setInquiryStatus(inq, e.target.value),
+      items: (inq.items || []).map((it) => ({ ...it, name: it.name || it.sku, priceLabel: it.priceLabel || '', ...live(it.sku) })),
     }));
+    const inqCount = (st) => this.state.inquiries.filter((i) => i.status === st).length;
+    const savedRows = this.state.savedItems.map((s) => ({ ...s, name: s.name || s.sku, priceLabel: s.priceLabel || '', date: fmtDate(s.createdAt), ...live(s.sku) }));
     const inquiryItemsTotal = this.state.inquiries.reduce((sum, inq) => sum + (inq.items ? inq.items.length : 0), 0);
 
     return {
@@ -424,6 +563,8 @@ class Component extends DCLogic {
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,
       hasNewContact: this.state.newContactCount > 0,
+      newInquiryCount: this.state.newInquiryCount || 0,
+      hasNewInquiry: this.state.newInquiryCount > 0,
       detailOpen: this.state.detailOpen,
       detail,
       detailLoading: this.state.detailLoading,
@@ -431,7 +572,22 @@ class Component extends DCLogic {
       closeDetails: () => this.closeDetails(),
       stop: (e) => e.stopPropagation(),
       cartRows, cartCount: cartRows.length, hasCart: cartRows.length > 0, hasNoCart: cartRows.length === 0,
-      savedRows: this.state.savedItems, savedCount: this.state.savedItems.length,
+      savedRows, savedCount: this.state.savedItems.length,
+      contactRows: this.state.contactMessages.map((cm) => ({
+        subject: cm.subject, href: `AdminContact.dc.html?id=${cm.id}`,
+        meta: `${fmtDate(cm.createdAt)} · ${cm.replies.length} repl${cm.replies.length === 1 ? 'y' : 'ies'} · ${cm.message}`,
+        statusLabel: { new: 'New', in_progress: 'In progress', replied: 'Replied', closed: 'Closed' }[cm.status] || cm.status,
+        pillClass: `ud-pill-${cm.status}`,
+      })),
+      hasContact: this.state.contactMessages.length > 0,
+      contactHeading: `Contact Messages (${this.state.contactMessages.length})`,
+      inquiryHeading: `Inquiry History (${this.state.inquiries.length} sent, ${inquiryItemsTotal} products total)`,
+      savedHeading: `Saved Items (${this.state.savedItems.length})`,
+      cartHeading: `Current Cart (${cartRows.length})`,
+      inquiryWord: this.state.inquiries.length === 1 ? 'inquiry' : 'inquiries',
+      inqPending: inqCount('pending'), inqReplied: inqCount('replied'), inqClosed: inqCount('closed'),
+      refreshDetails: () => this.state.detailCustomer && this.loadDetails(this.state.detailCustomer.id),
+      refreshLabel: this.state.detailLoading ? 'Refreshing…' : '↻ Refresh',
       hasSaved: this.state.savedItems.length > 0, hasNoSaved: this.state.savedItems.length === 0,
       inquiryRows, inquiryCount: inquiryRows.length, inquiryItemsTotal,
       hasInquiries: inquiryRows.length > 0, hasNoInquiries: inquiryRows.length === 0,

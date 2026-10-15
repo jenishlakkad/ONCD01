@@ -399,6 +399,7 @@ class Component extends DCLogic {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load.');
       this.setState({ loading: false, product: json.data });
+      import('./utils/recentlyViewed.js').then((m) => m.recordView(json.data.sku)).catch(() => {});
     } catch {
       this.setState({ loading: false, notFound: true });
     }

@@ -31,6 +31,11 @@ a:hover{color:var(--color-accent-700)}
         <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
       </sc-if>
     </a>
+    <a href="AdminInquiries.dc.html" class="side-item">Inquiries
+      <sc-if value="{{ hasNewInquiry }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newInquiryCount }}</span>
+      </sc-if>
+    </a>
     <a href="AdminProducts.dc.html" class="side-item">Products</a>
     <a href="AdminCategories.dc.html" class="side-item">Categories</a>
     <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
@@ -59,6 +64,15 @@ a:hover{color:var(--color-accent-700)}
       <p style="font-size:13px;color:var(--color-accent-700);margin:-12px 0 16px;">{{ errorMessage }}</p>
     </sc-if>
 
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <sc-for list="{{ kindTabs }}" as="k" hint-placeholder-count="2">
+        <button class="btn {{ k.cls }}" style="padding:7px 14px;font-size:13px;" onClick="{{ k.select }}">{{ k.label }}</button>
+      </sc-for>
+      <sc-if value="{{ isNewsletter }}" hint-placeholder-val="{{ false }}">
+        <button class="btn btn-ghost" style="margin-left:auto;font-size:12.5px;" onClick="{{ copyEmails }}">{{ copyEmailsLabel }}</button>
+      </sc-if>
+    </div>
+
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
       <div style="position:relative;flex:1;min-width:220px;max-width:360px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -82,8 +96,10 @@ a:hover{color:var(--color-accent-700)}
       <tbody>
         <sc-for list="{{ visibleMessages }}" as="m" hint-placeholder-count="6">
           <tr>
-            <td class="adm-td">{{ m.fullName }}<div style="opacity:.55;font-size:11.5px;">{{ m.email }}</div></td>
-            <td class="adm-td">{{ m.subject }}</td>
+            <td class="adm-td">{{ m.fullName }}<div style="opacity:.55;font-size:11.5px;">{{ m.email }}</div>
+              <sc-if value="{{ m.isCustomer }}" hint-placeholder-val="{{ false }}"><a href="{{ m.customerHref }}" style="font-size:11px;">Registered customer →</a></sc-if>
+            </td>
+            <td class="adm-td">{{ m.subject }}<sc-if value="{{ m.customerReplied }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:var(--color-accent-700);font-weight:600;">Customer replied</div></sc-if></td>
             <td class="adm-td" style="opacity:.75;">{{ m.dateLabel }}</td>
             <td class="adm-td"><span class="tag {{ m.tagClass }}" style="{{ m.tagStyle }}">{{ m.statusLabel }}</span></td>
             <td class="adm-td">{{ m.replyCount }}</td>
@@ -104,6 +120,13 @@ a:hover{color:var(--color-accent-700)}
           <div class="dialog-title">{{ detail.subject }}</div>
           <p style="font-size:12px;opacity:.6;margin-top:-6px;">From {{ detail.fullName }} &lt;{{ detail.email }}&gt; · {{ detail.phone }} · {{ detail.dateLabel }}</p>
 
+          <sc-if value="{{ detail.isCustomer }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;padding:8px 12px;border-radius:8px;background:var(--color-accent-100);margin-top:6px;">
+              <span><strong>{{ detail.customerLine }}</strong></span>
+              <a href="{{ detail.customerHref }}">Open customer profile →</a>
+              <a href="{{ detail.inquiriesHref }}">Their inquiries →</a>
+            </div>
+          </sc-if>
           <div style="display:flex;gap:8px;margin:10px 0 4px;flex-wrap:wrap;">
             <a href="{{ detail.mailHref }}" class="btn btn-ghost" style="font-size:11px;padding:5px 10px;">Email</a>
             <a href="{{ detail.telHref }}" class="btn btn-ghost" style="font-size:11px;padding:5px 10px;">Call</a>
@@ -119,11 +142,11 @@ a:hover{color:var(--color-accent-700)}
           <div style="border:1px solid var(--color-divider);border-radius:8px;padding:14px;margin-top:10px;white-space:pre-wrap;font-size:13.5px;">{{ detail.message }}</div>
 
           <sc-if value="{{ detail.hasReplies }}" hint-placeholder-val="{{ false }}">
-            <p style="font-size:11px;opacity:.55;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.06em;">Reply History</p>
+            <p style="font-size:11px;opacity:.55;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.06em;">Conversation</p>
             <div style="display:flex;flex-direction:column;gap:8px;">
               <sc-for list="{{ detail.replies }}" as="r" hint-placeholder-count="2">
-                <div style="border:1px solid var(--color-divider);border-radius:8px;padding:10px 12px;background:var(--color-surface);">
-                  <div style="font-size:11px;opacity:.6;margin-bottom:4px;">{{ r.adminName }} · {{ r.dateLabel }}</div>
+                <div style="border:1px solid var(--color-divider);border-radius:8px;padding:10px 12px;background:{{ r.bg }};margin-left:{{ r.indent }};">
+                  <div style="font-size:11px;opacity:.6;margin-bottom:4px;">{{ r.who }} · {{ r.dateLabel }}</div>
                   <div style="font-size:13px;white-space:pre-wrap;">{{ r.body }}</div>
                 </div>
               </sc-for>
@@ -131,7 +154,7 @@ a:hover{color:var(--color-accent-700)}
           </sc-if>
 
           <div class="field" style="margin-top:16px;">
-            <label>Reply to customer (sends a real email)</label>
+            <label>{{ replyFieldLabel }}</label>
             <textarea class="input" rows="4" value="{{ replyText }}" onChange="{{ handleReplyText }}" placeholder="Type your reply…"></textarea>
           </div>
 
@@ -154,7 +177,8 @@ a:hover{color:var(--color-accent-700)}
 class Component extends DCLogic {
   state = {
     admin: null, messages: [], errorMessage: '',
-    search: '', statusFilter: 'all',
+    search: new URLSearchParams(window.location.search).get('q') || '', statusFilter: 'all', kind: 'message', copiedEmails: false,
+    newInquiryCount: 0,
     dialogOpen: false, detailId: null, detail: null, dialogError: '',
     replyText: '', replying: false,
   };
@@ -166,7 +190,11 @@ class Component extends DCLogic {
     if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
     this.setState({ admin: me });
     this.filters = await import('./utils/filters.js');
-    this.loadMessages();
+    await this.loadMessages();
+    // Deep link from a customer's Details dialog, the Inquiries inbox or the
+    // desk's notification email.
+    const id = Number(new URLSearchParams(window.location.search).get('id'));
+    if (id) this.openDetail(id);
   }
 
   async loadMessages() {
@@ -175,6 +203,7 @@ class Component extends DCLogic {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load messages.');
       this.setState({ messages: json.data, errorMessage: '' });
+      import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newInquiryCount: c.inquiries })));
     } catch (err) {
       this.setState({ errorMessage: err.message });
     }
@@ -259,7 +288,12 @@ class Component extends DCLogic {
       return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
     };
 
-    const allMessages = this.state.messages.map((m) => ({
+    // Newsletter signups share the table but aren't conversations — they get
+    // their own tab and never count as unread.
+    const kindOf = (m) => m.kind || 'message';
+    const allMessages = this.state.messages.filter((m) => kindOf(m) === this.state.kind).map((m) => ({
+      isCustomer: !!m.customer, customerHref: m.customer ? `AdminUsers.dc.html?customer=${m.customer.id}` : '#',
+      customerReplied: m.lastSender === 'customer' && m.status === 'new',
       id: m.id, fullName: m.fullName, email: m.email, subject: m.subject,
       status: m.status, statusLabel: STATUS_LABEL[m.status] || m.status,
       tagClass: (STATUS_TAG[m.status] || {}).cls || 'tag-outline',
@@ -286,8 +320,19 @@ class Component extends DCLogic {
       waHref: 'https://wa.me/' + (d.phone || '').replace(/[^\d]/g, ''),
       handleStatus: (e) => this.setStatus(e.target.value),
       hasReplies: !!(d.replies && d.replies.length),
-      replies: (d.replies || []).map((r) => ({ ...r, dateLabel: fmtDate(r.createdAt) })),
-    } : { subject: '', fullName: '', email: '', phone: '', message: '', status: 'new', dateLabel: '', mailHref: '#', telHref: '#', waHref: '#', handleStatus: () => {}, hasReplies: false, replies: [] };
+      replies: (d.replies || []).map((r) => ({
+        ...r, dateLabel: fmtDate(r.createdAt),
+        who: r.sender === 'customer' ? `${r.adminName || d.fullName} (customer)` : `${r.adminName} (sales desk)`,
+        bg: r.sender === 'customer' ? 'var(--color-bg)' : 'var(--color-accent-100)',
+        indent: r.sender === 'customer' ? '0' : '24px',
+      })),
+      isCustomer: !!d.customer,
+      customerLine: d.customer ? `Registered customer: ${d.customer.name}${d.customer.company ? ` · ${d.customer.company}` : ''}` : '',
+      customerHref: d.customer ? `AdminUsers.dc.html?customer=${d.customer.id}` : '#',
+      inquiriesHref: `AdminInquiries.dc.html?q=${encodeURIComponent(d.email)}`,
+    } : { subject: '', fullName: '', email: '', phone: '', message: '', status: 'new', dateLabel: '', mailHref: '#', telHref: '#', waHref: '#', handleStatus: () => {}, hasReplies: false, replies: [], isCustomer: false, customerLine: '', customerHref: '#', inquiriesHref: '#' };
+    const newsletterEmails = this.state.messages.filter((m) => kindOf(m) === 'newsletter').map((m) => m.email);
+    const conversationsNew = this.state.messages.filter((m) => kindOf(m) === 'message' && m.status === 'new').length;
 
     return {
       adminName: this.state.admin ? this.state.admin.fullName : '',
@@ -312,8 +357,17 @@ class Component extends DCLogic {
       replying: this.state.replying,
       replyLabel: this.state.replying ? 'Sending…' : 'Send Reply',
       dialogError: this.state.dialogError,
-      newContactCount: allMessages.filter((m) => m.status === 'new').length,
-      hasNewContact: allMessages.some((m) => m.status === 'new'),
+      newContactCount: conversationsNew,
+      hasNewContact: conversationsNew > 0,
+      newInquiryCount: this.state.newInquiryCount,
+      hasNewInquiry: this.state.newInquiryCount > 0,
+      kindTabs: [['message', `Conversations${conversationsNew ? ` (${conversationsNew} new)` : ''}`], ['newsletter', `Newsletter subscribers (${newsletterEmails.length})`]].map(([key, label]) => ({
+        label, cls: this.state.kind === key ? 'btn-primary' : 'btn-secondary', select: () => this.setState({ kind: key, statusFilter: 'all' }),
+      })),
+      isNewsletter: this.state.kind === 'newsletter',
+      copyEmailsLabel: this.state.copiedEmails ? 'Copied ✓' : `Copy all ${newsletterEmails.length} emails`,
+      copyEmails: () => { try { navigator.clipboard.writeText(newsletterEmails.join(', ')); this.setState({ copiedEmails: true }); } catch {} },
+      replyFieldLabel: d && d.customer ? "Reply (emailed, and shown in the customer's account)" : 'Reply to sender (sends a real email)',
     };
   }
 }

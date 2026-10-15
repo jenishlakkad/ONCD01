@@ -14,7 +14,11 @@ const { writeAudit } = require('../lib/auditPostgres');
 // collation, so no COLLATE "C" is needed anywhere in this file.
 
 const router = express.Router();
-router.use(requireAdmin, requirePermission('producttypes', 'manage'));
+// Scoped to this router's own paths: it's mounted at /api/admin (app.js), so
+// an unscoped router.use() also ran for /api/admin/customers, /contact,
+// /homepage, ... and locked every role without product-types access out of
+// its own modules.
+router.use(['/product-types', '/feature-flags'], requireAdmin, requirePermission('producttypes', 'manage'));
 
 // `enabled` here is read straight off the BOOLEAN column, so PostgreSQL
 // would otherwise return true/false where the existing SQLite API returns

@@ -9,6 +9,10 @@ const { makeUploader, convertHeic } = require('../middleware/upload');
 const { writeAudit } = require('../lib/auditPostgres');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
+const {
+  HOMEPAGE_MIGRATION_SQL, SECTIONS, SECTION_BY_KEY, FLOW_KEYS, TEXT_FIELDS,
+  sanitizeSettings, sanitizeText, loadSectionRows, flowOrder, getMergedSections, describeForAdmin,
+} = require('../lib/homepageSections');
 const env = require('../config/env');
 
 // PostgreSQL counterpart to server/routes/adminHomepage.js (SQLite).
@@ -58,6 +62,22 @@ router.get('/', asyncRoute(async (req, res) => {
   const whyUs = await db.all(
     `SELECT id, title, description, sort_order AS "sortOrder", enabled FROM why_us_bullets WHERE page = 'home' ORDER BY sort_order`
   );
+  const { sections: merged, schemaReady } = await getMergedSections({ fresh: true });
+  // Live numbers behind the hints shown next to product-driven sections
+  // (e.g. "no products starred yet" explains why Featured isn't showing).
+  const [featuredRows, requestedRow] = await Promise.all([
+    db.all(
+      `SELECT p.type, COUNT(*)::int AS n FROM products p JOIN product_types pt ON pt.key = p.type
+       WHERE p.featured = TRUE AND p.status = 'active' AND p.visibility = 'visible' AND pt.enabled = TRUE GROUP BY p.type`
+    ),
+    db.get(
+      `SELECT COUNT(DISTINCT ii.product_id)::int AS n FROM inquiry_items ii
+       JOIN products p ON p.id = ii.product_id JOIN product_types pt ON pt.key = p.type
+       WHERE p.status = 'active' AND p.visibility = 'visible' AND pt.enabled = TRUE`
+    ),
+  ]);
+  const featuredByType = { diamond: 0, jewelry: 0, gemstone: 0 };
+  for (const r of featuredRows) featuredByType[r.type] = r.n;
   res.json({
     data: {
       slides: slides.map((r) => ({ ...r, id: Number(r.id), enabled: r.enabled ? 1 : 0, imageUrl: toPublicMediaUrl(r.imageUrl) })),
@@ -65,6 +85,14 @@ router.get('/', asyncRoute(async (req, res) => {
       blocks: blocks.map((r) => ({ ...r, imageUrl: toPublicMediaUrl(r.imageUrl) })),
       collections: collections.map((r) => ({ ...r, id: Number(r.id), imageUrl: toPublicMediaUrl(r.imageUrl) })),
       whyUs: whyUs.map((r) => ({ ...r, id: Number(r.id), enabled: r.enabled ? 1 : 0 })),
+      sectionList: merged.map((m) => describeForAdmin(SECTION_BY_KEY.get(m.key), m)),
+      schemaReady,
+      migrationSql: schemaReady ? '' : HOMEPAGE_MIGRATION_SQL,
+      stats: {
+        featuredByType,
+        featuredTotal: featuredByType.diamond + featuredByType.jewelry + featuredByType.gemstone,
+        requestedProducts: requestedRow ? requestedRow.n : 0,
+      },
     },
   });
 }));
@@ -127,15 +155,97 @@ router.delete('/slides/:id', asyncRoute(async (req, res) => {
   res.json({ data: { deleted: true } });
 }));
 
+// Sections defined in lib/homepageSections.js may not have a row yet. The
+// first write that needs one stores EVERY flow section's current position,
+// so the page order never shifts as a side effect of saving one section
+// (the stored order only takes over once all flow sections have rows).
+async function ensureRows(client, rows) {
+  const order = flowOrder(rows);
+  const missing = SECTIONS.some((d) => !rows.has(d.key));
+  if (!missing) return;
+  for (const def of SECTIONS) {
+    const existing = rows.get(def.key);
+    const sortOrder = def.pinned ? -1 : order.indexOf(def.key);
+    await client.query(
+      `INSERT INTO homepage_sections (key, label, enabled, sort_order) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (key) DO UPDATE SET sort_order = EXCLUDED.sort_order`,
+      [def.key, def.label, existing ? !!existing.enabled : def.defaultEnabled, sortOrder]
+    );
+  }
+}
+
+// Must be registered before /sections/:key, which would otherwise capture
+// "reorder" as a section key.
+router.put('/sections/reorder', asyncRoute(async (req, res) => {
+  const order = Array.isArray((req.body || {}).order) ? req.body.order.map(String) : null;
+  if (!order || order.length !== FLOW_KEYS.length || new Set(order).size !== order.length || !order.every((k) => FLOW_KEYS.includes(k))) {
+    throw new ApiError(400, 'order must list every homepage section key exactly once.');
+  }
+  const { rows } = await loadSectionRows({ fresh: true });
+  await db.transaction(async (client) => {
+    await ensureRows(client, rows);
+    for (const [i, key] of order.entries()) {
+      await client.query('UPDATE homepage_sections SET sort_order = $1 WHERE key = $2', [i, key]);
+    }
+  });
+  await writeAudit({ actor: req.adminUser.full_name, action: 'Reordered homepage sections', target: 'Homepage layout', module: 'Homepage' });
+  res.json({ data: { reordered: true } });
+}));
+
+// Body may carry any of: enabled, the section's text fields (kicker, title,
+// subtitle, ctaLabel, ctaHref), settings (merged key-by-key into what's
+// stored), or reset:true (back to registry defaults). A body with only
+// `enabled` keeps the original toggle contract: { key, enabled }.
 router.put('/sections/:key', asyncRoute(async (req, res) => {
-  const existing = await db.get('SELECT * FROM homepage_sections WHERE key = $1', [req.params.key]);
-  if (!existing) throw new ApiError(404, 'Unknown section.');
-  const enabled = !!(req.body || {}).enabled;
-  await db.query('UPDATE homepage_sections SET enabled = $1 WHERE key = $2', [enabled, existing.key]);
-  await writeAudit({ actor: req.adminUser.full_name, action: 'Toggled homepage section', target: existing.label, module: 'Homepage' });
-  // Real boolean, built from the request body, not read back from the DB —
-  // preserved exactly as the SQLite source already returns it.
-  res.json({ data: { key: existing.key, enabled } });
+  const def = SECTION_BY_KEY.get(req.params.key);
+  if (!def) throw new ApiError(404, 'Unknown section.');
+  const body = req.body || {};
+  const text = sanitizeText(def, body);
+  const settings = sanitizeSettings(def, body.settings);
+  const wantsContent = body.reset === true || Object.keys(text).length > 0 || Object.keys(settings).length > 0;
+  const wantsToggle = body.enabled !== undefined;
+  if (wantsToggle && def.togglable === false) throw new ApiError(400, `${def.label} is always shown and can't be switched off.`);
+
+  const { rows, schemaReady } = await loadSectionRows({ fresh: true });
+  if (wantsContent && !schemaReady) {
+    throw new ApiError(409, 'Editing section text and settings needs a one-time database update. Open the Homepage page in admin for the SQL to run.');
+  }
+
+  const enabled = !!body.enabled;
+  await db.transaction(async (client) => {
+    await ensureRows(client, rows);
+    if (wantsToggle) await client.query('UPDATE homepage_sections SET enabled = $1 WHERE key = $2', [enabled, def.key]);
+    if (body.reset === true) {
+      await client.query(
+        `UPDATE homepage_sections SET kicker = NULL, title = NULL, subtitle = NULL, cta_label = NULL, cta_href = NULL, settings = '{}'::jsonb WHERE key = $1`,
+        [def.key]
+      );
+    } else if (wantsContent) {
+      const sets = [];
+      const values = [];
+      for (const [field, column] of TEXT_FIELDS) {
+        if (text[field] === undefined) continue;
+        values.push(text[field]);
+        sets.push(`${column} = $${values.length}`);
+      }
+      if (Object.keys(settings).length) {
+        values.push(JSON.stringify(settings));
+        sets.push(`settings = settings || $${values.length}::jsonb`);
+      }
+      values.push(def.key);
+      await client.query(`UPDATE homepage_sections SET ${sets.join(', ')} WHERE key = $${values.length}`, values);
+    }
+  });
+
+  const action = body.reset === true ? 'Reset homepage section' : wantsContent ? 'Edited homepage section' : 'Toggled homepage section';
+  await writeAudit({ actor: req.adminUser.full_name, action, target: def.label, module: 'Homepage' });
+  if (!wantsContent) {
+    // Real boolean built from the request body (the original toggle contract).
+    return res.json({ data: { key: def.key, enabled } });
+  }
+  const { sections: merged } = await getMergedSections({ fresh: true });
+  const fresh = merged.find((m) => m.key === def.key);
+  res.json({ data: describeForAdmin(def, fresh) });
 }));
 
 // ---- Marketing blocks: promo banner, spotlight, story teaser ----

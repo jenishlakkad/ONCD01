@@ -35,6 +35,7 @@ app.use('/api/settings', require('./routes/settingsPostgres'));
 app.use('/api/inquiries', require('./routes/inquiriesPostgres'));
 app.use('/api/cart', require('./routes/cartPostgres'));
 app.use('/api/saved-items', require('./routes/savedItemsPostgres'));
+app.use('/api/account', require('./routes/accountPostgres'));
 app.use('/api/contact', require('./routes/contactPostgres'));
 app.use('/api/admin/products', require('./routes/adminProductsPostgres'));
 app.use('/api/admin/categories', require('./routes/adminCategoriesPostgres'));
@@ -49,6 +50,7 @@ app.use('/api/admin/roles', require('./routes/adminRolesPostgres'));
 app.use('/api/admin/audit', require('./routes/adminAuditPostgres'));
 app.use('/api/admin/dashboard', require('./routes/adminDashboardPostgres'));
 app.use('/api/admin/contact', require('./routes/adminContactPostgres'));
+app.use('/api/admin/inquiries', require('./routes/adminInquiriesPostgres'));
 
 app.use('/uploads', express.static(env.uploadsDir));
 app.use(express.static(env.rootDir, { extensions: ['html'] }));

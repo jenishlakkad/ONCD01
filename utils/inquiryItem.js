@@ -1,3 +1,5 @@
+import { refFor, rememberNote } from './inquiryRef.js';
+
 // Shared helpers for the single-item "Inquire" popup (product cards +
 // product detail pages). Pure functions over a raw serialized product row
 // (see server/lib/serializeProduct.js) — no DOM/state here, the popup's
@@ -73,8 +75,14 @@ export function inquiryMessage(p, note, customer) {
   const title = inquiryTitle(p);
   const priceLabel = inquiryPriceLabel(p);
 
+  // Same item set as the popup's submitInquiry([{ sku, qty: 1 }]) call, so
+  // the stored inquiry carries this exact reference and note.
+  const asItems = [{ sku: p.sku, qty: 1 }];
+  rememberNote(asItems, note);
   const lines = [
     "Hello, I'd like to inquire about the following item:",
+    '',
+    `Reference: ${bold(refFor(asItems))}`,
     '',
     bold('PRODUCT DETAILS'),
     `SKU: ${p.sku}`,

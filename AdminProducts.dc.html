@@ -21,6 +21,9 @@ a:hover{color:var(--color-accent-700)}
 .adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;}
 .vid-drop{border:1px dashed var(--color-divider);border-radius:var(--radius-md);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:color-mix(in srgb, var(--color-text) 55%, transparent);text-align:center;padding:8px;}
 @keyframes adm-spin{to{transform:rotate(360deg);}}
+.star-btn{background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;margin-right:4px;color:var(--color-divider);vertical-align:-1px;transition:color .15s,transform .15s;}
+.star-btn:hover{color:var(--color-accent);transform:scale(1.15);}
+.star-btn.on{color:var(--color-accent);}
 </style>
 </helmet>
 
@@ -32,6 +35,11 @@ a:hover{color:var(--color-accent-700)}
     <a href="AdminContact.dc.html" class="side-item">Contact Messages
       <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
         <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminInquiries.dc.html" class="side-item">Inquiries
+      <sc-if value="{{ hasNewInquiry }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newInquiryCount }}</span>
       </sc-if>
     </a>
     <a href="AdminProducts.dc.html" class="side-item active">Products</a>
@@ -90,6 +98,7 @@ a:hover{color:var(--color-accent-700)}
         <option value="all">All statuses</option>
         <option value="active">Active only</option>
         <option value="hidden">Hidden only</option>
+        <option value="featured">★ Featured on homepage</option>
       </select>
       <select class="input" value="{{ categoryFilter }}" onChange="{{ handleCategoryFilter }}" style="width:auto;">
         <option value="All">All categories</option>
@@ -125,6 +134,8 @@ a:hover{color:var(--color-accent-700)}
         <strong style="font-size:12.5px;">{{ selectedCount }} selected</strong>
         <button onClick="{{ bulkActivate }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Make Active</button>
         <button onClick="{{ bulkHide }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Hide</button>
+        <button onClick="{{ bulkFeature }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}" title="Show on the homepage's Featured section">★ Feature</button>
+        <button onClick="{{ bulkUnfeature }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Unfeature</button>
         <button onClick="{{ bulkDelete }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;color:var(--color-accent-700);" disabled="{{ bulkBusy }}">Delete</button>
         <select class="input" value="{{ bulkPriceVisibility }}" onChange="{{ handleBulkPriceVisibility }}" style="width:auto;font-size:12px;padding:5px 8px;">
           <option value="__unset">Set price visibility…</option>
@@ -168,7 +179,7 @@ a:hover{color:var(--color-accent-700)}
                 <div title="No photo or video yet" style="width:34px;height:34px;border-radius:6px;border:1px dashed var(--color-divider);display:flex;align-items:center;justify-content:center;opacity:.4;font-size:14px;">—</div>
               </sc-if>
             </td>
-            <td class="adm-td">{{ p.sku }}</td>
+            <td class="adm-td" style="white-space:nowrap;"><button onClick="{{ p.toggleFeatured }}" class="star-btn {{ p.starClass }}" aria-pressed="{{ p.starPressed }}" aria-label="{{ p.starAria }}" title="{{ p.starAria }}">★</button>{{ p.sku }}</td>
             <td class="adm-td" data-pri="2">{{ p.category }}</td>
             <td class="adm-td" style="opacity:.75;" data-pri="2">{{ p.specs }}</td>
             <td class="adm-td">{{ p.price }}</td>
@@ -502,7 +513,10 @@ class Component extends DCLogic {
   state = {
     admin: null, activeType: 'diamond',
     products: [], errorMessage: '',
-    search: '', statusFilter: 'all', categoryFilter: 'All', mediaFilter: 'all',
+    // ?featured=1 (linked from the Homepage Builder) opens straight onto
+    // the starred products.
+    search: '', statusFilter: (() => { try { return new URLSearchParams(window.location.search).get('featured') === '1' ? 'featured' : 'all'; } catch { return 'all'; } })(),
+    categoryFilter: 'All', mediaFilter: 'all',
     pageSize: 50, currentPage: 1,
     selectedIds: new Set(), bulkBusy: false, bulkPriceVisibility: '__unset',
     dialogOpen: false, editingId: null,
@@ -522,7 +536,7 @@ class Component extends DCLogic {
     const me = await fetchAdminSession();
     if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
     this.setState({ admin: me });
-    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newContactCount: c.contact, newInquiryCount: c.inquiries })));
     this.loadGlobalPriceMode();
     this.filters = await import('./utils/filters.js');
     this.loadProducts();
@@ -575,7 +589,15 @@ class Component extends DCLogic {
       if (!res.ok) throw new Error(json.error || 'Failed to load products.');
       const liveIds = new Set(json.data.map((p) => p.id));
       const prunedSelection = new Set([...this.state.selectedIds].filter((id) => liveIds.has(id)));
-      this.setState({ products: json.data, errorMessage: '', selectedIds: prunedSelection });
+      const update = { products: json.data, errorMessage: '', selectedIds: prunedSelection };
+      // Arriving via ?featured=1: land on a tab that actually has starred
+      // products rather than an empty Diamonds list.
+      if (!this._featuredTabChosen && this.state.statusFilter === 'featured') {
+        this._featuredTabChosen = true;
+        const withStars = ['diamond', 'jewelry', 'gemstone'].find((t) => json.data.some((p) => p.type === t && p.featured));
+        if (withStars) update.activeType = withStars;
+      }
+      this.setState(update);
     } catch (err) {
       this.setState({ errorMessage: err.message });
     }
@@ -841,6 +863,37 @@ class Component extends DCLogic {
     } catch (err) {
       this.setState({ errorMessage: err.message });
     }
+  }
+
+  async toggleFeatured(p) {
+    const featured = !p.featured;
+    // Optimistic so the star responds instantly; reloaded from the server either way.
+    this.setState({ products: this.state.products.map((x) => (x.id === p.id ? { ...x, featured } : x)) });
+    try {
+      const res = await fetch(`/api/admin/products/${p.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ featured }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update Featured.');
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+    }
+    this.loadProducts();
+  }
+
+  async bulkSetFeatured(featured) {
+    const ids = [...this.state.selectedIds];
+    if (!ids.length) return;
+    this.setState({ bulkBusy: true });
+    const results = await Promise.all(ids.map((id) =>
+      fetch(`/api/admin/products/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ featured }) })
+        .then((r) => r.ok).catch(() => false)
+    ));
+    const failed = results.filter((ok) => !ok).length;
+    this.setState({ bulkBusy: false, selectedIds: new Set() });
+    await this.loadProducts();
+    if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to update.` });
   }
 
   async removeProduct(p) {
@@ -1159,6 +1212,11 @@ class Component extends DCLogic {
         tagClass: p.status === 'active' ? 'tag-accent' : 'tag-neutral',
         toggleLabel: p.status === 'active' ? 'Hide' : 'Show',
         toggleStatus: () => this.toggleStatus(p),
+        featured: !!p.featured,
+        starClass: p.featured ? 'on' : '',
+        starPressed: p.featured ? 'true' : 'false',
+        starAria: p.featured ? `Remove ${p.sku} from homepage Featured` : `Feature ${p.sku} on the homepage`,
+        toggleFeatured: () => this.toggleFeatured(p),
         remove: () => { if (window.confirm(`Delete ${p.sku}? This cannot be undone.`)) this.removeProduct(p); },
         edit: () => this.openEdit(p),
         hasMedia: !!(p.media && p.media.length),
@@ -1177,7 +1235,8 @@ class Component extends DCLogic {
       ? this.filters.distinctValues(typeProducts, 'category').filter((c) => c !== '—')
       : [];
     const visibleProducts = typeProducts.filter((p) => {
-      if (this.state.statusFilter !== 'all' && p.status !== this.state.statusFilter) return false;
+      if (this.state.statusFilter === 'featured') { if (!p.featured) return false; }
+      else if (this.state.statusFilter !== 'all' && p.status !== this.state.statusFilter) return false;
       if (this.state.categoryFilter !== 'All' && p.category !== this.state.categoryFilter) return false;
       if (this.state.mediaFilter === 'has' && !p.hasMedia) return false;
       if (this.state.mediaFilter === 'none' && p.hasMedia) return false;
@@ -1282,6 +1341,8 @@ class Component extends DCLogic {
       bulkBusy: this.state.bulkBusy,
       bulkActivate: () => this.bulkSetStatus('active'),
       bulkHide: () => this.bulkSetStatus('hidden'),
+      bulkFeature: () => this.bulkSetFeatured(true),
+      bulkUnfeature: () => this.bulkSetFeatured(false),
       bulkDelete: () => this.bulkDeleteSelected(),
       clearSelection: () => this.clearSelection(),
       bulkPriceVisibility: this.state.bulkPriceVisibility,
@@ -1332,6 +1393,8 @@ class Component extends DCLogic {
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,
       hasNewContact: this.state.newContactCount > 0,
+      newInquiryCount: this.state.newInquiryCount || 0,
+      hasNewInquiry: this.state.newInquiryCount > 0,
     };
   }
 }

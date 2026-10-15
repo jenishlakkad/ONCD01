@@ -4,6 +4,9 @@
 // the real session check is in flight.
 
 const HINT_KEY = 'aurum_session_hint';
+// Dashboard.dc.html's last-seen account snapshot (instant paint on revisit).
+// Personal data, so it goes whenever the session does.
+const ACCOUNT_CACHE_KEY = 'oncd_account_cache_v1';
 
 // Read synchronously in page state initializers, e.g.:
 //   customer: hasSessionHint() ? {} : null
@@ -13,15 +16,17 @@ export function hasSessionHint() {
   try { return localStorage.getItem(HINT_KEY) === '1'; } catch { return false; }
 }
 
+// Called right after a successful login. A cached dashboard from an earlier
+// session on this device may belong to a different account, so it's dropped.
 export function setSessionHint() {
-  try { localStorage.setItem(HINT_KEY, '1'); } catch {}
+  try { localStorage.setItem(HINT_KEY, '1'); localStorage.removeItem(ACCOUNT_CACHE_KEY); } catch {}
 }
 
 export async function fetchCustomerSession() {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
     if (!res.ok) {
-      try { localStorage.removeItem(HINT_KEY); } catch {}
+      try { localStorage.removeItem(HINT_KEY); localStorage.removeItem(ACCOUNT_CACHE_KEY); } catch {}
       return null;
     }
     const json = await res.json();
@@ -38,7 +43,7 @@ export async function logoutCustomer() {
   } catch {
     /* ignore */
   }
-  try { localStorage.removeItem('aurum_session_hint'); } catch {}
+  try { localStorage.removeItem('aurum_session_hint'); localStorage.removeItem(ACCOUNT_CACHE_KEY); } catch {}
   try {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
   } catch {

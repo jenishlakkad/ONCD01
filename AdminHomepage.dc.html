@@ -18,6 +18,63 @@ a:hover{color:var(--color-accent-700)}
 .side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
 .switch{width:42px;height:23px;border-radius:999px;border:none;cursor:pointer;position:relative;padding:0;flex:none;}
 .switch span{position:absolute;top:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:var(--shadow-sm);}
+.switch:disabled{cursor:not-allowed;opacity:.5;}
+
+/* ── Tabs ────────────────────────────────────────────────────────────── */
+.hb-tabs{display:flex;gap:4px;border-bottom:1px solid var(--color-divider);margin:0 0 28px;overflow-x:auto;scrollbar-width:none;}
+.hb-tabs::-webkit-scrollbar{display:none;}
+.hb-tab{flex:none;background:none;border:none;border-bottom:2px solid transparent;padding:12px 16px;font:inherit;font-size:13.5px;color:var(--color-text);opacity:.65;cursor:pointer;margin-bottom:-1px;}
+.hb-tab:hover{opacity:1;}
+.hb-tab.is-active{opacity:1;border-bottom-color:var(--color-accent);color:var(--color-accent-800);font-weight:600;}
+
+/* ── One-time migration banner ───────────────────────────────────────── */
+.mig{border:1px solid #e9c97a;background:#fdf6e3;border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:28px;}
+.mig h4{margin:0 0 6px;font-size:16px;}
+.mig p{font-size:13px;margin:0 0 12px;opacity:.85;}
+.mig pre{background:#fff;border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:12px 14px;font-size:12px;overflow-x:auto;margin:0 0 12px;white-space:pre;}
+.mig-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+/* ── Layout list ─────────────────────────────────────────────────────── */
+.hb-intro{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+.hb-intro p{font-size:13px;opacity:.7;margin:4px 0 0;max-width:620px;}
+.hb-group{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700);margin:24px 0 10px;}
+.sec-list{display:flex;flex-direction:column;gap:8px;}
+.sec-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-bg);position:relative;user-select:none;transition:transform .12s ease,box-shadow .12s ease,opacity .2s;}
+.sec-row.draggable{cursor:grab;}
+.sec-row.is-off{opacity:.55;}
+.sec-row.is-off:hover{opacity:.8;}
+.sec-handle{color:var(--color-neutral-600);font-size:15px;letter-spacing:-2px;flex:none;width:14px;}
+.sec-pos{flex:none;width:26px;height:26px;border-radius:50%;background:var(--color-surface);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--color-accent-800);}
+.sec-main{flex:1;min-width:0;}
+.sec-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sec-desc{font-size:12px;opacity:.62;margin-top:3px;line-height:1.45;}
+.chip{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+.chip-aud{background:var(--color-surface);color:var(--color-neutral-800);border:1px solid var(--color-divider);}
+.chip-ok{background:#e6f2e8;color:#2c6a3c;}
+.chip-warn{background:#fbf0d6;color:#81570a;}
+.chip-off{background:var(--color-neutral-100);color:var(--color-neutral-800);}
+.sec-actions{display:flex;align-items:center;gap:6px;flex:none;}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--color-divider);background:var(--color-bg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--color-text);padding:0;}
+.icon-btn:hover:not(:disabled){border-color:var(--color-accent);color:var(--color-accent-800);}
+.icon-btn:disabled{opacity:.3;cursor:default;}
+@media (max-width:767px){
+  .sec-row{flex-wrap:wrap;}
+  .sec-actions{width:100%;justify-content:flex-end;}
+  .sec-desc{display:none;}
+}
+
+/* ── Customize dialog ────────────────────────────────────────────────── */
+.dlg-h{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700);margin:20px 0 10px;}
+.dlg-desc{font-size:12.5px;opacity:.7;margin:6px 0 0;}
+.dlg-warn{font-size:12.5px;background:#fdf6e3;border:1px solid #e9c97a;border-radius:var(--radius-md);padding:10px 12px;margin-top:14px;}
+.tg-row{display:flex;align-items:center;gap:12px;font-size:13px;margin:10px 0;cursor:pointer;}
+.items{display:flex;flex-direction:column;gap:10px;}
+.item-row{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface);}
+.item-num{flex:none;width:22px;height:22px;border-radius:50%;background:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:6px;}
+.item-fields{flex:1;min-width:0;display:grid;gap:8px;}
+.item-fields .field{margin:0;}
+.item-actions{display:flex;flex-direction:column;gap:4px;flex:none;}
+.dlg-link{font-size:12.5px;margin-top:14px;opacity:.8;}
 </style>
 </helmet>
 
@@ -29,6 +86,11 @@ a:hover{color:var(--color-accent-700)}
     <a href="AdminContact.dc.html" class="side-item">Contact Messages
       <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
         <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminInquiries.dc.html" class="side-item">Inquiries
+      <sc-if value="{{ hasNewInquiry }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newInquiryCount }}</span>
       </sc-if>
     </a>
     <a href="AdminProducts.dc.html" class="side-item">Products</a>
@@ -47,96 +109,277 @@ a:hover{color:var(--color-accent-700)}
   </aside>
 
   <main style="padding:32px 40px 80px;max-width:1180px;">
-    <div class="adm-page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
-      <div><h6 style="color:var(--color-accent-700);">Content</h6><h1 style="font-size:28px;margin-top:6px;">Homepage</h1></div>
-      <div style="display:flex;align-items:center;gap:12px;">
+    <div class="adm-page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap;">
+      <div><h6 style="color:var(--color-accent-700);">Content</h6><h1 style="font-size:28px;margin-top:6px;">Homepage Builder</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <a href="Home.dc.html" target="_blank" rel="noopener" class="btn btn-secondary" style="padding:8px 14px;font-size:12.5px;">View live homepage ↗</a>
         <div class="tag tag-outline">Admin: {{ adminName }}</div>
         <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
       </div>
     </div>
 
     <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
-      <p style="font-size:13px;color:var(--color-accent-700);margin-top:-16px;">{{ errorMessage }}</p>
+      <p style="font-size:13px;color:var(--color-accent-700);margin:-8px 0 16px;">{{ errorMessage }}</p>
+    </sc-if>
+    <sc-if value="{{ notice }}" hint-placeholder-val="{{ false }}">
+      <p role="status" style="font-size:13px;color:#2c6a3c;margin:-8px 0 16px;">{{ notice }}</p>
     </sc-if>
 
-    <h4>Hero Carousel Slides</h4>
-    <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
-      <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
-        <div data-slide-id="{{ s.id }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
-          <div style="display:flex;gap:14px;align-items:center;min-width:0;">
-            <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
-              <sc-if value="{{ s.hasImage }}" hint-placeholder-val="{{ false }}">
-                <img src="{{ s.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+    <sc-if value="{{ needsMigration }}" hint-placeholder-val="{{ false }}">
+      <div class="mig">
+        <h4>One-time database update needed</h4>
+        <p>Turning sections on/off and reordering them already works. To also edit each section's headings and settings, run this once in your Supabase SQL editor (Supabase → SQL Editor → New query → paste → Run). It only adds columns — no existing data is changed, and it's safe to run twice.</p>
+        <pre>{{ migrationSql }}</pre>
+        <div class="mig-actions">
+          <button onClick="{{ copyMigration }}" class="btn btn-secondary" style="padding:7px 14px;font-size:12.5px;">{{ copyLabel }}</button>
+          <button onClick="{{ recheckMigration }}" class="btn btn-primary" style="padding:7px 14px;font-size:12.5px;">I've run it — check again</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <div class="hb-tabs" role="tablist">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+        <button role="tab" aria-selected="{{ t.selected }}" class="hb-tab {{ t.activeClass }}" onClick="{{ t.select }}">{{ t.label }}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ tabIsLayout }}" hint-placeholder-val="{{ true }}">
+      <div class="hb-intro">
+        <div>
+          <h4 style="margin:0;">Page layout</h4>
+          <p>Drag sections (or use the arrows) to change their order on the homepage, switch any of them off, or click Customize to change headings and settings. Changes go live as soon as you make them.</p>
+        </div>
+      </div>
+
+      <div class="hb-group">Pinned to the top</div>
+      <div class="sec-list">
+        <sc-for list="{{ pinnedRows }}" as="s" hint-placeholder-count="2">
+          <div class="sec-row {{ s.rowClass }}">
+            <span class="sec-pos" aria-hidden="true">★</span>
+            <div class="sec-main">
+              <div class="sec-name">{{ s.label }}
+                <sc-if value="{{ s.hint }}" hint-placeholder-val="{{ false }}"><span class="chip {{ s.hintClass }}">{{ s.hint }}</span></sc-if>
+              </div>
+              <div class="sec-desc">{{ s.description }}</div>
+            </div>
+            <div class="sec-actions">
+              <button onClick="{{ s.customize }}" class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">Customize</button>
+              <sc-if value="{{ s.togglable }}" hint-placeholder-val="{{ true }}">
+                <button class="switch" onClick="{{ s.toggle }}" style="background:{{ s.bg }};" aria-label="{{ s.toggleAria }}" aria-pressed="{{ s.pressed }}"><span style="left:{{ s.knobLeft }};"></span></button>
               </sc-if>
             </div>
-            <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.title }}</div><div style="font-size:12px;opacity:.6;">{{ s.kicker }}</div></div>
           </div>
-          <button onClick="{{ s.edit }}" class="btn btn-ghost" style="flex:none;">Edit Slide</button>
-        </div>
-      </sc-for>
-      <button onClick="{{ openAddSlide }}" class="btn btn-secondary" style="width:fit-content;">+ Add Slide</button>
-    </div>
+        </sc-for>
+      </div>
 
-    <h4>Homepage Sections</h4>
-    <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden;margin-bottom:36px;">
-      <sc-for list="{{ homeSections }}" as="h" hint-placeholder-count="4">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--color-divider);">
-          <span>{{ h.label }}</span>
-          <button class="switch" onClick="{{ h.toggle }}" style="background:{{ h.bg }};"><span style="left:{{ h.knobLeft }};"></span></button>
-        </div>
-      </sc-for>
-    </div>
-
-    <h4>Marketing Blocks</h4>
-    <p style="font-size:12px;opacity:.6;margin-top:4px;">The promo banner, editor's-pick spotlight, and "Our Story" teaser shown on the homepage.</p>
-    <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
-      <sc-for list="{{ blockCards }}" as="b" hint-placeholder-count="3">
-        <div data-block-key="{{ b.key }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
-          <div style="display:flex;gap:14px;align-items:center;min-width:0;">
-            <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
-              <sc-if value="{{ b.hasImage }}" hint-placeholder-val="{{ false }}">
-                <img src="{{ b.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-              </sc-if>
+      <div class="hb-group">Page sections — in display order</div>
+      <div class="sec-list">
+        <sc-for list="{{ flowRows }}" as="s" hint-placeholder-count="12">
+          <div class="sec-row draggable {{ s.rowClass }}" data-section-key="{{ s.key }}" onPointerDown="{{ s.dragStart }}" style="transform:{{ s.tileTransform }};box-shadow:{{ s.tileShadow }};z-index:{{ s.tileZ }};">
+            <span class="sec-handle" aria-hidden="true">⋮⋮</span>
+            <span class="sec-pos">{{ s.position }}</span>
+            <div class="sec-main">
+              <div class="sec-name">{{ s.label }}
+                <sc-if value="{{ s.audience }}" hint-placeholder-val="{{ false }}"><span class="chip chip-aud">{{ s.audience }}</span></sc-if>
+                <sc-if value="{{ s.hint }}" hint-placeholder-val="{{ false }}"><span class="chip {{ s.hintClass }}">{{ s.hint }}</span></sc-if>
+              </div>
+              <div class="sec-desc">{{ s.description }}</div>
             </div>
-            <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;">{{ b.label }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.title }}</div></div>
-          </div>
-          <button onClick="{{ b.edit }}" class="btn btn-ghost" style="flex:none;">Edit</button>
-        </div>
-      </sc-for>
-    </div>
-
-    <h4>Collections</h4>
-    <p style="font-size:12px;opacity:.6;margin-top:4px;">The Diamonds / Jewelry / Gemstones cards on the homepage.</p>
-    <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
-      <sc-for list="{{ collectionCards }}" as="c" hint-placeholder-count="3">
-        <div data-collection-key="{{ c.key }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
-          <div style="display:flex;gap:14px;align-items:center;min-width:0;">
-            <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
-              <sc-if value="{{ c.hasImage }}" hint-placeholder-val="{{ false }}">
-                <img src="{{ c.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-              </sc-if>
+            <div class="sec-actions">
+              <button class="icon-btn" onClick="{{ s.moveUp }}" disabled="{{ s.isFirst }}" aria-label="{{ s.upAria }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 15 6-6 6 6"/></svg></button>
+              <button class="icon-btn" onClick="{{ s.moveDown }}" disabled="{{ s.isLast }}" aria-label="{{ s.downAria }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+              <button onClick="{{ s.customize }}" class="btn btn-ghost" style="padding:5px 10px;font-size:12px;">{{ s.customizeLabel }}</button>
+              <button class="switch" onClick="{{ s.toggle }}" style="background:{{ s.bg }};" aria-label="{{ s.toggleAria }}" aria-pressed="{{ s.pressed }}"><span style="left:{{ s.knobLeft }};"></span></button>
             </div>
-            <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;">{{ c.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.description }}</div></div>
           </div>
-          <button onClick="{{ c.edit }}" class="btn btn-ghost" style="flex:none;">Edit</button>
-        </div>
-      </sc-for>
-    </div>
+        </sc-for>
+      </div>
+    </sc-if>
 
-    <h4>Why Choose Us</h4>
-    <p style="font-size:12px;opacity:.6;margin-top:4px;">Drag to reorder. Shown near the bottom of the homepage.</p>
-    <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0 36px;">
-      <sc-for list="{{ whyUsCards }}" as="w" hint-placeholder-count="4">
-        <div data-why-id="{{ w.id }}" onPointerDown="{{ w.dragStart }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:grab;user-select:none;transform:{{ w.tileTransform }};box-shadow:{{ w.tileShadow }};opacity:{{ w.tileOpacity }};z-index:{{ w.tileZ }};position:relative;transition:transform .12s ease,box-shadow .12s ease;">
-          <div style="min-width:0;"><div style="font-weight:600;font-size:14px;">{{ w.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ w.description }}</div></div>
-          <div style="display:flex;gap:8px;flex:none;">
-            <button onClick="{{ w.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
-            <button onClick="{{ w.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+    <sc-if value="{{ tabIsSlides }}" hint-placeholder-val="{{ false }}">
+      <h4 style="margin-top:0;">Hero Carousel Slides</h4>
+      <p style="font-size:12px;opacity:.6;margin-top:4px;">Slider speed and the second button are under Page Layout → Hero Slider → Customize.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
+        <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
+          <div data-slide-id="{{ s.id }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+            <div style="display:flex;gap:14px;align-items:center;min-width:0;">
+              <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ s.hasImage }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ s.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                </sc-if>
+              </div>
+              <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.title }}</div><div style="font-size:12px;opacity:.6;">{{ s.kicker }}</div></div>
+            </div>
+            <button onClick="{{ s.edit }}" class="btn btn-ghost" style="flex:none;">Edit Slide</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ openAddSlide }}" class="btn btn-secondary" style="width:fit-content;">+ Add Slide</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tabIsBlocks }}" hint-placeholder-val="{{ false }}">
+      <h4 style="margin-top:0;">Content Blocks</h4>
+      <p style="font-size:12px;opacity:.6;margin-top:4px;">The promo banner, editor's-pick spotlight, and "Our Story" teaser shown on the homepage.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
+        <sc-for list="{{ blockCards }}" as="b" hint-placeholder-count="3">
+          <div data-block-key="{{ b.key }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+            <div style="display:flex;gap:14px;align-items:center;min-width:0;">
+              <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ b.hasImage }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ b.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                </sc-if>
+              </div>
+              <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;">{{ b.label }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.title }}</div></div>
+            </div>
+            <button onClick="{{ b.edit }}" class="btn btn-ghost" style="flex:none;">Edit</button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tabIsCollections }}" hint-placeholder-val="{{ false }}">
+      <h4 style="margin-top:0;">Collections</h4>
+      <p style="font-size:12px;opacity:.6;margin-top:4px;">The Diamonds / Jewelry / Gemstones cards on the homepage. A card is hidden automatically while its product type is switched off.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;margin:16px 0 36px;">
+        <sc-for list="{{ collectionCards }}" as="c" hint-placeholder-count="3">
+          <div data-collection-key="{{ c.key }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;">
+            <div style="display:flex;gap:14px;align-items:center;min-width:0;">
+              <div style="width:72px;height:48px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.08);flex:none;">
+                <sc-if value="{{ c.hasImage }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ c.imageUrl }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                </sc-if>
+              </div>
+              <div style="min-width:0;"><div style="font-family:var(--font-heading);font-weight:600;">{{ c.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.description }}</div></div>
+            </div>
+            <button onClick="{{ c.edit }}" class="btn btn-ghost" style="flex:none;">Edit</button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tabIsWhyUs }}" hint-placeholder-val="{{ false }}">
+      <h4 style="margin-top:0;">Why Choose Us</h4>
+      <p style="font-size:12px;opacity:.6;margin-top:4px;">Drag to reorder. The section's heading is under Page Layout → Why Choose Us → Customize.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0 36px;">
+        <sc-for list="{{ whyUsCards }}" as="w" hint-placeholder-count="4">
+          <div data-why-id="{{ w.id }}" onPointerDown="{{ w.dragStart }}" style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:grab;user-select:none;transform:{{ w.tileTransform }};box-shadow:{{ w.tileShadow }};opacity:{{ w.tileOpacity }};z-index:{{ w.tileZ }};position:relative;transition:transform .12s ease,box-shadow .12s ease;">
+            <div style="min-width:0;"><div style="font-weight:600;font-size:14px;">{{ w.title }}</div><div style="font-size:12px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ w.description }}</div></div>
+            <div style="display:flex;gap:8px;flex:none;">
+              <button onClick="{{ w.edit }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Edit</button>
+              <button onClick="{{ w.remove }}" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">Delete</button>
+            </div>
+          </div>
+        </sc-for>
+        <button onClick="{{ openAddWhyUs }}" class="btn btn-secondary" style="width:fit-content;">+ Add Bullet</button>
+      </div>
+    </sc-if>
+
+    <!-- Section Customize dialog — built from the field descriptors the
+         server sends with each section, so new settings appear here
+         without touching this page. -->
+    <sc-if value="{{ secDialogOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeSecDialog }}">
+        <div class="dialog" style="max-width:620px;max-height:88vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">Customize: {{ secDialogLabel }}</div>
+          <p class="dlg-desc">{{ secDialogDesc }}</p>
+          <sc-if value="{{ secDialogLocked }}" hint-placeholder-val="{{ false }}">
+            <p class="dlg-warn">Run the one-time database update shown at the top of this page to edit headings and settings. Switching the section on/off and reordering already work.</p>
+          </sc-if>
+
+          <sc-if value="{{ secHasText }}" hint-placeholder-val="{{ true }}">
+            <div class="dlg-h">Headings &amp; text</div>
+            <sc-for list="{{ secTextFields }}" as="tf" hint-placeholder-count="2">
+              <div class="field">
+                <label>{{ tf.label }}</label>
+                <input class="input" value="{{ tf.value }}" onChange="{{ tf.onChange }}" placeholder="{{ tf.placeholder }}" sc-camel-max-length="{{ tf.maxLength }}" disabled="{{ secDialogLocked }}"/>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ secHasSettings }}" hint-placeholder-val="{{ true }}">
+            <div class="dlg-h">Settings</div>
+            <sc-for list="{{ secSettingFields }}" as="sf" hint-placeholder-count="2">
+              <sc-if value="{{ sf.isSelect }}" hint-placeholder-val="{{ true }}">
+                <div class="field">
+                  <label>{{ sf.label }}</label>
+                  <select class="input" value="{{ sf.value }}" onChange="{{ sf.onChange }}" disabled="{{ secDialogLocked }}">
+                    <sc-for list="{{ sf.options }}" as="o" hint-placeholder-count="3">
+                      <option value="{{ o.value }}">{{ o.label }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+              </sc-if>
+              <sc-if value="{{ sf.isNumber }}" hint-placeholder-val="{{ false }}">
+                <div class="field">
+                  <label>{{ sf.label }}</label>
+                  <input class="input" type="number" min="{{ sf.min }}" max="{{ sf.max }}" value="{{ sf.value }}" onChange="{{ sf.onChange }}" disabled="{{ secDialogLocked }}" style="max-width:140px;"/>
+                </div>
+              </sc-if>
+              <sc-if value="{{ sf.isToggle }}" hint-placeholder-val="{{ false }}">
+                <div class="tg-row">
+                  <button class="switch" onClick="{{ sf.onToggle }}" style="background:{{ sf.bg }};" disabled="{{ secDialogLocked }}" aria-pressed="{{ sf.pressed }}" aria-label="{{ sf.label }}"><span style="left:{{ sf.knobLeft }};"></span></button>
+                  <span>{{ sf.label }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ sf.isItems }}" hint-placeholder-val="{{ false }}">
+                <div class="field">
+                  <label>{{ sf.label }}</label>
+                  <div class="items">
+                    <sc-for list="{{ sf.items }}" as="it" hint-placeholder-count="2">
+                      <div class="item-row">
+                        <span class="item-num">{{ it.number }}</span>
+                        <div class="item-fields">
+                          <sc-for list="{{ it.fields }}" as="ff" hint-placeholder-count="2">
+                            <div class="field">
+                              <label style="font-size:11px;">{{ ff.label }}</label>
+                              <sc-if value="{{ ff.isSelect }}" hint-placeholder-val="{{ false }}">
+                                <select class="input" value="{{ ff.value }}" onChange="{{ ff.onChange }}" disabled="{{ secDialogLocked }}">
+                                  <sc-for list="{{ ff.options }}" as="o" hint-placeholder-count="3">
+                                    <option value="{{ o.value }}">{{ o.label }}</option>
+                                  </sc-for>
+                                </select>
+                              </sc-if>
+                              <sc-if value="{{ ff.isText }}" hint-placeholder-val="{{ true }}">
+                                <input class="input" value="{{ ff.value }}" onChange="{{ ff.onChange }}" sc-camel-max-length="{{ ff.maxLength }}" disabled="{{ secDialogLocked }}"/>
+                              </sc-if>
+                              <sc-if value="{{ ff.isTextarea }}" hint-placeholder-val="{{ false }}">
+                                <textarea class="input" rows="3" value="{{ ff.value }}" onChange="{{ ff.onChange }}" sc-camel-max-length="{{ ff.maxLength }}" disabled="{{ secDialogLocked }}"></textarea>
+                              </sc-if>
+                            </div>
+                          </sc-for>
+                        </div>
+                        <div class="item-actions">
+                          <button class="icon-btn" onClick="{{ it.moveUp }}" disabled="{{ it.isFirst }}" aria-label="Move up"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 15 6-6 6 6"/></svg></button>
+                          <button class="icon-btn" onClick="{{ it.moveDown }}" disabled="{{ it.isLast }}" aria-label="Move down"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+                          <button class="icon-btn" onClick="{{ it.remove }}" aria-label="Remove"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+                        </div>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ sf.empty }}" hint-placeholder-val="{{ false }}">
+                      <p style="font-size:12.5px;opacity:.6;margin:0;">Nothing added yet — this section stays hidden until you add one.</p>
+                    </sc-if>
+                    <button onClick="{{ sf.add }}" class="btn btn-secondary" style="width:fit-content;padding:6px 14px;font-size:12.5px;" disabled="{{ sf.addDisabled }}">+ Add {{ sf.itemLabel }}</button>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ secLinkHref }}" hint-placeholder-val="{{ false }}">
+            <p class="dlg-link">{{ secLinkText }} <a href="{{ secLinkHref }}">{{ secLinkLabel }} →</a></p>
+          </sc-if>
+
+          <sc-if value="{{ secDialogError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13px;color:var(--color-accent-700);margin-top:10px;">{{ secDialogError }}</p>
+          </sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ resetSection }}" class="btn btn-ghost" style="margin-right:auto;" disabled="{{ secResetDisabled }}">Reset to defaults</button>
+            <button onClick="{{ closeSecDialog }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveSection }}" class="btn btn-primary" disabled="{{ secSaveDisabled }}">{{ secSaveLabel }}</button>
           </div>
         </div>
-      </sc-for>
-      <button onClick="{{ openAddWhyUs }}" class="btn btn-secondary" style="width:fit-content;">+ Add Bullet</button>
-    </div>
+      </div>
+    </sc-if>
 
     <sc-if value="{{ dialogOpen }}" hint-placeholder-val="{{ false }}">
       <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeDialog }}">
@@ -218,18 +461,33 @@ a:hover{color:var(--color-accent-700)}
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+const TABS = [
+  { key: 'layout', label: 'Page Layout' },
+  { key: 'slides', label: 'Hero Slides' },
+  { key: 'blocks', label: 'Content Blocks' },
+  { key: 'collections', label: 'Collections' },
+  { key: 'whyUs', label: 'Why Choose Us' },
+];
+// Sections whose content lives in another tab: Customize jumps there (or
+// opens that editor) instead of the generic settings dialog.
+const TEXT_PLACEHOLDER = 'Leave blank to hide';
+
 class Component extends DCLogic {
   emptyForm = { title: '', kicker: '', sub: '', cta: '', href: '', description: '' };
   emptyWhyUsForm = { title: '', description: '' };
   BLOCK_LABELS = { promo: 'Promo Banner', spotlight: "Editor's Pick Spotlight", storyTeaser: 'Our Story Teaser' };
 
   state = {
-    admin: null, errorMessage: '', slides: [], sections: [], blocks: [], collections: [], whyUs: [],
+    admin: null, errorMessage: '', notice: '', slides: [], sections: [], blocks: [], collections: [], whyUs: [],
+    sectionList: [], schemaReady: true, migrationSql: '', stats: null, productTypes: [], copied: false,
+    activeTab: (() => { try { const t = new URLSearchParams(window.location.search).get('tab'); return TABS.some((x) => x.key === t) ? t : 'layout'; } catch { return 'layout'; } })(),
     dialogOpen: false, dialogKind: null, editingId: null, editingKey: null,
     form: this.emptyForm, dialogError: '', saving: false,
     currentImageUrl: '', imageUploading: false,
     whyUsDialogOpen: false, whyUsEditingId: null, whyUsForm: this.emptyWhyUsForm, whyUsDialogError: '', whyUsSaving: false,
     draggingWhyUsId: null, newContactCount: 0,
+    draggingSectionKey: null,
+    secDialogKey: null, secText: {}, secSettings: {}, secDialogError: '', secSaving: false,
   };
 
   async componentDidMount() {
@@ -238,7 +496,8 @@ class Component extends DCLogic {
     const me = await fetchAdminSession();
     if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
     this.setState({ admin: me });
-    import('./utils/contactBadge.js').then((m) => m.fetchNewContactCount().then((n) => this.setState({ newContactCount: n })));
+    import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newContactCount: c.contact, newInquiryCount: c.inquiries })));
+    fetch('/api/product-types', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => this.setState({ productTypes: j.data || [] })).catch(() => {});
     this.loadAll();
   }
 
@@ -247,9 +506,11 @@ class Component extends DCLogic {
       const res = await fetch('/api/admin/homepage', { credentials: 'same-origin' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load homepage content.');
+      const d = json.data;
       this.setState({
-        slides: json.data.slides, sections: json.data.sections,
-        blocks: json.data.blocks || [], collections: json.data.collections || [], whyUs: json.data.whyUs || [],
+        slides: d.slides, sections: d.sections,
+        blocks: d.blocks || [], collections: d.collections || [], whyUs: d.whyUs || [],
+        sectionList: d.sectionList || [], schemaReady: d.schemaReady !== false, migrationSql: d.migrationSql || '', stats: d.stats || null,
         errorMessage: '',
       });
     } catch (err) {
@@ -257,20 +518,153 @@ class Component extends DCLogic {
     }
   }
 
-  async toggleSection(key, enabled) {
+  flash(notice) {
+    this.setState({ notice });
+    clearTimeout(this._noticeTimer);
+    this._noticeTimer = setTimeout(() => this.setState({ notice: '' }), 2600);
+  }
+
+  async putSection(key, body) {
+    const res = await fetch(`/api/admin/homepage/sections/${key}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Failed to update section.');
+    return json.data;
+  }
+
+  async toggleSection(s) {
+    // Optimistic: flip it in place, then confirm with the server.
+    const enabled = !s.enabled;
+    this.setState({ sectionList: this.state.sectionList.map((x) => (x.key === s.key ? { ...x, enabled } : x)) });
     try {
-      const res = await fetch(`/api/admin/homepage/sections/${key}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-        body: JSON.stringify({ enabled }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to update section.');
-      this.loadAll();
+      await this.putSection(s.key, { enabled });
+      this.flash(`${s.label} ${enabled ? 'is now shown' : 'is now hidden'} on the homepage.`);
     } catch (err) {
       this.setState({ errorMessage: err.message });
     }
+    this.loadAll();
   }
 
+  flowList() { return this.state.sectionList.filter((s) => !s.pinned); }
+
+  async saveOrder(flow) {
+    try {
+      const res = await fetch('/api/admin/homepage/sections/reorder', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ order: flow.map((s) => s.key) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to save the new order.');
+      this.flash('New section order saved.');
+    } catch (err) {
+      this.setState({ errorMessage: err.message });
+      this.loadAll();
+    }
+  }
+
+  moveSection(key, dir) {
+    const flow = this.flowList();
+    const i = flow.findIndex((s) => s.key === key);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= flow.length) return;
+    const next = flow.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    this.setState({ sectionList: [...this.state.sectionList.filter((s) => s.pinned), ...next] });
+    this.saveOrder(next);
+  }
+
+  // Same pointer-drag approach as the Why Us list below.
+  startSectionDrag(key, e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('button,a,input,select')) return;
+    e.preventDefault();
+    this._dragSectionKey = key;
+    this._sectionOrderChanged = false;
+    this.setState({ draggingSectionKey: key });
+    this._secMove = (ev) => this.handleSectionDragMove(ev);
+    this._secUp = () => this.finishSectionDrag();
+    window.addEventListener('pointermove', this._secMove);
+    window.addEventListener('pointerup', this._secUp);
+    window.addEventListener('pointercancel', this._secUp);
+  }
+  handleSectionDragMove(e) {
+    if (!this._dragSectionKey) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const tile = el && el.closest('[data-section-key]');
+    if (!tile) return;
+    const overKey = tile.getAttribute('data-section-key');
+    if (!overKey || overKey === this._dragSectionKey) return;
+    const flow = this.flowList().slice();
+    const from = flow.findIndex((s) => s.key === this._dragSectionKey);
+    const to = flow.findIndex((s) => s.key === overKey);
+    if (from < 0 || to < 0) return;
+    const [moved] = flow.splice(from, 1);
+    flow.splice(to, 0, moved);
+    this._sectionOrderChanged = true;
+    this.setState({ sectionList: [...this.state.sectionList.filter((s) => s.pinned), ...flow] });
+  }
+  finishSectionDrag() {
+    window.removeEventListener('pointermove', this._secMove);
+    window.removeEventListener('pointerup', this._secUp);
+    window.removeEventListener('pointercancel', this._secUp);
+    this._dragSectionKey = null;
+    this.setState({ draggingSectionKey: null });
+    if (this._sectionOrderChanged) this.saveOrder(this.flowList());
+  }
+
+  // ---- Customize dialog ----
+  openCustomize(s) {
+    if (s.blockKey) {
+      const block = this.state.blocks.find((b) => b.key === s.blockKey);
+      if (block) { this.openEditBlock(block); return; }
+    }
+    const text = {};
+    for (const f of s.textFields) text[f.name] = s[f.name] == null ? '' : String(s[f.name]);
+    this.setState({
+      secDialogKey: s.key, secText: text,
+      secSettings: JSON.parse(JSON.stringify(s.settings || {})),
+      secDialogError: '', secSaving: false,
+    });
+  }
+  closeSecDialog() { this.setState({ secDialogKey: null }); }
+  setSecText(name, value) { this.setState({ secText: { ...this.state.secText, [name]: value } }); }
+  setSecSetting(name, value) { this.setState({ secSettings: { ...this.state.secSettings, [name]: value } }); }
+  setItems(name, items) { this.setSecSetting(name, items); }
+
+  async saveSection() {
+    const key = this.state.secDialogKey;
+    this.setState({ secSaving: true, secDialogError: '' });
+    try {
+      await this.putSection(key, { ...this.state.secText, settings: this.state.secSettings });
+      this.setState({ secSaving: false, secDialogKey: null });
+      this.flash('Saved — the homepage is updated.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ secSaving: false, secDialogError: err.message });
+    }
+  }
+  async resetSection() {
+    const key = this.state.secDialogKey;
+    if (!window.confirm('Reset this section\'s headings and settings to the defaults?')) return;
+    this.setState({ secSaving: true, secDialogError: '' });
+    try {
+      await this.putSection(key, { reset: true });
+      this.setState({ secSaving: false, secDialogKey: null });
+      this.flash('Section reset to its defaults.');
+      this.loadAll();
+    } catch (err) {
+      this.setState({ secSaving: false, secDialogError: err.message });
+    }
+  }
+
+  async copyMigration() {
+    try { await navigator.clipboard.writeText(this.state.migrationSql); this.setState({ copied: true }); }
+    catch { this.setState({ errorMessage: 'Copy failed — select the SQL text and copy it manually.' }); }
+  }
+
+  // ---- Existing editors (slides / content blocks / collections / why us) ----
   openAddSlide() {
     this.setState({
       dialogOpen: true, dialogKind: 'slide', editingId: null, editingKey: null,
@@ -461,14 +855,92 @@ class Component extends DCLogic {
     }
   }
 
+  // Live status for each section, so it's clear WHY something isn't
+  // showing (e.g. Featured with nothing starred yet).
+  statusFor(s) {
+    const stats = this.state.stats || {};
+    const typeOff = (key) => this.state.productTypes.some((t) => t.key === key && !t.enabled);
+    if (!s.enabled) return { hint: 'Hidden', cls: 'chip-off' };
+    switch (s.key) {
+      case 'announcement': return s.title ? { hint: 'Showing', cls: 'chip-ok' } : { hint: 'Add a message to show it', cls: 'chip-warn' };
+      case 'featured': return stats.featuredTotal ? { hint: `${stats.featuredTotal} starred product${stats.featuredTotal === 1 ? '' : 's'}`, cls: 'chip-ok' } : { hint: 'Hidden until you star products', cls: 'chip-warn' };
+      case 'favorites': return (stats.requestedProducts || 0) >= 3 ? { hint: `Ranking ${stats.requestedProducts} requested products`, cls: 'chip-ok' } : { hint: 'Hidden until 3+ products get inquiries', cls: 'chip-warn' };
+      case 'gemHighlights': return typeOff('gemstone') ? { hint: 'Hidden — Gemstones are switched off', cls: 'chip-warn' } : null;
+      case 'testimonials': return (s.settings.items || []).length ? { hint: `${s.settings.items.length} testimonial${s.settings.items.length === 1 ? '' : 's'}`, cls: 'chip-ok' } : { hint: 'Hidden until you add one', cls: 'chip-warn' };
+      case 'trustBar': return (s.settings.items || []).length ? null : { hint: 'Hidden — no badges', cls: 'chip-warn' };
+      case 'tradeCta': return s.settings.audience === 'guests' ? { hint: 'Guests only', cls: 'chip-aud' } : null;
+      default: return null;
+    }
+  }
+
+  buildSecDialog() {
+    const s = this.state.sectionList.find((x) => x.key === this.state.secDialogKey);
+    if (!s) return { secDialogOpen: false };
+    const locked = !this.state.schemaReady;
+    const secTextFields = s.textFields.map((f) => ({
+      label: f.label, value: this.state.secText[f.name] || '', maxLength: f.maxLength || 300,
+      placeholder: f.default ? `Default: ${f.default}` : TEXT_PLACEHOLDER,
+      onChange: (e) => this.setSecText(f.name, e.target.value),
+    }));
+    const st = this.state.secSettings;
+    const secSettingFields = s.settingsFields.map((f) => {
+      const base = { label: f.label, isSelect: f.type === 'select', isNumber: f.type === 'number', isToggle: f.type === 'toggle', isItems: f.type === 'items' };
+      if (f.type === 'select') {
+        return { ...base, value: String(st[f.name]), options: f.options.map((o) => ({ value: String(o.value), label: o.label })),
+          onChange: (e) => { const o = f.options.find((x) => String(x.value) === e.target.value); this.setSecSetting(f.name, o ? o.value : e.target.value); } };
+      }
+      if (f.type === 'number') {
+        return { ...base, value: String(st[f.name]), min: String(f.min), max: String(f.max), onChange: (e) => this.setSecSetting(f.name, e.target.value === '' ? '' : Number(e.target.value)) };
+      }
+      if (f.type === 'toggle') {
+        const on = !!st[f.name];
+        return { ...base, bg: on ? 'var(--color-accent)' : 'var(--color-divider)', knobLeft: on ? '21px' : '2px', pressed: on ? 'true' : 'false', onToggle: () => this.setSecSetting(f.name, !on) };
+      }
+      const items = Array.isArray(st[f.name]) ? st[f.name] : [];
+      const update = (next) => this.setItems(f.name, next);
+      return {
+        ...base, itemLabel: f.itemLabel, empty: items.length === 0, addDisabled: locked || items.length >= f.max,
+        add: () => update([...items, Object.fromEntries(f.fields.map((ff) => [ff.name, ff.default || '']))]),
+        items: items.map((item, i) => ({
+          number: i + 1, isFirst: i === 0, isLast: i === items.length - 1,
+          remove: () => update(items.filter((_, j) => j !== i)),
+          moveUp: () => { if (i > 0) { const n = items.slice(); [n[i - 1], n[i]] = [n[i], n[i - 1]]; update(n); } },
+          moveDown: () => { if (i < items.length - 1) { const n = items.slice(); [n[i + 1], n[i]] = [n[i], n[i + 1]]; update(n); } },
+          fields: f.fields.map((ff) => ({
+            label: ff.label, value: item[ff.name] || '', maxLength: ff.maxLength || 300,
+            isSelect: ff.type === 'select', isText: ff.type === 'text', isTextarea: ff.type === 'textarea',
+            options: (ff.options || []).map((o) => ({ value: o.value, label: o.label })),
+            onChange: (e) => update(items.map((x, j) => (j === i ? { ...x, [ff.name]: e.target.value } : x))),
+          })),
+        })),
+      };
+    });
+    // Point at where the rest of this section's content is managed.
+    const links = {
+      featured: ['Choose which products appear by starring them on', 'Products', 'AdminProducts.dc.html?featured=1'],
+      collections: ['Edit the cards themselves in the', 'Collections tab', 'AdminHomepage.dc.html?tab=collections'],
+      whyUs: ['Edit the selling points in the', 'Why Choose Us tab', 'AdminHomepage.dc.html?tab=whyUs'],
+      hero: ['Manage slide photos and text in the', 'Hero Slides tab', 'AdminHomepage.dc.html?tab=slides'],
+      shapePicker: ['Shapes come from your shape list in', 'Attributes', 'AdminAttributes.dc.html'],
+    };
+    const link = links[s.key];
+    return {
+      secDialogOpen: true, secDialogLabel: s.label, secDialogDesc: s.description, secDialogLocked: locked,
+      secTextFields, secHasText: secTextFields.length > 0,
+      secSettingFields, secHasSettings: secSettingFields.length > 0,
+      secLinkText: link ? link[0] : '', secLinkLabel: link ? link[1] : '', secLinkHref: link ? link[2] : '',
+      secDialogError: this.state.secDialogError,
+      secSaveDisabled: locked || this.state.secSaving,
+      secResetDisabled: locked || this.state.secSaving,
+      secSaveLabel: this.state.secSaving ? 'Saving…' : 'Save',
+      closeSecDialog: () => this.closeSecDialog(),
+      saveSection: () => this.saveSection(),
+      resetSection: () => this.resetSection(),
+    };
+  }
+
   renderVals() {
     const heroSlides = this.state.slides.map((s) => ({ ...s, hasImage: !!s.imageUrl, edit: () => this.openEditSlide(s) }));
-    const homeSections = this.state.sections.map((s) => ({
-      label: s.label,
-      toggle: () => this.toggleSection(s.key, !s.enabled),
-      bg: s.enabled ? 'var(--color-accent)' : 'var(--color-divider)',
-      knobLeft: s.enabled ? '21px' : '2px',
-    }));
     const blockCards = this.state.blocks.map((b) => ({
       ...b, label: this.BLOCK_LABELS[b.key] || b.key, hasImage: !!b.imageUrl, edit: () => this.openEditBlock(b),
     }));
@@ -487,6 +959,36 @@ class Component extends DCLogic {
       tileZ: w.id === draggingId ? 5 : 1,
     }));
 
+    const toRow = (s) => {
+      const status = this.statusFor(s);
+      return {
+        ...s,
+        hint: status ? status.hint : '', hintClass: status ? status.cls : '',
+        rowClass: s.enabled ? '' : 'is-off',
+        bg: s.enabled ? 'var(--color-accent)' : 'var(--color-divider)',
+        knobLeft: s.enabled ? '21px' : '2px',
+        pressed: s.enabled ? 'true' : 'false',
+        toggleAria: `${s.enabled ? 'Hide' : 'Show'} ${s.label}`,
+        toggle: () => this.toggleSection(s),
+        customize: () => this.openCustomize(s),
+        customizeLabel: s.blockKey ? 'Edit content' : 'Customize',
+      };
+    };
+    const pinnedRows = this.state.sectionList.filter((s) => s.pinned).map(toRow);
+    const flow = this.flowList();
+    const dragKey = this.state.draggingSectionKey;
+    const flowRows = flow.map((s, i) => ({
+      ...toRow(s),
+      position: i + 1, isFirst: i === 0, isLast: i === flow.length - 1,
+      upAria: `Move ${s.label} up`, downAria: `Move ${s.label} down`,
+      moveUp: () => this.moveSection(s.key, -1),
+      moveDown: () => this.moveSection(s.key, 1),
+      dragStart: (e) => this.startSectionDrag(s.key, e),
+      tileTransform: s.key === dragKey ? 'scale(1.015)' : 'none',
+      tileShadow: s.key === dragKey ? '0 10px 24px rgba(0,0,0,.16)' : 'none',
+      tileZ: s.key === dragKey ? 5 : 1,
+    }));
+
     const fh = {};
     Object.keys(this.emptyForm).forEach((k) => { fh[k] = (e) => this.setFormField(k, e.target.value); });
     const whyUsFh = {};
@@ -498,27 +1000,40 @@ class Component extends DCLogic {
       block: 'Edit ' + (this.BLOCK_LABELS[this.state.editingKey] || 'Block'),
       collection: 'Edit Collection Tile',
     };
-    // Each image slot on the homepage is a different shape (full-bleed banner,
-    // 4:3 block, 16:6 wide spotlight, 4:5 portrait card) - key off dialogKind/
-    // editingKey (same keys dialogTitleByKind uses) so the hint always matches
-    // where the photo is actually going to appear.
+    // Each image slot on the homepage is a different shape - key off
+    // dialogKind/editingKey so the hint matches where the photo will appear.
     const SIZE_HINTS = {
       slide: 'Recommended: 1920×1080px or larger, landscape. This fills a full-width banner and is cropped to fit, so extra size keeps it sharp on large screens.',
       promo: 'Recommended: 1600×1200px (4:3).',
-      spotlight: 'Recommended: 1920×720px (wide banner, 16:6).',
+      spotlight: 'Recommended: 1920×720px (wide banner).',
       storyTeaser: 'Recommended: 1600×1200px (4:3).',
-      collection: 'Recommended: 1000×1250px (portrait, 4:5).',
+      collection: 'Recommended: 1200×1500px (portrait). Cards are cropped to fit, so keep the subject centered.',
     };
     const sizeHintKey = dialogKind === 'block' ? this.state.editingKey : dialogKind;
-    const recommendedImageSize = SIZE_HINTS[sizeHintKey] || '';
+    const tab = this.state.activeTab;
 
     return {
-      heroSlides, homeSections, blockCards, collectionCards, whyUsCards,
+      tabs: TABS.map((t) => ({
+        label: t.label, selected: t.key === tab ? 'true' : 'false', activeClass: t.key === tab ? 'is-active' : '',
+        select: () => this.setState({ activeTab: t.key }),
+      })),
+      tabIsLayout: tab === 'layout', tabIsSlides: tab === 'slides', tabIsBlocks: tab === 'blocks',
+      tabIsCollections: tab === 'collections', tabIsWhyUs: tab === 'whyUs',
+      needsMigration: !this.state.schemaReady && !!this.state.migrationSql,
+      migrationSql: this.state.migrationSql,
+      copyMigration: () => this.copyMigration(),
+      copyLabel: this.state.copied ? '✓ Copied' : 'Copy SQL',
+      recheckMigration: () => this.loadAll(),
+      notice: this.state.notice,
+      pinnedRows, flowRows,
+      heroSlides, blockCards, collectionCards, whyUsCards,
       errorMessage: this.state.errorMessage,
       adminName: this.state.admin ? this.state.admin.fullName : '',
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,
       hasNewContact: this.state.newContactCount > 0,
+      newInquiryCount: this.state.newInquiryCount || 0,
+      hasNewInquiry: this.state.newInquiryCount > 0,
       openAddSlide: () => this.openAddSlide(),
       openAddWhyUs: () => this.openAddWhyUs(),
       dialogOpen: this.state.dialogOpen,
@@ -531,7 +1046,7 @@ class Component extends DCLogic {
       hasCurrentImage: !!this.state.currentImageUrl,
       currentImageUrl: this.state.currentImageUrl,
       uploadLabel: this.state.currentImageUrl ? 'Replace Photo' : 'Upload Photo',
-      recommendedImageSize,
+      recommendedImageSize: SIZE_HINTS[sizeHintKey] || '',
       handleImageSelect: (e) => this.handleImageSelect(e),
       imageUploading: this.state.imageUploading,
       closeDialog: () => this.closeDialog(),
@@ -550,6 +1065,7 @@ class Component extends DCLogic {
       whyUsSaving: this.state.whyUsSaving,
       whyUsSaveLabel: this.state.whyUsSaving ? 'Saving…' : 'Save',
       whyUsDialogError: this.state.whyUsDialogError,
+      ...this.buildSecDialog(),
     };
   }
 }
