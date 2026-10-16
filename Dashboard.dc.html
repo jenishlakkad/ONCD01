@@ -67,7 +67,7 @@ a:hover{color:var(--color-accent-700)}
 .stat-value{font-family:var(--font-heading);font-size:30px;font-weight:600;line-height:1.1;}
 .stat-sub{font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent);}
 .stat-sub.hot{color:var(--color-accent-700);font-weight:600;}
-.ov-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:22px;margin-top:30px;align-items:start;}
+.ov-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(min(100%,260px),1fr);gap:22px;margin-top:30px;align-items:start;}
 .panel{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:20px 22px;background:var(--color-bg);}
 .panel + .panel{margin-top:16px;}
 .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;}
@@ -109,7 +109,7 @@ a:hover{color:var(--color-accent-700)}
 .pcard.gone .pcard-media::after{content:"No longer available";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,26,22,.55);color:#fff;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;z-index:1;}
 .pcard-actions{display:flex;gap:8px;margin-top:10px;}
 .pcard-actions .btn{flex:1;padding:7px 10px;font-size:12.5px;justify-content:center;}
-.saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;}
+.saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:18px;}
 
 /* ── Toolbars / chips ──────────────────────────────────────────────── */
 .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
@@ -220,7 +220,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
 @media (max-width:1180px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.ov-grid,.profile-layout{grid-template-columns:minmax(0,1fr);}.profile-aside{position:static;}}
 @media (max-width:900px){
   .acct-shell{grid-template-columns:minmax(0,1fr);gap:20px;padding-top:16px;}
-  .acct-side{position:sticky;top:72px;z-index:30;background:var(--color-bg);margin:0 calc(-1 * clamp(16px,5vw,56px));padding:8px clamp(16px,5vw,56px);border-bottom:1px solid var(--color-divider);gap:0;}
+  .acct-side{position:sticky;top:72px;z-index:30;background:var(--color-bg);margin:0 calc(-1 * clamp(16px,5vw,32px));padding:8px clamp(16px,5vw,32px);border-bottom:1px solid var(--color-divider);gap:0;}
   .acct-id,.acct-side-foot{display:none;}
   .acct-tabs{flex-direction:row;overflow-x:auto;gap:6px;scrollbar-width:none;}
   .acct-tabs::-webkit-scrollbar{display:none;}
@@ -275,7 +275,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
     <a href="About.dc.html">About</a>
     <a href="Contact.dc.html">Contact</a>
     <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
-      <a href="Home.dc.html?cart=open" aria-label="Inquiry cart" style="position:relative;color:var(--color-text);display:flex;">
+      <a class="nav-cart-desktop" href="Home.dc.html?cart=open" aria-label="Inquiry cart" style="position:relative;color:var(--color-text);display:flex;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
           <span style="position:absolute;top:-8px;right:-10px;background:var(--color-accent);color:#fff;font-size:10px;border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;">{{ cartCount }}</span>
@@ -589,7 +589,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
                       <sc-if value="{{ q.canReinquire }}" hint-placeholder-val="{{ true }}">
                         <button class="btn btn-secondary" onClick="{{ q.reinquire }}">Inquire again</button>
                       </sc-if>
-                      <a href="{{ q.followUpHref }}" target="_blank" rel="noopener" class="btn btn-ghost">Continue on {{ q.followUpLabel }}</a>
+                      <a href="{{ q.followUpHref }}" target="_blank" rel="noopener" class="btn btn-ghost">{{ q.followUpButton }}</a>
                       <sc-if value="{{ q.canResolve }}" hint-placeholder-val="{{ false }}">
                         <button class="btn btn-ghost" style="margin-left:auto;" onClick="{{ q.resolve }}">Mark as resolved</button>
                       </sc-if>
@@ -896,10 +896,10 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
   </sc-if>
 
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+    <div class="site-footer-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
       <div>
         <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">ONCD</div>
-        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">{{ footerTagline }}</p>
       </div>
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
@@ -943,7 +943,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+    <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
       <span>GIA · IGI · HRD Certified Partners</span>
     </div>
@@ -952,6 +952,23 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+// Catalog switches from Admin > Product Types, as last seen by
+// utils/productTypes.js — read synchronously so the first paint already
+// hides disabled catalogs (the live answer is fetched on mount).
+function readTypeVisibility() {
+  try {
+    const v = JSON.parse(localStorage.getItem('oncd_type_visibility_v1') || 'null');
+    if (v) return { showDiamonds: v.diamond !== false, showJewelry: v.jewelry !== false, showGemstones: v.gemstone !== false };
+  } catch {}
+  return { showDiamonds: true, showJewelry: true, showGemstones: true };
+}
+// Footer brand line naming only the catalogs that are switched on.
+function footerTaglineFor(d, j, g) {
+  const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
+  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+}
 const TYPE_LABEL = { diamond: 'Diamond', jewelry: 'Jewelry', gemstone: 'Gemstone' };
 const LISTING_PAGE = { diamond: 'Diamonds.dc.html', jewelry: 'Jewelry.dc.html', gemstone: 'Gemstones.dc.html' };
 const DETAIL_PAGE = { diamond: 'DiamondProduct.dc.html', jewelry: 'JewelryProduct.dc.html', gemstone: 'GemstoneProduct.dc.html' };
@@ -1052,7 +1069,7 @@ class Component extends DCLogic {
     fresh: false, stale: false, loadError: '', blockedMessage: '',
     activeTab: tabFromUrl(),
     now: Date.now(),
-    showDiamonds: true, showJewelry: true, showGemstones: true,
+    ...readTypeVisibility(),
     settings: { whatsapp: '', inquiryEmail: '', supportEmail: '', lineId: '', skypeId: '' },
     accountMenuOpen: false,
     cartItems: [],
@@ -1305,6 +1322,12 @@ class Component extends DCLogic {
       .catch(() => {});
   }
 
+  // The shared Inquiry Cart drawer (utils/cartDrawer.js) opens right here;
+  // the Home link is only the fallback if the cart module hasn't loaded.
+  openCart() {
+    if (this.cart) this.cart.openCartDrawer();
+    else window.location.href = 'Home.dc.html?cart=open';
+  }
   refreshCart() {
     if (this.cart) this.setState({ cartItems: this.cart.getCart() });
   }
@@ -1390,7 +1413,7 @@ class Component extends DCLogic {
       return;
     }
     this.addItemsToCart([card]);
-    this.showToast('Added to your inquiry cart.', 'Review & send', () => { window.location.href = 'Home.dc.html?cart=open'; });
+    this.showToast('Added to your inquiry cart.', 'Review & send', () => this.openCart());
   }
 
   async removeSaved(sku) {
@@ -1621,6 +1644,7 @@ class Component extends DCLogic {
         send: () => this.sendInquiryMessage(inq),
         canResolve: status !== 'closed', resolve: () => this.resolveInquiry(inq),
         followUpLabel: FOLLOW_UP_LABEL[inq.channel] || 'WhatsApp',
+        followUpButton: `Continue on ${FOLLOW_UP_LABEL[inq.channel] || 'WhatsApp'}`,
         metaLine: [`${n} item${n === 1 ? '' : 's'}`, CHANNEL_LABEL[inq.channel] || inq.channel, `${fmtDate(inq.createdAt)} (${timeAgo(inq.createdAt, now)})`,
           msgs.length ? `${msgs.length} message${msgs.length === 1 ? '' : 's'}` : '', inq.ref ? `#${inq.id}` : ''].filter(Boolean).join(' · '),
         id: inq.id, status, anchorId: `inq-${inq.id}`, titleLabel: inq.ref || `Inquiry #${inq.id}`,
@@ -1644,7 +1668,7 @@ class Component extends DCLogic {
           const msg = added
             ? `${added} item${added === 1 ? '' : 's'} added to your inquiry cart${skipped ? ` (${skipped} no longer listed)` : ''}.`
             : 'These items are already in your inquiry cart.';
-          this.showToast(msg, 'Review & send', () => { window.location.href = 'Home.dc.html?cart=open'; });
+          this.showToast(msg, 'Review & send', () => this.openCart());
         },
         followUpHref: this.followUpHref(followUp),
         toggle: () => this.setState({ expandedId: expanded ? null : inq.id }),
@@ -1696,7 +1720,9 @@ class Component extends DCLogic {
     const contactAwaiting = (data.contactMessages || []).filter((c) => c.status === 'new' || c.status === 'in_progress').length;
 
     // ── Saved
-    const savedAll = data.saved.map((s) => {
+    // Saved pieces from a catalog switched off in Admin > Product Types are
+    // hidden (not deleted) — they reappear if it's switched back on.
+    const savedAll = data.saved.filter((s) => typeOn[(products[s.sku] && products[s.sku].type) || s.productType] !== false).map((s) => {
       const p = products[s.sku];
       const type = (p && p.type) || s.productType || '';
       if (p) {
@@ -1797,7 +1823,7 @@ class Component extends DCLogic {
       { label: 'Saved items', value: savedAll.length, sub: goneCount ? `${goneCount} no longer available` : (addableSaved.length ? `${addableSaved.length} ready to inquire` : 'Your shortlist'), subClass: '',
         go: () => this.goTab('saved') },
       { label: 'Inquiry cart', value: cartCount, sub: cartLines ? 'Review & send →' : 'Empty', subClass: cartLines ? 'hot' : '',
-        go: () => { window.location.href = 'Home.dc.html?cart=open'; } },
+        go: () => this.openCart() },
     ];
 
     return {
@@ -1827,6 +1853,7 @@ class Component extends DCLogic {
       syncLabel, syncDotClass: st.stale || !st.fresh ? 'stale' : '',
       browseHref, browseLinks,
       showDiamonds: st.showDiamonds, showJewelry: st.showJewelry, showGemstones: st.showGemstones,
+      footerTagline: footerTaglineFor(st.showDiamonds, st.showJewelry, st.showGemstones),
       footerEmail: st.settings.supportEmail || st.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: st.settings.whatsapp || '+1 (555) 123-4567',
       hasToast: !!st.toast, toast: st.toast || { message: '', actionLabel: '', action: null },
@@ -1886,7 +1913,7 @@ class Component extends DCLogic {
       canAddAllSaved: addableSaved.length > 1, addAllSavedLabel: `Add ${addableSaved.length} to inquiry cart`,
       addAllSavedToCart: () => {
         const added = this.addItemsToCart(addableSaved);
-        this.showToast(`${added} item${added === 1 ? '' : 's'} added to your inquiry cart.`, 'Review & send', () => { window.location.href = 'Home.dc.html?cart=open'; });
+        this.showToast(`${added} item${added === 1 ? '' : 's'} added to your inquiry cart.`, 'Review & send', () => this.openCart());
       },
 
       // profile

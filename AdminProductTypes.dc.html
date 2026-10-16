@@ -60,7 +60,7 @@ a:hover{color:var(--color-accent-700)}
       </div>
     </div>
 
-    <p style="opacity:.65;font-size:13px;margin-top:-16px;">Disabling a type removes it from navigation, homepage and search immediately — no coding required.</p>
+    <p style="opacity:.7;font-size:13px;margin-top:-16px;max-width:760px;line-height:1.55;">Switching a type <strong>off</strong> hides it from customers everywhere, straight away: menus and footers, homepage sections, slides and banners that link to it, its catalog and product pages, recommendations, saved items and the inquiry cart. Products stay untouched here in the admin panel and return exactly as they were when you switch it back on.</p>
     <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
       <p style="font-size:13px;color:var(--color-accent-700);margin-top:12px;">{{ errorMessage }}</p>
     </sc-if>
@@ -69,7 +69,7 @@ a:hover{color:var(--color-accent-700)}
       <sc-for list="{{ typeToggles }}" as="t" hint-placeholder-count="3">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--color-divider);">
           <div><div style="font-family:var(--font-heading);font-weight:600;">{{ t.label }}</div><div style="font-size:12px;opacity:.6;">{{ t.desc }}</div></div>
-          <button class="switch" onClick="{{ t.toggle }}" style="background:{{ t.bg }};"><span style="left:{{ t.knobLeft }};"></span></button>
+          <button class="switch" role="switch" aria-checked="{{ t.ariaChecked }}" aria-label="{{ t.ariaLabel }}" onClick="{{ t.toggle }}" style="background:{{ t.bg }};"><span style="left:{{ t.knobLeft }};"></span></button>
         </div>
       </sc-for>
     </div>
@@ -79,7 +79,7 @@ a:hover{color:var(--color-accent-700)}
       <sc-for list="{{ featureToggles }}" as="t" hint-placeholder-count="3">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--color-divider);">
           <div><div style="font-family:var(--font-heading);font-weight:600;">{{ t.label }}</div><div style="font-size:12px;opacity:.6;">{{ t.desc }}</div></div>
-          <button class="switch" onClick="{{ t.toggle }}" style="background:{{ t.bg }};"><span style="left:{{ t.knobLeft }};"></span></button>
+          <button class="switch" role="switch" aria-checked="{{ t.ariaChecked }}" aria-label="{{ t.ariaLabel }}" onClick="{{ t.toggle }}" style="background:{{ t.bg }};"><span style="left:{{ t.knobLeft }};"></span></button>
         </div>
       </sc-for>
     </div>
@@ -146,8 +146,19 @@ class Component extends DCLogic {
   }
 
   renderVals() {
-    const mk = (label, desc, on, toggle) => ({ label, desc, toggle, bg: on ? 'var(--color-accent)' : 'var(--color-divider)', knobLeft: on ? '21px' : '2px' });
-    const typeToggles = this.state.types.map((t) => mk(t.label, `Show ${t.label.toLowerCase()} catalog site-wide`, !!t.enabled, () => this.toggleType(t.key, !t.enabled)));
+    const mk = (label, desc, on, toggle) => ({
+      label, desc, toggle, bg: on ? 'var(--color-accent)' : 'var(--color-divider)', knobLeft: on ? '21px' : '2px',
+      ariaChecked: on ? 'true' : 'false', ariaLabel: `${label}: ${on ? 'on' : 'off'}`,
+    });
+    const typeToggles = this.state.types.map((t) => mk(
+      t.label,
+      t.enabled ? 'Live on the storefront' : 'Hidden from customers everywhere',
+      !!t.enabled,
+      () => {
+        if (t.enabled && !window.confirm(`Hide ${t.label} from the whole storefront? Customers won't see it in menus, the homepage, catalog pages, saved items or the inquiry cart until you switch it back on.`)) return;
+        this.toggleType(t.key, !t.enabled);
+      },
+    ));
     const featureToggles = this.state.features.map((f) => mk(f.label, f.description, !!f.enabled, () => this.toggleFeature(f.key, !f.enabled)));
     return {
       typeToggles, featureToggles,

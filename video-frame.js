@@ -66,8 +66,11 @@
       if (cropRaw && cropRaw !== 'null') {
         try { crop = JSON.parse(cropRaw); } catch { crop = null; }
       }
+      // Measured against this element (the tile), not the video — see
+      // utils/applyVideoCrop.js.
       import('./utils/applyVideoCrop.js').then(({ applyVideoCrop }) => {
-        this._cleanupCrop = applyVideoCrop(this._video, crop);
+        if (this._cleanupCrop) this._cleanupCrop();
+        this._cleanupCrop = applyVideoCrop(this._video, crop, this);
       });
     }
   }

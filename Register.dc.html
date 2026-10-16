@@ -70,7 +70,7 @@
         <h2 style="margin-top:8px;">Create Your Account</h2>
         <p style="opacity:.7;font-size:13px;margin-bottom:28px;">We'll email a verification code before your application is submitted for admin review.</p>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;">
           <div class="field"><label>Full Name *</label><input class="input" ref="{{ fullNameRef }}" required=""/></div>
           <div class="field"><label>Mobile Number *</label><input class="input" ref="{{ mobileRef }}" required=""/></div>
           <div class="field" style="grid-column:1/-1;"><label>Email *</label><input class="input" type="email" ref="{{ emailRef }}" required=""/></div>
@@ -94,10 +94,10 @@
   </section>
 
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+    <div class="site-footer-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
       <div>
         <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">ONCD</div>
-        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">{{ footerTagline }}</p>
       </div>
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
@@ -141,7 +141,7 @@
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+    <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
       <span>GIA · IGI · HRD Certified Partners</span>
     </div>
@@ -150,10 +150,27 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+// Catalog switches from Admin > Product Types, as last seen by
+// utils/productTypes.js — read synchronously so the first paint already
+// hides disabled catalogs (the live answer is fetched on mount).
+function readTypeVisibility() {
+  try {
+    const v = JSON.parse(localStorage.getItem('oncd_type_visibility_v1') || 'null');
+    if (v) return { showDiamonds: v.diamond !== false, showJewelry: v.jewelry !== false, showGemstones: v.gemstone !== false };
+  } catch {}
+  return { showDiamonds: true, showJewelry: true, showGemstones: true };
+}
+// Footer brand line naming only the catalogs that are switched on.
+function footerTaglineFor(d, j, g) {
+  const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
+  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+}
 class Component extends DCLogic {
   state = {
     step: 'form', pendingEmail: '', submitting: false, showError: false, errorMessage: '',
-    showDiamonds: true, showJewelry: true, showGemstones: true,
+    ...readTypeVisibility(),
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
   };
   fullNameRef = React.createRef(); mobileRef = React.createRef(); emailRef = React.createRef();
@@ -226,6 +243,7 @@ class Component extends DCLogic {
     return {
       isForm: step === 'form', isOtp: step === 'otp', isDone: step === 'done',
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
+      footerTagline: footerTaglineFor(this.state.showDiamonds, this.state.showJewelry, this.state.showGemstones),
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
       pendingEmail: this.state.pendingEmail || 'your email',

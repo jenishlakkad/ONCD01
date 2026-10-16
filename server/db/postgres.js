@@ -20,15 +20,20 @@ if (!connectionString) {
 // setting already proven to connect in migrate-to-postgres.js.
 //
 // Opening a connection to Supabase costs ~1.2s (TLS + pooler handshake)
-// versus ~150ms for a query on a warm one. pg's default idleTimeoutMillis
-// (10s) closed connections between almost every page view, so a refresh
-// after a short pause paid that 1.2s again. Holding idle connections for
-// 5 minutes (plus TCP keep-alive so they survive NAT/firewall idling)
-// keeps normal browsing on warm connections.
+// versus ~150ms for a query on a warm one, so idle connections are kept
+// for a while (pg's default 10s closed them between most page views).
+//
+// But Supabase's SESSION pooler caps clients at 15 for the whole database,
+// and that cap is shared by every server using it (the live site and any
+// dev/test instance) plus scripts. Hitting it fails queries everywhere
+// with EMAXCONNSESSION — so each process holds at most a few connections
+// and lets them go after a short idle spell. Both are tunable per
+// deployment: PG_POOL_MAX, PG_IDLE_MS.
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
-  idleTimeoutMillis: 5 * 60 * 1000,
+  max: Number(process.env.PG_POOL_MAX) || 5,
+  idleTimeoutMillis: Number(process.env.PG_IDLE_MS) || 30 * 1000,
   keepAlive: true,
 });
 

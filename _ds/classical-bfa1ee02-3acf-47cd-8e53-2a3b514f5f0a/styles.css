@@ -504,7 +504,7 @@ img,svg,video,canvas{max-width:100%;height:auto;}
 @media (min-width:480px){ .product-card-price{font-size:15px;} }
 .product-card-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
 .product-card-btns.single{grid-template-columns:1fr;}
-.product-card-btns .btn{width:100%;padding:8px 6px;font-size:10.5px;}
+.product-card-btns .btn{width:100%;padding:8px 6px;font-size:10.5px;white-space:nowrap;}
 @media (min-width:480px){ .product-card-btns .btn{padding:9px 8px;font-size:12px;} }
 
 /* ── Nav (hamburger below 1024px) ──────────────────────────────────── */
@@ -636,7 +636,10 @@ img,svg,video,canvas{max-width:100%;height:auto;}
 @media (max-width:479px){
   .btn{padding:10px 16px;font-size:12.5px;}
   .dialog{padding:20px;}
-  .card{padding:14px;}
+  /* Not product cards: their photo runs edge to edge and the body has its
+     own padding — this used to inset every product photo by 14px on
+     phones and squeeze the title/spec/buttons into what was left. */
+  .card:not(.product-card){padding:14px;}
 }
 
 /* Landscape phones: a tall 88vh hero eats the whole screen when height is
@@ -644,4 +647,47 @@ img,svg,video,canvas{max-width:100%;height:auto;}
    below the fold. */
 @media (max-height:480px) and (orientation:landscape){
   .hero-section{height:auto !important;min-height:420px !important;padding-top:90px;padding-bottom:40px;}
+}
+
+/* ── Site footer (same markup on every storefront page) ─────────────────
+   The inline auto-fit grid left the 5 columns to chance: one long
+   single column on phones, a lone "Reach the Desk" column wrapping onto
+   its own row on tablets and small laptops. Fixed tiers instead:
+   phones 2 columns (brand full width), tablets brand on top + 4 link
+   columns, desktop one row. Long e-mail addresses break instead of
+   pushing past the column. */
+.site-footer-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:32px 20px !important;}
+.site-footer-grid > div:first-child{grid-column:1 / -1;}
+.site-footer-grid > div:first-child p{max-width:420px !important;}
+.site-footer-grid span,.site-footer-grid a{overflow-wrap:anywhere;}
+@media (min-width:640px){
+  .site-footer-grid{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:36px 24px !important;}
+}
+@media (min-width:1024px){
+  .site-footer-grid{grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr)) minmax(0,1.25fr) !important;gap:32px !important;}
+  .site-footer-grid > div:first-child{grid-column:auto;}
+  .site-footer-grid > div:first-child p{max-width:280px !important;}
+}
+@media (min-width:1280px){ .site-footer-grid{gap:40px !important;} }
+.footer-bottom-row{gap:6px 24px;flex-wrap:wrap;}
+@media (max-width:767px){
+  .footer-bottom-row{justify-content:center !important;text-align:center;}
+}
+
+/* Open mobile menu: the top bar already shows the cart (.nav-cart-mobile),
+   so the desktop cart icon inside the account/login group is hidden there
+   instead of appearing twice. */
+@media (max-width:1023px){
+  .nav .nav-cart-desktop{display:none !important;}
+}
+
+/* Justified paragraphs: only from tablet width up. On a phone's short
+   lines justification stretches the word gaps into visible "rivers". */
+.text-justify{text-align:left;}
+@media (min-width:768px){ .text-justify{text-align:justify;} }
+
+/* A page whose top-bar cart is a link (Dashboard: it opens the cart on
+   Home) was caught by ".nav > a{display:none}" above and never showed. */
+@media (max-width:1023px){
+  .nav > a.nav-cart-mobile{display:flex !important;flex-basis:auto;order:1;padding:0;border-top:none;}
 }

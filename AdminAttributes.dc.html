@@ -73,7 +73,7 @@ a:hover{color:var(--color-accent-700)}
         <label class="seg-opt"><input type="radio" name="type" checked="{{ isColorTab }}" onChange="{{ selectColorTab }}"/>Colors ({{ colorCount }})</label>
         <label class="seg-opt"><input type="radio" name="type" checked="{{ isCertTab }}" onChange="{{ selectCertTab }}"/>Certifications ({{ certCount }})</label>
       </div>
-      <button onClick="{{ openAdd }}" class="btn btn-primary">+ Add {{ addLabel }}</button>
+      <button onClick="{{ openAdd }}" class="btn btn-primary">{{ addButtonLabel }}</button>
     </div>
 
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
@@ -329,7 +329,7 @@ class Component extends DCLogic {
       handleSearch: (e) => this.handleSearch(e),
       totalForTab, visibleRows, reorderHint,
 
-      addLabel: typeLabel,
+      addLabel: typeLabel, addButtonLabel: `+ Add ${typeLabel}`,
       openAdd: () => this.openAdd(),
 
       dialogOpen: this.state.dialogOpen,

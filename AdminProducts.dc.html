@@ -72,11 +72,11 @@ a:hover{color:var(--color-accent-700)}
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
       <div class="seg">
-        <label class="seg-opt"><input type="radio" name="type" checked="{{ isDiamondTab }}" onChange="{{ selectDiamondTab }}"/>Diamonds ({{ diamondCount }})</label>
-        <label class="seg-opt"><input type="radio" name="type" checked="{{ isJewelryTab }}" onChange="{{ selectJewelryTab }}"/>Jewelry ({{ jewelryCount }})</label>
-        <label class="seg-opt"><input type="radio" name="type" checked="{{ isGemstoneTab }}" onChange="{{ selectGemstoneTab }}"/>Gemstones ({{ gemstoneCount }})</label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isDiamondTab }}" onChange="{{ selectDiamondTab }}"/><span>{{ diamondTabLabel }}</span></label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isJewelryTab }}" onChange="{{ selectJewelryTab }}"/><span>{{ jewelryTabLabel }}</span></label>
+        <label class="seg-opt"><input type="radio" name="type" checked="{{ isGemstoneTab }}" onChange="{{ selectGemstoneTab }}"/><span>{{ gemstoneTabLabel }}</span></label>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <a href="{{ templateUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download Template</a>
         <sc-if value="{{ hasProductsInTab }}" hint-placeholder-val="{{ true }}">
           <a href="{{ exportAllUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download All Stock</a>
@@ -85,7 +85,7 @@ a:hover{color:var(--color-accent-700)}
           {{ importButtonLabel }}
           <input type="file" accept=".xlsx,.xls" onChange="{{ handleImportFile }}" disabled="{{ importBusy }}" style="display:none;"/>
         </label>
-        <button onClick="{{ openAdd }}" class="btn btn-primary">+ Add {{ activeTypeLabel }}</button>
+        <button onClick="{{ openAdd }}" class="btn btn-primary">{{ addButtonLabel }}</button>
       </div>
     </div>
 
@@ -154,7 +154,7 @@ a:hover{color:var(--color-accent-700)}
     <sc-if value="{{ showSelectAllBanner }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:9px 14px;background:var(--color-accent-100);border:1px solid var(--color-accent-300);border-radius:8px;font-size:12.5px;flex-wrap:wrap;">
         <span>All {{ pageSelectedCount }} items on this page are selected.</span>
-        <button onClick="{{ selectAllMatching }}" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;">Select all {{ filteredCount }} matching items</button>
+        <button onClick="{{ selectAllMatching }}" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;">{{ selectAllLabel }}</button>
       </div>
     </sc-if>
 
@@ -229,7 +229,7 @@ a:hover{color:var(--color-accent-700)}
                   </sc-if>
                   <sc-if value="{{ m.isVideo }}" hint-placeholder-val="{{ false }}">
                     <video-frame src="{{ m.url }}" crop="{{ m.cropJson }}" style="width:100%;height:100%;pointer-events:none;"></video-frame>
-                    <button onClick="{{ m.editVideo }}" title="Frame / crop video" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">✎ Edit</button>
+                    <button onClick="{{ m.editVideo }}" title="Frame video (choose the square)" style="position:absolute;bottom:4px;right:4px;background:rgba(32,31,29,.65);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 7px;cursor:pointer;">✎ Edit</button>
                   </sc-if>
                   <sc-if value="{{ m.isCover }}" hint-placeholder-val="{{ false }}">
                     <span style="position:absolute;top:4px;left:4px;background:rgba(32,31,29,.75);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;pointer-events:none;">Cover</span>
@@ -252,11 +252,11 @@ a:hover{color:var(--color-accent-700)}
             <sc-if value="{{ mediaBusy }}" hint-placeholder-val="{{ false }}">
               <span style="font-size:12.5px;color:var(--color-accent-700);display:inline-flex;align-items:center;gap:6px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" style="animation:adm-spin .8s linear infinite;"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="42" stroke-dashoffset="14" stroke-linecap="round"/></svg>
-                Processing photo/video…
+                Preparing photo/video…
               </span>
             </sc-if>
           </div>
-          <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1600px or larger, square — product photos are shown in a zoomable gallery, so extra resolution keeps zoomed-in detail sharp. Photos/videos are only saved when you click Save Product.</p>
+          <p style="font-size:11px;opacity:.55;margin-top:6px;">Photos and videos are made square automatically (centered) — use ✎ Edit on any tile to move or zoom the frame. Videos are also compressed and their sound removed when you save. Phone videos up to 200 MB are fine. Nothing is saved until you click Save Product.</p>
           <sc-if value="{{ mediaError }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;padding:12px 14px;border-radius:var(--radius-md);background:color-mix(in srgb, var(--color-accent-700) 8%, var(--color-bg));border:1px solid color-mix(in srgb, var(--color-accent-700) 30%, transparent);">
               <span style="font-size:16px;line-height:1;flex:none;">⚠️</span>
@@ -520,7 +520,7 @@ class Component extends DCLogic {
     pageSize: 50, currentPage: 1,
     selectedIds: new Set(), bulkBusy: false, bulkPriceVisibility: '__unset',
     dialogOpen: false, editingId: null,
-    form: this.emptyForm, dialogError: '', saving: false,
+    form: this.emptyForm, dialogError: '', saving: false, saveStatus: '',
     formDirty: false, mediaDirty: false,
     categoryOptions: [], subcategoryOptions: [],
     shapeOptions: [], colorOptions: [], certOptions: [],
@@ -672,8 +672,10 @@ class Component extends DCLogic {
     return (media || []).map((m) => ({
       clientId: 'existing-' + m.id, isExisting: true, serverId: m.id,
       kind: m.kind, url: m.url, originalName: m.originalName,
-      crop: m.crop || null, cropTouched: false,
-      pendingFile: null, pendingRemove: false,
+      crop: m.crop || null,
+      // Re-opening the framing tool starts from how it's shown today.
+      frameView: m.crop ? { aspect: m.crop.aspect || 'square', x: m.crop.x || 0, y: m.crop.y || 0, s: m.crop.scale || 1 } : null,
+      pendingFile: null, pendingRemove: false, reframe: null,
     }));
   }
 
@@ -719,7 +721,7 @@ class Component extends DCLogic {
     if (!this.state.editingId) body.type = activeType;
     for (const k of Object.keys(body)) if (body[k] === '') body[k] = null;
 
-    this.setState({ saving: true, dialogError: '', mediaError: '' });
+    this.setState({ saving: true, saveStatus: '', dialogError: '', mediaError: '' });
     let productId = this.state.editingId;
     try {
       const url = productId ? `/api/admin/products/${productId}` : '/api/admin/products';
@@ -754,27 +756,28 @@ class Component extends DCLogic {
           if (!m.isExisting) {
             const fd = new FormData();
             fd.append('files', m.pendingFile, m.originalName || 'upload');
+            // The server cuts every video to its frame (centered square
+            // unless the admin chose one), compresses it and drops the sound.
+            if (m.kind === 'video') {
+              fd.append('frames', JSON.stringify([m.frame || null]));
+              this.setState({ saveStatus: `Processing video ${m.originalName ? '“' + m.originalName + '”' : ''}…` });
+            } else {
+              this.setState({ saveStatus: 'Uploading photos…' });
+            }
             const r = await fetch(`/api/admin/products/${productId}/media`, { method: 'POST', credentials: 'same-origin', body: fd });
             const j = await r.json();
             if (!r.ok) throw new Error(j.error || `Failed to upload ${m.originalName || 'a file'}.`);
             const created = j.data[0];
-            working.push({ ...m, isExisting: true, serverId: created.id, pendingFile: null });
-            // The only remaining metadata-only crop path: a brand-new video's
-            // auto-applied centered-square default (see handleMediaSelect)
-            // is deliberately still non-destructive/CSS-only, not re-encoded
-            // here — re-encoding every video the instant it's added would
-            // turn a fast multi-file add into a multi-second-per-video wait,
-            // for a framing the admin never explicitly asked for. Explicitly
-            // opening "Frame Video" (editVideoMedia) always produces a real,
-            // destructive crop instead, whether confirming this same default
-            // or picking something else — this is the one path that doesn't.
-            if (m.cropTouched && m.crop) {
-              const cr = await fetch(`/api/admin/products/${productId}/media/${created.id}/crop`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ crop: m.crop }),
-              });
-              if (!cr.ok) { const j2 = await cr.json().catch(() => ({})); throw new Error(j2.error || 'Failed to save video framing.'); }
-            }
+            working.push({ ...m, isExisting: true, serverId: created.id, url: created.url, pendingFile: null, sourceFile: null, frame: null, crop: null });
+          } else if (m.reframe) {
+            this.setState({ saveStatus: `Re-framing video ${m.originalName ? '“' + m.originalName + '”' : ''}…` });
+            const r = await fetch(`/api/admin/products/${productId}/media/${m.serverId}/reframe`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+              body: JSON.stringify({ frame: m.reframe }),
+            });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(j.error || `Failed to re-frame ${m.originalName || 'a video'}.`);
+            working.push({ ...m, url: j.data.url, reframe: null, crop: null, frameView: null });
           } else if (m.pendingFile) {
             const fd = new FormData();
             fd.append('file', m.pendingFile, m.originalName || 'upload');
@@ -1005,12 +1008,12 @@ class Component extends DCLogic {
           return {
             clientId, isExisting: false, serverId: null, kind,
             url: URL.createObjectURL(f), originalName: f.name,
-            // { x:0, y:0, scale:1 } is exactly "no pan, no extra zoom" — the
-            // plain centered square of the frame, applied via CSS wherever
-            // the video is shown (see utils/applyVideoCrop.js), never
-            // re-encoding the file itself.
-            crop: { x: 0, y: 0, scale: 1, aspect: 'square' }, cropTouched: true,
-            pendingFile: f, pendingRemove: false,
+            // Nothing is encoded in the browser. frame:null = the server's
+            // default, the centered square (the middle of a 9:16 clip); the
+            // tile previews exactly that with CSS until Save.
+            frame: null, frameView: null,
+            crop: { x: 0, y: 0, scale: 1, aspect: 'square' },
+            pendingFile: f, sourceFile: f, pendingRemove: false,
           };
         }
         // HEIC (and any other format the browser can't decode into an <img>)
@@ -1026,8 +1029,10 @@ class Component extends DCLogic {
         return {
           clientId, isExisting: false, serverId: null, kind,
           url: URL.createObjectURL(pendingFile), originalName,
-          crop: null, cropTouched: false,
-          pendingFile, pendingRemove: false,
+          crop: null, cropView: null,
+          // The untouched original: Edit always re-crops from this, never
+          // from the already-cropped copy, so nothing is lost by re-editing.
+          pendingFile, sourceFile: f, pendingRemove: false,
         };
       }));
       this.setState({ mediaItems: [...this.state.mediaItems, ...newItems], mediaDirty: true, mediaBusy: false });
@@ -1049,48 +1054,75 @@ class Component extends DCLogic {
     return (file.type || '').startsWith('video/') ? 'video' : 'image';
   }
 
-  async editImageMedia(m) {
+  // Tile handlers can hold the tile as it was when first drawn; always work
+  // from its CURRENT state (latest crop, saved framing, original file).
+  currentMedia(m) {
+    return this.state.mediaItems.find((mi) => mi.clientId === m.clientId) || m;
+  }
+
+  async editImageMedia(tile) {
+    if (this.state.mediaBusy) return;
+    const m = this.currentMedia(tile);
     try {
-      const blob = m.pendingFile || await fetch(m.url, { credentials: 'same-origin' }).then((r) => r.blob());
+      const blob = m.sourceFile || m.pendingFile || await fetch(m.url, { credentials: 'same-origin' }).then((r) => r.blob());
       const file = blob instanceof File ? blob : new File([blob], m.originalName || 'photo.jpg', { type: blob.type || 'image/jpeg' });
       const { openCropper } = await import('./utils/imageCropper.js');
-      const cropped = await openCropper(file, { title: 'Edit Photo', subtitle: m.originalName || '', defaultAspect: 'square' });
-      if (!cropped) return;
+      let view = null;
+      const cropped = await openCropper(file, {
+        title: 'Edit Photo', subtitle: m.originalName || '', defaultAspect: 'square',
+        initialView: m.sourceFile ? m.cropView : null,
+        // Called the moment Apply is clicked; encoding the crop follows and
+        // takes a second or so, so the grid shows "Preparing…" meanwhile.
+        onView: (v) => { view = v; this.setState({ mediaBusy: true }); },
+      });
+      if (!cropped) { this.setState({ mediaBusy: false }); return; }
       const newUrl = URL.createObjectURL(cropped);
       if (m.url.indexOf('blob:') === 0) URL.revokeObjectURL(m.url);
+      const base = (m.originalName || 'photo').replace(/\.[^.]+$/, '');
       this.setState({
-        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId ? { ...mi, url: newUrl, pendingFile: cropped } : mi)),
-        mediaDirty: true,
+        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId ? {
+          ...mi, url: newUrl, pendingFile: cropped, cropView: view,
+          // an existing photo becomes its own source from here on
+          sourceFile: mi.sourceFile || file,
+          originalName: cropped === file ? mi.originalName : `${base}.webp`,
+        } : mi)),
+        mediaDirty: true, mediaBusy: false,
       });
     } catch (err) {
-      this.setState({ mediaError: err.message || 'Failed to edit photo.' });
+      this.setState({ mediaBusy: false, mediaError: err.message || 'Failed to edit photo.' });
     }
   }
 
-  async editVideoMedia(m) {
+  // Opens the framing tool on the video (the original file for one that
+  // isn't saved yet, the stored video otherwise). Nothing is encoded here:
+  // the chosen frame is sent on Save and the server cuts, compresses and
+  // mutes the video (server/lib/processVideo.js). The tile previews the
+  // chosen frame straight away.
+  async editVideoMedia(tile) {
+    if (this.state.mediaBusy) return;
+    const m = this.currentMedia(tile);
     try {
       const { openVideoCropper } = await import('./utils/videoCropper.js');
-      const result = await openVideoCropper(m.url, { title: 'Frame Video', subtitle: m.originalName || '', initialCrop: m.crop || null, defaultAspect: 'square' });
-      if (result === undefined) return; // cancelled, or nothing to crop — no change
-      // Cropping is now destructive: the video was actually re-encoded down
-      // to just the selected window (see utils/videoCropExport.js), so from
-      // here it's treated exactly like a replacement file — same as
-      // editImageMedia() — not a separate metadata update. `crop` is reset
-      // to null since the framing is now physically baked into the pixels;
-      // no CSS overlay is needed (or wanted) on top of it.
-      const ext = result.extension || '.mp4';
-      const base = (m.originalName || 'video').replace(/\.[^.]+$/, '');
-      const file = new File([result.blob], base + ext, { type: result.mimeType });
-      const newUrl = URL.createObjectURL(file);
-      if (m.url.indexOf('blob:') === 0) URL.revokeObjectURL(m.url);
+      const result = await openVideoCropper(m.url, {
+        title: 'Frame Video', subtitle: m.originalName || '', initialView: m.frameView || null,
+        note: m.isExisting
+          ? 'When you save, this video is re-cut to the new frame (compressed, no sound) and replaces the current one.'
+          : 'When you save, the video is cut to this frame, compressed and its sound removed.',
+      });
+      if (!result) return;
+      const { frame, view } = result;
+      const preview = frame.aspect === 'original' ? null : { x: view.x, y: view.y, scale: view.s, aspect: view.aspect };
       this.setState({
-        mediaItems: this.state.mediaItems.map((mi) => (mi.clientId === m.clientId
-          ? { ...mi, url: newUrl, originalName: file.name, pendingFile: file, crop: null, cropTouched: false }
-          : mi)),
+        mediaItems: this.state.mediaItems.map((mi) => {
+          if (mi.clientId !== m.clientId) return mi;
+          return mi.isExisting
+            ? { ...mi, reframe: frame, frameView: view, crop: preview }
+            : { ...mi, frame, frameView: view, crop: preview };
+        }),
         mediaDirty: true,
       });
     } catch (err) {
-      this.setState({ mediaError: err.message || 'Failed to crop video.' });
+      this.setState({ mediaError: err.message || 'Failed to open the video framing tool.' });
     }
   }
 
@@ -1307,9 +1339,12 @@ class Component extends DCLogic {
       diamondCount: allProducts.filter((p) => p.type === 'diamond').length,
       jewelryCount: allProducts.filter((p) => p.type === 'jewelry').length,
       gemstoneCount: allProducts.filter((p) => p.type === 'gemstone').length,
-      activeTypeLabel: typeLabel,
+      diamondTabLabel: `Diamonds (${allProducts.filter((p) => p.type === 'diamond').length})`,
+      jewelryTabLabel: `Jewelry (${allProducts.filter((p) => p.type === 'jewelry').length})`,
+      gemstoneTabLabel: `Gemstones (${allProducts.filter((p) => p.type === 'gemstone').length})`,
+      activeTypeLabel: typeLabel, addButtonLabel: `+ Add ${typeLabel}`,
       visibleProducts: pagedProducts,
-      filteredCount: visibleProducts.length,
+      filteredCount: visibleProducts.length, selectAllLabel: `Select all ${visibleProducts.length} matching items`,
       activeTypeTotal: typeProducts.length,
       pageSize: String(pageSize),
       handlePageSize: (e) => this.setState({ pageSize: Number(e.target.value), currentPage: 1 }),
@@ -1362,7 +1397,7 @@ class Component extends DCLogic {
       isDiamondForm: activeType === 'diamond', isJewelryForm: activeType === 'jewelry', isGemstoneForm: activeType === 'gemstone',
       saveForm: () => this.saveForm(),
       saving: this.state.saving,
-      saveLabel: this.state.saving ? 'Saving…' : this.state.mediaBusy ? 'Processing…' : 'Save Product',
+      saveLabel: this.state.saving ? (this.state.saveStatus || 'Saving…') : this.state.mediaBusy ? 'Preparing…' : 'Save Product',
       saveDisabled: this.state.saving || this.state.mediaBusy,
       dialogError: this.state.dialogError,
       mediaError: this.state.mediaError,

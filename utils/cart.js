@@ -5,6 +5,7 @@
 
 import { inquiryTitle, inquirySpecRows, inquiryPriceLabel } from './inquiryItem.js';
 import { refFor, rememberNote, pendingFor } from './inquiryRef.js';
+import { readCachedTypeVisibility } from './productTypes.js';
 
 const KEY = 'aurum_cart_v1';
 
@@ -41,9 +42,22 @@ function syncCartToServer(items) {
   } catch {}
 }
 
+// What the customer sees and can send: items from a catalog switched off in
+// Admin > Product Types are left out (they stay stored, and come back if the
+// catalog is switched on again). Items saved without product details have no
+// known type and are always shown.
 export function getCart() {
-  return readCart();
+  const vis = readCachedTypeVisibility();
+  return readCart().filter((i) => !(i.product && i.product.type && vis[i.product.type] === false));
 }
+
+// Every page already re-reads the cart on 'aurum-cart-change'; a change in
+// which catalogs are on has to trigger the same refresh.
+try {
+  window.addEventListener('oncd-type-visibility-change', () => {
+    try { window.dispatchEvent(new CustomEvent('aurum-cart-change')); } catch {}
+  });
+} catch {}
 
 // item.product (optional) is the full raw serialized product row (see
 // server/lib/serializeProduct.js) - when present it's what buildMessage()
@@ -77,6 +91,32 @@ export function removeFromCart(sku) {
 
 export function clearCart() {
   writeCart([]);
+}
+
+// Quantity from the drawer's stepper (jewelry pieces; a loose stone is one
+// of a kind and always 1). Clamped to 1..99.
+export function setQty(sku, qty) {
+  const items = readCart();
+  const it = items.find((i) => i.sku === sku);
+  if (!it) return items;
+  it.qty = Math.max(1, Math.min(99, Math.round(Number(qty) || 1)));
+  writeCart(items);
+  return items;
+}
+
+// Undo for a removal: puts the exact item back where it was.
+export function restoreItem(item, index) {
+  if (!item || !item.sku) return readCart();
+  const items = readCart().filter((i) => i.sku !== item.sku);
+  items.splice(Math.max(0, Math.min(items.length, Number(index) || 0)), 0, item);
+  writeCart(items);
+  return items;
+}
+
+// The one Inquiry Cart drawer every storefront page uses
+// (utils/cartDrawer.js) — loaded on first use.
+export function openCartDrawer() {
+  return import('./cartDrawer.js').then((m) => m.openCart()).catch((err) => console.error('[cart] drawer failed to load', err));
 }
 
 // *word* is the shared bold convention on WhatsApp and Skype (their compose
@@ -206,3 +246,27 @@ export function submitInquiry(items, channel) {
     console.error('[cart] failed to record inquiry', err);
   }
 }
+
+// Every page that loads this module gets the same entry points into the
+// drawer: a "...?cart=open" address (old bookmarks, e-mails), and any link
+// to "...?cart=open" on the page (e.g. Dashboard's "Review & send inquiry")
+// opens the drawer right where the customer is instead of navigating away.
+try {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('cart') === 'open') {
+    params.delete('cart');
+    const qs = params.toString();
+    try { history.replaceState(history.state, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash); } catch {}
+    setTimeout(openCartDrawer, 0);
+  }
+  if (!window.__oncdCartLinks) {
+    window.__oncdCartLinks = true;
+    document.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.target.closest && e.target.closest('a[href*="cart=open"]');
+      if (!a) return;
+      e.preventDefault();
+      openCartDrawer();
+    });
+  }
+} catch {}

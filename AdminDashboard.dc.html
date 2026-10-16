@@ -140,7 +140,7 @@ a:hover{color:var(--color-accent-700)}
         <h2 style="color:#f8f4f4;font-size:22px;font-weight:400;">{{ greeting }}, {{ adminFirstName }}.</h2>
         <p>{{ todayLabel }} — here's what needs your attention today.</p>
       </div>
-      <div class="tag tag-accent" style="flex:none;">{{ pendingApprovalsCount }} awaiting approval</div>
+      <div class="tag tag-accent" style="flex:none;">{{ pendingApprovalsLabel }}</div>
     </div>
 
     <h6 style="color:var(--color-accent-700);margin-bottom:12px;">Quick Actions</h6>
@@ -332,6 +332,7 @@ class Component extends DCLogic {
       newInquiryCount: this.state.newInquiryCount || 0,
       hasNewInquiry: this.state.newInquiryCount > 0,
       pendingApprovalsCount,
+      pendingApprovalsLabel: `${pendingApprovalsCount} awaiting approval`,
       hasPendingApprovals: pendingApprovalsCount > 0,
       totalProductsCount: statValue('Total Products'),
       inquiriesWeekCount: statValue('Inquiries This Week'),

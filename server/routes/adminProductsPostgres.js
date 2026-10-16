@@ -11,6 +11,10 @@ const { serializeProduct } = require('../lib/serializeProduct');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
 const { stripVideoAudio } = require('../lib/stripVideoAudio');
+const { processVideo } = require('../lib/processVideo');
+const r2Storage = require('../services/r2Storage');
+const os = require('os');
+const crypto = require('crypto');
 const { METAL_OPTIONS, getVariants } = require('../lib/productVariants');
 const { writeAudit } = require('../lib/auditPostgres');
 const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns } = require('../lib/excelImportPostgres');
@@ -152,6 +156,39 @@ router.delete('/:id', asyncRoute(async (req, res) => {
   res.json({ data: { deleted: true } });
 }));
 
+// Turns an uploaded video into what the storefront actually serves: framed
+// (centered square unless the admin chose a frame), compressed, no sound —
+// see lib/processVideo.js. Rewrites `file` in place (path/name/mimetype) so
+// persistUploadedFile() stores the processed .mp4. If a file can't be
+// re-encoded (unusual codec), it falls back to the old behaviour (audio
+// stripped by stream copy, original framing) rather than losing the upload.
+async function prepareVideo(file, frame) {
+  const inputPath = file.path;
+  let outPath;
+  let processed = true;
+  try {
+    outPath = await processVideo(inputPath, frame);
+  } catch (err) {
+    console.error('[media] video processing failed, keeping original framing:', err.message);
+    processed = false;
+    outPath = await stripVideoAudio(inputPath);
+  }
+  fs.unlink(inputPath, () => {});
+  file.path = outPath;
+  file.filename = path.basename(outPath);
+  if (processed) {
+    file.mimetype = 'video/mp4';
+    file.originalname = String(file.originalname || 'video').replace(/\.[^.]+$/, '') + '.mp4';
+  }
+  return processed;
+}
+
+function framesFrom(body) {
+  const raw = body && body.frames;
+  if (!raw) return [];
+  try { const v = JSON.parse(raw); return Array.isArray(v) ? v : []; } catch { return []; }
+}
+
 router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(async (req, res) => {
   const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
   if (!product) throw new ApiError(404, 'Product not found.');
@@ -169,22 +206,16 @@ router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(asy
   // two stages fully resolve before the next file starts.
   const created = [];
   const failed = [];
-  for (const f of req.files) {
+  // Optional per-file framing chosen in the admin's framing tool, in the
+  // same order as `files` (null/missing = centered square).
+  const frames = framesFrom(req.body);
+  for (const [i, f] of req.files.entries()) {
     const kind = kindOf(f.mimetype, f.originalname);
     let url;
     try {
-      // Product preview videos never need sound — every byte of audio is
-      // pure wasted storage. Stream-copy (no re-encode, near-instant) via
-      // ffmpeg before the file ever reaches R2, so no video uploaded from
-      // this form can carry an audio track. Swapping f.path here also makes
-      // persistUploadedFile() derive the R2 key/local filename from the
-      // audio-stripped file, not the original.
-      if (kind === 'video') {
-        const stripped = await stripVideoAudio(f.path);
-        fs.unlink(f.path, () => {}); // the pre-strip copy is no longer needed
-        f.path = stripped;
-        f.filename = path.basename(stripped);
-      }
+      // Videos are framed, compressed and muted before they ever reach
+      // storage, so no product video carries sound or wasted pixels.
+      if (kind === 'video') await prepareVideo(f, frames[i] || null);
       url = await persistUploadedFile(f, 'products');
     } catch (err) {
       failed.push({ originalName: f.originalname, error: 'Failed to upload this file. Please try again.' });
@@ -257,13 +288,8 @@ router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute
   // media is physically safe no matter what happens next.
   let newUrl;
   try {
-    // Same audio-strip guarantee as create — see POST /:id/media above.
-    if (newKind === 'video') {
-      const stripped = await stripVideoAudio(req.file.path);
-      fs.unlink(req.file.path, () => {});
-      req.file.path = stripped;
-      req.file.filename = path.basename(stripped);
-    }
+    // Same processing as create — see prepareVideo above.
+    if (newKind === 'video') await prepareVideo(req.file, (req.body || {}).frame || null);
     newUrl = await persistUploadedFile(req.file, 'products');
   } catch (err) {
     throw new ApiError(502, 'Failed to upload the replacement file. The existing media was not changed.');
@@ -289,6 +315,61 @@ router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute
 
   await writeAudit({ actor: req.adminUser.full_name, action: 'Edited media', target: product.sku, module: 'Products' });
   res.json({ data: { id: Number(media.id), kind: newKind, url: newUrl, originalName: req.file.originalname } });
+}));
+
+// Re-frames a video that's already saved, from the stored file: the admin
+// picks a new window in the framing tool and the server re-cuts it (same
+// processing as an upload). The stored file is what gets cropped: a video
+// uploaded before this processing existed still has its full 9:16 frame to
+// choose from; one that's already square can be zoomed/shifted within it.
+router.post('/:id/media/:mediaId/reframe', asyncRoute(async (req, res) => {
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  if (!product) throw new ApiError(404, 'Product not found.');
+  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [req.params.mediaId, product.id]);
+  if (!media) throw new ApiError(404, 'Media not found.');
+  if (media.kind !== 'video') throw new ApiError(400, 'Only videos can be re-framed here.');
+  if (!String(media.url).startsWith('/uploads/')) throw new ApiError(400, 'This video is not stored by the site.');
+
+  // The source: this server's local copy if it has one, otherwise R2.
+  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'oncd-reframe-'));
+  const ext = path.extname(media.url) || '.mp4';
+  const file = { path: path.join(tmpDir, `source${ext}`), originalname: media.original_name || `video${ext}`, mimetype: 'video/mp4' };
+  const cleanupTmp = () => fs.promises.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  try {
+    const localPath = path.join(env.rootDir, media.url.replace(/^\//, ''));
+    if (fs.existsSync(localPath)) await fs.promises.copyFile(localPath, file.path);
+    else {
+      const obj = await r2Storage.getObject(media.url.slice('/uploads/'.length));
+      await fs.promises.writeFile(file.path, obj.body);
+    }
+  } catch (err) {
+    await cleanupTmp();
+    throw new ApiError(502, 'Could not read the stored video. Please try again.');
+  }
+
+  let newUrl;
+  try {
+    const processed = await prepareVideo(file, (req.body || {}).frame || null);
+    if (!processed) throw new Error('not processed');
+    // Stored under a fresh upload-style name in the products folder, so
+    // the new object's key can never collide with the old one.
+    const finalName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}.mp4`;
+    const finalPath = path.join(env.rootDir, 'uploads', 'products', finalName);
+    await fs.promises.mkdir(path.dirname(finalPath), { recursive: true });
+    await fs.promises.copyFile(file.path, finalPath);
+    newUrl = await persistUploadedFile({ ...file, path: finalPath, filename: finalName }, 'products');
+  } catch (err) {
+    await cleanupTmp();
+    throw new ApiError(502, 'Could not process the video. The existing video was not changed.');
+  }
+  await cleanupTmp();
+
+  await db.query('UPDATE product_media SET url = $1, crop = NULL WHERE id = $2', [newUrl, media.id]);
+  // Only after the database points at the new file is the old one removed.
+  await removeR2ObjectForUrl(media.url);
+  fs.unlink(path.join(env.rootDir, media.url.replace(/^\//, '')), () => {});
+  await writeAudit({ actor: req.adminUser.full_name, action: 'Re-framed video', target: product.sku, module: 'Products' });
+  res.json({ data: { id: Number(media.id), kind: 'video', url: toPublicMediaUrl(newUrl), originalName: media.original_name } });
 }));
 
 // Video framing (pan/zoom crop) is stored as metadata, not re-encoded — see
@@ -453,7 +534,7 @@ router.use((err, req, res, next) => {
     return res.status(400).json({ error: err.message });
   }
   if (err && err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ error: 'File is too large (50MB max).' });
+    return res.status(400).json({ error: 'File is too large (200MB max).' });
   }
   next(err);
 });

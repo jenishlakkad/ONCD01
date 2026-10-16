@@ -33,6 +33,12 @@ a:hover{color:var(--color-accent-700)}
     <div class="nav-brand" style="letter-spacing:.1em;">ONCD</div>
     <input type="checkbox" class="nav-check" id="navCheck" hidden>
     <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+    <button onClick="{{ toggleCart }}" class="nav-cart-mobile" aria-label="Cart">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
+        <span style="position:absolute;top:2px;right:2px;background:var(--color-accent);color:#fff;font-size:10px;border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;">{{ cartCount }}</span>
+      </sc-if>
+    </button>
     <a href="Home.dc.html">Home</a>
     <sc-if value="{{ showDiamonds }}" hint-placeholder-val="{{ true }}">
       <a href="Diamonds.dc.html">Diamonds</a>
@@ -46,7 +52,7 @@ a:hover{color:var(--color-accent-700)}
     <a href="About.dc.html">About</a>
     <a href="Contact.dc.html">Contact</a>
     <div style="display:flex;align-items:center;gap:18px;margin-left:28px;">
-      <button onClick="{{ toggleCart }}" style="position:relative;background:none;border:none;cursor:pointer;color:var(--color-text);display:flex;">
+      <button onClick="{{ toggleCart }}" class="nav-cart-desktop" aria-label="Cart" style="position:relative;background:none;border:none;cursor:pointer;color:var(--color-text);display:flex;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
           <span style="position:absolute;top:-8px;right:-10px;background:var(--color-accent);color:#fff;font-size:10px;border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;">{{ cartCount }}</span>
@@ -88,7 +94,7 @@ a:hover{color:var(--color-accent-700)}
 
     <div class="legal-toc">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:10px;">On this page</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 24px;font-size:13.5px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px 24px;font-size:13.5px;">
         <a href="#overview">1. Overview</a>
         <a href="#methods">2. Accepted Payment Methods</a>
         <a href="#pricing">3. Pricing &amp; Quotes</a>
@@ -128,10 +134,10 @@ a:hover{color:var(--color-accent-700)}
   </section>
 
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
+    <div class="site-footer-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
       <div>
         <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">ONCD</div>
-        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">Certified diamonds, fine jewelry and rare gemstones for trade and private collectors, since 1994.</p>
+        <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">{{ footerTagline }}</p>
       </div>
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Shop</h6>
@@ -175,54 +181,38 @@ a:hover{color:var(--color-accent-700)}
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
+    <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
       <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
 
-  <sc-if value="{{ cartOpen }}" hint-placeholder-val="{{ false }}">
-    <div style="position:fixed;inset:0;background:rgba(45,43,43,.5);z-index:100;display:flex;justify-content:flex-end;" onClick="{{ closeCartBg }}">
-      <div style="background:var(--color-bg);width:min(420px,100%);height:100%;padding:28px;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);" onClick="{{ stop }}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-          <h3 style="margin:0;">Inquiry Cart</h3>
-          <button onClick="{{ toggleCart }}" style="background:none;border:none;cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-        </div>
-        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
-          <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:16px;">
-            <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="0">
-              <div style="display:flex;gap:12px;border-bottom:1px solid var(--color-divider);padding-bottom:14px;">
-                <div style="flex:1;">
-                  <div style="font-size:11px;opacity:.6;">{{ it.sku }}</div>
-                  <div style="font-size:14px;font-family:var(--font-heading);font-weight:600;">{{ it.name }}</div>
-                  <div style="font-size:12px;opacity:.7;margin-top:4px;">Qty {{ it.qty }} · {{ it.priceLabel }}</div>
-                </div>
-                <button onClick="{{ it.remove }}" style="background:none;border:none;cursor:pointer;color:var(--color-text);opacity:.5;height:fit-content;">×</button>
-              </div>
-            </sc-for>
-          </div>
-          <div style="border-top:1px solid var(--color-divider);padding-top:16px;margin-top:16px;">
-            <p style="font-size:12px;opacity:.7;margin:0 0 12px;">Send this inquiry to our sales desk via:</p>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-              <a href="{{ waLink }}" target="_blank" class="btn btn-secondary" onClick="{{ submitWa }}">WhatsApp</a>
-              <a href="{{ emailLink }}" class="btn btn-secondary" onClick="{{ submitEmail }}">Email</a>
-              <a href="{{ lineLink }}" target="_blank" class="btn btn-secondary" onClick="{{ submitLine }}">LINE</a>
-              <a href="{{ skypeLink }}" class="btn btn-secondary" onClick="{{ submitSkype }}">Skype</a>
-            </div>
-            <button onClick="{{ clearCartFn }}" class="btn btn-ghost btn-block">Clear Cart</button>
-          </div>
-        </sc-if>
-      </div>
-    </div>
-  </sc-if>
+  <!-- Inquiry Cart: the shared drawer in utils/cartDrawer.js (opened via cart.openCartDrawer()). -->
 
 </div>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+// Catalog switches from Admin > Product Types, as last seen by
+// utils/productTypes.js — read synchronously so the first paint already
+// hides disabled catalogs (the live answer is fetched on mount).
+function readTypeVisibility() {
+  try {
+    const v = JSON.parse(localStorage.getItem('oncd_type_visibility_v1') || 'null');
+    if (v) return { showDiamonds: v.diamond !== false, showJewelry: v.jewelry !== false, showGemstones: v.gemstone !== false };
+  } catch {}
+  return { showDiamonds: true, showJewelry: true, showGemstones: true };
+}
+// Footer brand line naming only the catalogs that are switched on.
+function footerTaglineFor(d, j, g) {
+  const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
+  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+}
 class Component extends DCLogic {
   state = {
-    cartOpen: false, cartItems: [], showDiamonds: true, showJewelry: true, showGemstones: true,
+    cartItems: [], ...readTypeVisibility(),
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false,
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
@@ -257,9 +247,9 @@ class Component extends DCLogic {
   renderVals() {
     const cart = this.cart;
     const items = this.state.cartItems;
-    const message = cart ? cart.buildMessage(items, {}) : '';
     return {
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
+      footerTagline: footerTaglineFor(this.state.showDiamonds, this.state.showJewelry, this.state.showGemstones),
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
       isLoggedIn: !!this.state.customer,
@@ -269,22 +259,11 @@ class Component extends DCLogic {
       closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
       accountName: (this.state.customer && this.state.customer.full_name) || '',
       accountEmail: (this.state.customer && this.state.customer.email) || '',
-      cartOpen: this.state.cartOpen,
       cartItems: items,
       hasCartItems: items.length > 0,
       cartCount: items.reduce((n, i) => n + i.qty, 0),
-      toggleCart: () => this.setState(s => ({ cartOpen: !s.cartOpen })),
-      closeCartBg: () => this.setState({ cartOpen: false }),
+      toggleCart: () => { if (this.cart) this.cart.openCartDrawer(); },
       stop: e => e.stopPropagation(),
-      clearCartFn: () => { cart && cart.clearCart(); this.refreshCart(); },
-      waLink: cart ? cart.channelLink('whatsapp', message, this.state.settings) : '#',
-      emailLink: cart ? cart.channelLink('email', message, this.state.settings) : '#',
-      lineLink: cart ? cart.channelLink('line', message, this.state.settings) : '#',
-      skypeLink: cart ? cart.channelLink('skype', message, this.state.settings) : '#',
-      submitWa: () => cart && cart.submitInquiry(items, 'whatsapp'),
-      submitEmail: () => cart && cart.submitInquiry(items, 'email'),
-      submitLine: () => cart && cart.submitInquiry(items, 'line'),
-      submitSkype: () => cart && cart.submitInquiry(items, 'skype'),
     };
   }
 }

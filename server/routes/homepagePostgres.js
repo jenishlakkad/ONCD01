@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db/postgres');
+const { loadTypeVisibility, hrefAllowed } = require('../lib/productTypeVisibility');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const { PUBLIC_FROM, PUBLIC_WHERE, loadPriceContext, serializePublicRows } = require('../lib/publicProducts');
@@ -8,6 +9,10 @@ const { getMergedSections } = require('../lib/homepageSections');
 const router = express.Router();
 
 const PRODUCT_TYPES = ['diamond', 'jewelry', 'gemstone'];
+// Sections that only ever show one catalog, and sections whose admin
+// settings can narrow them to one catalog (settings.type).
+const TYPE_SECTIONS = { shapePicker: 'diamond', gemHighlights: 'gemstone' };
+const SINGLE_TYPE_FILTER_SECTIONS = ['featured', 'favorites'];
 // Home grids are at most 5 columns wide (see Home.dc.html's column logic),
 // so `rows` settings translate to at most rows * 5 products.
 const MAX_COLUMNS = 5;
@@ -38,7 +43,7 @@ async function serializeAll(req, rowLists, priceContext) {
 router.get('/', asyncRoute(async (req, res) => {
   // Independent reads, run together — each is a full network round trip to
   // the database, so running them one after another multiplied page latency.
-  const [slides, { sections: sectionList }, blockRows, collections, whyUs] = await Promise.all([
+  const [slides, { sections: allSections }, blockRows, collections, whyUs, vis] = await Promise.all([
     db.all(
       `SELECT id, title, kicker, sub, cta, href, image_url AS "imageUrl", sort_order AS "sortOrder"
        FROM homepage_slides WHERE enabled = true ORDER BY sort_order`
@@ -47,20 +52,35 @@ router.get('/', asyncRoute(async (req, res) => {
     db.all(`SELECT key, kicker, title, body, cta, href, image_url AS "imageUrl" FROM content_blocks WHERE page = 'home' ORDER BY sort_order`),
     db.all(`SELECT key, title, description, href, image_url AS "imageUrl" FROM homepage_collections ORDER BY sort_order`),
     db.all(`SELECT title, description FROM why_us_bullets WHERE page = 'home' AND enabled = true ORDER BY sort_order`),
+    loadTypeVisibility(),
   ]);
+  // Nothing on the homepage may lead into a catalog switched off in
+  // Admin > Product Types: slides, blocks, collection cards and section
+  // buttons pointing at one are dropped, and sections that only ever show
+  // one catalog are switched off with it.
+  const allowed = (href) => hrefAllowed(href, vis);
+  const sectionList = allSections.map((s) => {
+    const onlyType = TYPE_SECTIONS[s.key];
+    const filterType = s.settings && s.settings.type;
+    const typeOff = (onlyType && vis[onlyType] === false)
+      || (SINGLE_TYPE_FILTER_SECTIONS.includes(s.key) && filterType && filterType !== 'all' && vis[filterType] === false);
+    const out = typeOff ? { ...s, enabled: false } : s;
+    return out.ctaHref && !allowed(out.ctaHref) ? { ...out, ctaHref: '', ctaLabel: '' } : out;
+  });
   // Legacy key -> enabled map, kept alongside the richer sectionList.
   const sections = {};
   for (const s of sectionList) sections[s.key] = s.enabled;
   const blocks = {};
-  for (const r of blockRows) blocks[r.key] = { ...r, imageUrl: toPublicMediaUrl(r.imageUrl) };
+  for (const r of blockRows) if (allowed(r.href)) blocks[r.key] = { ...r, imageUrl: toPublicMediaUrl(r.imageUrl) };
 
   res.json({
     data: {
-      slides: slides.map((s) => ({ ...s, id: Number(s.id), imageUrl: toPublicMediaUrl(s.imageUrl) })),
+      slides: slides.filter((s) => allowed(s.href)).map((s) => ({ ...s, id: Number(s.id), imageUrl: toPublicMediaUrl(s.imageUrl) })),
       sections,
       sectionList,
       blocks,
-      collections: collections.map((c) => ({ ...c, imageUrl: toPublicMediaUrl(c.imageUrl) })),
+      collections: collections.filter((c) => vis[c.key] !== false && allowed(c.href)).map((c) => ({ ...c, imageUrl: toPublicMediaUrl(c.imageUrl) })),
+      productTypes: vis,
       whyUs,
     },
   });
@@ -94,22 +114,26 @@ router.get('/feed', asyncRoute(async (req, res) => {
   // queries themselves.
   const params = [];
   const P = (value) => { params.push(value); return '$' + params.length; };
-  const media = (photosOnly) => (photosOnly ? ` AND ${HAS_MEDIA}` : '');
+  // "Photos first" ranks products that have a photo ahead of those that
+  // don't, instead of filtering the photo-less ones out: a filter emptied
+  // whole sections (and the Gemstones tab) whenever a product type had no
+  // photos uploaded yet.
+  const photoFirst = (on) => (on ? `(CASE WHEN ${HAS_MEDIA} THEN 0 ELSE 1 END), ` : '');
   const ctes = [];
   const parts = [];
   if (on('featured')) {
     const s = cfg.featured.settings;
     // Starring a product bumps updated_at, so the latest pick leads.
     parts.push(`(SELECT p.*, 'featured'::text AS list_name,
-        ROW_NUMBER() OVER (ORDER BY p.updated_at DESC NULLS LAST, p.created_at DESC, p.id DESC)::int AS list_pos
-      ${PUBLIC_FROM} WHERE ${PUBLIC_WHERE} AND p.featured = TRUE${s.type !== 'all' ? ` AND p.type = ${P(s.type)}` : ''}${media(s.photosOnly)}
+        ROW_NUMBER() OVER (ORDER BY ${photoFirst(s.photosOnly)}p.updated_at DESC NULLS LAST, p.created_at DESC, p.id DESC)::int AS list_pos
+      ${PUBLIC_FROM} WHERE ${PUBLIC_WHERE} AND p.featured = TRUE${s.type !== 'all' ? ` AND p.type = ${P(s.type)}` : ''}
       ORDER BY list_pos LIMIT ${P(s.limit)})`);
   }
   if (on('newArrivals')) {
     const s = cfg.newArrivals.settings;
     parts.push(`(SELECT * FROM (SELECT p.*, 'arrivals'::text AS list_name,
-        ROW_NUMBER() OVER (PARTITION BY p.type ORDER BY p.created_at DESC, p.id DESC)::int AS list_pos
-      ${PUBLIC_FROM} WHERE ${PUBLIC_WHERE}${media(s.photosOnly)}) per_type WHERE per_type.list_pos <= ${P(s.rows * MAX_COLUMNS)})`);
+        ROW_NUMBER() OVER (PARTITION BY p.type ORDER BY ${photoFirst(s.photosOnly)}p.created_at DESC, p.id DESC)::int AS list_pos
+      ${PUBLIC_FROM} WHERE ${PUBLIC_WHERE}) per_type WHERE per_type.list_pos <= ${P(s.rows * MAX_COLUMNS)})`);
   }
   // Ranked by distinct inquiries inside the chosen window, then all-time
   // inquiries — only products that were genuinely requested at least once
@@ -126,17 +150,17 @@ router.get('/feed', asyncRoute(async (req, res) => {
         GROUP BY ii.product_id
       )`);
     parts.push(`(SELECT p.*, 'requested'::text AS list_name,
-        ROW_NUMBER() OVER (ORDER BY COALESCE(w.n_window, 0) DESC, a.n_all DESC, p.created_at DESC, p.id DESC)::int AS list_pos
+        ROW_NUMBER() OVER (ORDER BY ${photoFirst(s.photosOnly)}COALESCE(w.n_window, 0) DESC, a.n_all DESC, p.created_at DESC, p.id DESC)::int AS list_pos
       FROM all_time a JOIN products p ON p.id = a.product_id JOIN product_types pt ON pt.key = p.type
       LEFT JOIN in_window w ON w.product_id = p.id
-      WHERE ${PUBLIC_WHERE}${s.type !== 'all' ? ` AND p.type = ${P(s.type)}` : ''}${media(s.photosOnly)}
+      WHERE ${PUBLIC_WHERE}${s.type !== 'all' ? ` AND p.type = ${P(s.type)}` : ''}
       ORDER BY list_pos LIMIT ${P(s.limit)})`);
   }
   if (on('gemHighlights')) {
     const s = cfg.gemHighlights.settings;
     parts.push(`(SELECT p.*, 'gems'::text AS list_name,
-        ROW_NUMBER() OVER (ORDER BY p.created_at DESC, p.id DESC)::int AS list_pos
-      ${PUBLIC_FROM} WHERE ${PUBLIC_WHERE} AND p.type = 'gemstone'${media(s.photosOnly)}
+        ROW_NUMBER() OVER (ORDER BY ${photoFirst(s.photosOnly)}p.created_at DESC, p.id DESC)::int AS list_pos
+      ${PUBLIC_FROM} WHERE ${PUBLIC_WHERE} AND p.type = 'gemstone'
       ORDER BY list_pos LIMIT ${P(s.rows * MAX_COLUMNS)})`);
   }
   // One representative in-stock diamond (with a photo) per shape on the

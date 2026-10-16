@@ -384,7 +384,7 @@ router.delete('/why-us/:id', asyncRoute(async (req, res) => {
 // because they're thrown synchronously inside the upload middleware before res is touched.
 router.use((err, req, res, next) => {
   if (err && (err.message || '').startsWith('Unsupported file type')) return res.status(400).json({ error: err.message });
-  if (err && err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'File is too large (50MB max).' });
+  if (err && err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'File is too large (200MB max).' });
   next(err);
 });
 

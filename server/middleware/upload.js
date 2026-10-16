@@ -57,7 +57,10 @@ function makeUploader(subdir) {
   return multer({
     storage: storageFor(subdir),
     fileFilter,
-    limits: { fileSize: 50 * 1024 * 1024 },
+    // Raw phone clips (4K, 30s+) are often well over 50 MB; videos are
+    // re-encoded down to a few MB on arrival (lib/processVideo.js), so a
+    // generous limit here costs nothing in storage.
+    limits: { fileSize: 200 * 1024 * 1024 },
   });
 }
 

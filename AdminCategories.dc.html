@@ -74,7 +74,7 @@ a:hover{color:var(--color-accent-700)}
         <label class="seg-opt"><input type="radio" name="type" checked="{{ isGemstoneTab }}" onChange="{{ selectGemstoneTab }}"/>Gemstones ({{ gemstoneCount }})</label>
         <label class="seg-opt"><input type="radio" name="type" checked="{{ isSubcategoryTab }}" onChange="{{ selectSubcategoryTab }}"/>Subcategories ({{ subcategoryCount }})</label>
       </div>
-      <button onClick="{{ openAdd }}" class="btn btn-primary">+ Add {{ addLabel }}</button>
+      <button onClick="{{ openAdd }}" class="btn btn-primary">{{ addButtonLabel }}</button>
     </div>
 
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
@@ -422,6 +422,7 @@ class Component extends DCLogic {
       totalForTab, visibleRows, reorderHint,
 
       addLabel: isSubTab ? 'Subcategory' : typeLabel + ' Category',
+      addButtonLabel: `+ Add ${isSubTab ? 'Subcategory' : typeLabel + ' Category'}`,
       openAdd: () => this.openAdd(),
 
       dialogOpen: this.state.dialogOpen,

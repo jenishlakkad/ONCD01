@@ -1,235 +1,88 @@
-// Shared admin-only crop modal used before uploading a product photo.
-// Interaction model mirrors image-slot.js's reframe mode (pan/zoom the
-// image behind a FIXED window) rather than a movable crop box over a fixed
-// image — that guarantees the result is always a true pixel crop of the
-// source (never a stretch), because the output canvas is drawn at exactly
-// the window's aspect ratio.
+// Admin photo cropping. The framing UI itself is the shared tool in
+// utils/framePicker.js (same controls as video framing); this module turns
+// the chosen frame into the actual cropped image: drawn onto a canvas at
+// exactly the frame's shape (a true crop, never a stretch), at most 1600px
+// on its long edge, saved as WebP.
+//
+// "Original" is the fallback default for callers that don't ask for a
+// specific shape (About page photos, homepage banners keep their own
+// proportions); product photos ask for "square" (see AdminProducts.dc.html).
+import { openFramePicker } from './framePicker.js';
 
-// "Original" is listed first and is the fallback default for any caller
-// that doesn't ask for a specific one via opts.defaultAspect — most uploaded
-// photos aren't a perfect square/preset ratio, so leaving the source
-// uncropped by default (rather than silently cutting part of it off) is the
-// safer choice for general-purpose editing (About page photos, homepage
-// banners, …). Product photos specifically default to "square" instead —
-// see AdminProducts.dc.html's editImageMedia — since a consistent square
-// grid is what that catalog wants.
-const ASPECTS = [
-  { key: 'original', label: 'Original', ratio: null },
-  { key: 'square', label: 'Square', ratio: 1 },
-  { key: 'portrait', label: 'Portrait', ratio: 4 / 5 },
-  { key: 'landscape', label: 'Landscape', ratio: 4 / 3 },
-  { key: 'wide', label: 'Wide', ratio: 16 / 9 },
-];
 const MAX_OUT = 1600;
-const S_MAX = 4;
 
-let styleInjected = false;
-function injectStyle() {
-  if (styleInjected) return;
-  styleInjected = true;
-  const s = document.createElement('style');
-  s.textContent = `
-    .aic-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(20,19,18,.75);
-      display:flex;align-items:center;justify-content:center;font:13px/1.4 system-ui,-apple-system,sans-serif}
-    .aic-dialog{background:#fff;color:#201f1d;border-radius:12px;padding:20px;width:min(460px,92vw);
-      box-shadow:0 24px 64px rgba(0,0,0,.35)}
-    .aic-title{font-size:15px;font-weight:600;margin-bottom:4px}
-    .aic-sub{opacity:.6;font-size:12px;margin-bottom:14px}
-    .aic-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-    .aic-preset{border:1px solid #ddd9d3;background:#fff;border-radius:999px;padding:6px 12px;
-      font-size:12px;cursor:pointer}
-    .aic-preset[data-active]{background:#201f1d;color:#fff;border-color:#201f1d}
-    .aic-window{position:relative;overflow:hidden;background:#111;border-radius:8px;margin:0 auto;cursor:grab}
-    .aic-window[data-panning]{cursor:grabbing}
-    .aic-window img{position:absolute;max-width:none;transform-origin:0 0;user-select:none;
-      -webkit-user-drag:none;pointer-events:none}
-    .aic-hint{font-size:11px;opacity:.55;margin-top:10px;text-align:center}
-    .aic-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
-    .aic-btn{border:1px solid #ddd9d3;background:#fff;border-radius:8px;padding:8px 16px;
-      font-size:13px;cursor:pointer}
-    .aic-btn.primary{background:#201f1d;color:#fff;border-color:#201f1d}
-  `;
-  document.head.appendChild(s);
-}
-
-const clampS = (s) => Math.max(1, Math.min(S_MAX, s));
-
-/**
- * @param {File} file - image file to crop.
- * @param {{ title?: string, subtitle?: string }} [opts]
- * @returns {Promise<Blob|File|null>} cropped blob, the original file ("Original" preset),
- *   or null if the user cancelled / the file failed to load as an image.
- */
-export function openCropper(file, opts) {
-  opts = opts || {};
+function loadImage(file) {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
-    img.onload = () => mount(file, img, url, opts, resolve);
+    img.onload = () => resolve({ img, url });
     img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
     img.src = url;
   });
 }
 
-/**
- * Same result as opening the cropper, picking "Square" with no pan/zoom,
- * and clicking Apply Crop — but computed silently with no dialog. Used to
- * auto-crop every photo to a centered square the moment it's added to the
- * product form, so square framing is the out-of-the-box result instead of
- * something the admin has to remember to click Apply on for every tile —
- * openCropper (with defaultAspect: 'square') stays available afterward for
- * anyone who wants to pan/zoom/reposition a specific photo differently.
- * @param {File} file
- * @returns {Promise<Blob|null>} the cropped square image, or null if the
- *   file failed to load as an image (caller should fall back to the
- *   original file rather than lose the upload).
- */
-export function cropToCenterSquare(file) {
+function drawToBlob(img, rect) {
   return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const side = Math.min(img.naturalWidth, img.naturalHeight);
-      const sx = (img.naturalWidth - side) / 2;
-      const sy = (img.naturalHeight - side) / 2;
-      const outSize = Math.min(side, MAX_OUT);
-      const canvas = document.createElement('canvas');
-      canvas.width = outSize;
-      canvas.height = outSize;
-      canvas.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, outSize, outSize);
-      canvas.toBlob((blob) => { URL.revokeObjectURL(url); resolve(blob); }, 'image/webp', 0.9);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
-    img.src = url;
-  });
-}
-
-function mount(file, img, url, opts, resolve) {
-  injectStyle();
-  const backdrop = document.createElement('div');
-  backdrop.className = 'aic-backdrop';
-  backdrop.innerHTML =
-    '<div class="aic-dialog">' +
-    '  <div class="aic-title">' + (opts.title || 'Crop Photo') + '</div>' +
-    '  <div class="aic-sub">' + (opts.subtitle || (file.name || '')) + '</div>' +
-    '  <div class="aic-presets"></div>' +
-    '  <div class="aic-window"></div>' +
-    '  <div class="aic-hint">Drag to reposition &middot; scroll or pinch to zoom</div>' +
-    '  <div class="aic-actions">' +
-    '    <button type="button" class="aic-btn" data-act="cancel">Cancel</button>' +
-    '    <button type="button" class="aic-btn primary" data-act="apply">Apply Crop</button>' +
-    '  </div>' +
-    '</div>';
-  document.body.appendChild(backdrop);
-
-  const presetsEl = backdrop.querySelector('.aic-presets');
-  const windowEl = backdrop.querySelector('.aic-window');
-  windowEl.appendChild(img);
-
-  let aspect = (opts.defaultAspect && ASPECTS.find((a) => a.key === opts.defaultAspect)) || ASPECTS[0];
-  let view = { s: 1, x: 0, y: 0 };
-  let ww = 0, wh = 0, base = 1;
-
-  function layoutWindow() {
-    const maxBox = 380;
-    if (!aspect.ratio) {
-      // "Original": show the image at its own aspect, no crop window semantics.
-      const r = img.naturalWidth / img.naturalHeight;
-      ww = r >= 1 ? maxBox : Math.round(maxBox * r);
-      wh = r >= 1 ? Math.round(maxBox / r) : maxBox;
-    } else if (aspect.ratio >= 1) {
-      ww = maxBox; wh = Math.round(maxBox / aspect.ratio);
-    } else {
-      wh = maxBox; ww = Math.round(maxBox * aspect.ratio);
-    }
-    windowEl.style.width = ww + 'px';
-    windowEl.style.height = wh + 'px';
-    base = Math.max(ww / img.naturalWidth, wh / img.naturalHeight);
-    view = { s: 1, x: 0, y: 0 };
-    apply();
-  }
-
-  function clamp() {
-    const dispW = img.naturalWidth * base * view.s;
-    const dispH = img.naturalHeight * base * view.s;
-    const mx = Math.max(0, (dispW / ww - 1) * 50);
-    const my = Math.max(0, (dispH / wh - 1) * 50);
-    view.x = Math.max(-mx, Math.min(mx, view.x));
-    view.y = Math.max(-my, Math.min(my, view.y));
-  }
-
-  function apply() {
-    clamp();
-    const k = base * view.s;
-    const w = img.naturalWidth * k, h = img.naturalHeight * k;
-    const left = ww / 2 + (view.x / 100) * ww - w / 2;
-    const top = wh / 2 + (view.y / 100) * wh - h / 2;
-    img.style.width = w + 'px';
-    img.style.height = h + 'px';
-    img.style.left = left + 'px';
-    img.style.top = top + 'px';
-  }
-
-  presetsEl.innerHTML = ASPECTS.map((a) =>
-    `<button type="button" class="aic-preset" data-key="${a.key}"${a === aspect ? ' data-active' : ''}>${a.label}</button>`
-  ).join('');
-  presetsEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('.aic-preset');
-    if (!btn) return;
-    aspect = ASPECTS.find((a) => a.key === btn.getAttribute('data-key')) || ASPECTS[0];
-    [...presetsEl.children].forEach((c) => c.toggleAttribute('data-active', c === btn));
-    layoutWindow();
-  });
-
-  let drag = null;
-  windowEl.addEventListener('pointerdown', (e) => {
-    if (!aspect.ratio) return;
-    drag = { px: e.clientX, py: e.clientY, x: view.x, y: view.y };
-    windowEl.setPointerCapture(e.pointerId);
-    windowEl.setAttribute('data-panning', '');
-  });
-  windowEl.addEventListener('pointermove', (e) => {
-    if (!drag) return;
-    view.x = drag.x + (e.clientX - drag.px) / ww * 100;
-    view.y = drag.y + (e.clientY - drag.py) / wh * 100;
-    apply();
-  });
-  const endDrag = () => { drag = null; windowEl.removeAttribute('data-panning'); };
-  windowEl.addEventListener('pointerup', endDrag);
-  windowEl.addEventListener('pointercancel', endDrag);
-  windowEl.addEventListener('wheel', (e) => {
-    if (!aspect.ratio) return;
-    e.preventDefault();
-    view.s = clampS(view.s * Math.pow(1.0015, -e.deltaY));
-    apply();
-  }, { passive: false });
-
-  function cleanup() {
-    URL.revokeObjectURL(url);
-    backdrop.remove();
-  }
-
-  function finish(result) { cleanup(); resolve(result); }
-
-  backdrop.querySelector('[data-act="cancel"]').addEventListener('click', () => finish(null));
-  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) finish(null); });
-  backdrop.querySelector('[data-act="apply"]').addEventListener('click', () => {
-    if (!aspect.ratio) { finish(file); return; }
-    const k = base * view.s;
-    const sw = ww / k, sh = wh / k;
-    const left = ww / 2 + (view.x / 100) * ww - (img.naturalWidth * k) / 2;
-    const top = wh / 2 + (view.y / 100) * wh - (img.naturalHeight * k) / 2;
-    const sx = Math.max(0, Math.min(img.naturalWidth - sw, -left / k));
-    const sy = Math.max(0, Math.min(img.naturalHeight - sh, -top / k));
-    const scale = Math.min(1, MAX_OUT / Math.max(sw, sh));
-    const outW = Math.max(1, Math.round(sw * scale));
-    const outH = Math.max(1, Math.round(sh * scale));
+    const scale = Math.min(1, MAX_OUT / Math.max(rect.sw, rect.sh));
     const canvas = document.createElement('canvas');
-    canvas.width = outW;
-    canvas.height = outH;
-    canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
-    canvas.toBlob((blob) => finish(blob), 'image/webp', 0.9);
+    canvas.width = Math.max(1, Math.round(rect.sw * scale));
+    canvas.height = Math.max(1, Math.round(rect.sh * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => resolve(blob), 'image/webp', 0.9);
   });
+}
 
-  layoutWindow();
+/**
+ * @param {File|Blob} file - image to crop. Pass the ORIGINAL photo when you
+ *   have it, so re-editing never crops an already-cropped copy.
+ * @param {{ title?: string, subtitle?: string, defaultAspect?: string,
+ *           initialView?: object, onView?: (view:object) => void }} [opts]
+ *   initialView/onView let a caller re-open the tool exactly where the admin
+ *   left it (onView receives the chosen framing).
+ * @returns {Promise<Blob|File|null>} cropped blob, the original file for
+ *   "Original", or null if cancelled / the file isn't a viewable image.
+ */
+export async function openCropper(file, opts) {
+  opts = opts || {};
+  const loaded = await loadImage(file);
+  if (!loaded) return null;
+  const { img, url } = loaded;
+  try {
+    const picked = await openFramePicker(img, img.naturalWidth, img.naturalHeight, {
+      title: opts.title || 'Crop Photo',
+      subtitle: opts.subtitle || file.name || '',
+      defaultAspect: opts.defaultAspect || 'original',
+      initialView: opts.initialView,
+      applyLabel: 'Apply Crop',
+    });
+    if (!picked) return null;
+    if (opts.onView) opts.onView(picked.view);
+    if (picked.aspect === 'original') return file;
+    return await drawToBlob(img, picked.rect);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * The plain centered square, silently (no dialog) — what every product
+ * photo gets the moment it's added, so square framing is automatic. The
+ * admin can still open openCropper afterwards to frame a photo differently.
+ * @returns {Promise<Blob|null>} null if the file isn't a viewable image
+ *   (e.g. HEIC on most browsers) — the caller uploads the original instead.
+ */
+export async function cropToCenterSquare(file) {
+  const loaded = await loadImage(file);
+  if (!loaded) return null;
+  const { img, url } = loaded;
+  try {
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    return await drawToBlob(img, {
+      sx: (img.naturalWidth - side) / 2, sy: (img.naturalHeight - side) / 2, sw: side, sh: side,
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }

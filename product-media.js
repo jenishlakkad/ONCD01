@@ -59,8 +59,10 @@
     '.cover{transition:opacity .18s ease}' +
     '.hover-vid{opacity:0;pointer-events:none;transition:opacity .18s ease;background:#000}' +
     '.poster-vid{background:#000}' +
-    ':host([data-hovering]) .hover-vid{opacity:1}' +
-    ':host([data-hovering]) .cover{opacity:0}' +
+    // The photo stays up until the video is actually playing (data-vid-ready),
+    // so hovering never flashes black while the clip loads.
+    ':host([data-hovering][data-vid-ready]) .hover-vid{opacity:1}' +
+    ':host([data-hovering][data-vid-ready]) .cover{opacity:0}' +
     '.badge{position:absolute;right:8px;bottom:8px;width:24px;height:24px;border-radius:50%;' +
     '  background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;' +
     '  pointer-events:none;transition:opacity .18s ease}' +
@@ -116,6 +118,8 @@
       this._onEnter = () => this._startHoverVideo();
       this._onLeave = () => this._stopHoverVideo();
       this._onClick = (e) => this._handleClick(e);
+      this._onPlaying = () => { if (this.hasAttribute('data-hovering')) this.setAttribute('data-vid-ready', ''); };
+      this._hoverVid.addEventListener('playing', this._onPlaying);
       this._upgradeProperty('media');
     }
 
@@ -170,11 +174,17 @@
       // card is already the active one (e.g. a stray extra pointerenter).
       if (activeMedia && activeMedia !== this) activeMedia._stopHoverVideo();
       activeMedia = this;
-      if (this._hoverVid.src !== v.url) this._hoverVid.src = v.url;
+      // Compare the attribute, not the .src property: the property is
+      // always absolute while stored URLs are usually relative, so comparing
+      // the property re-assigned (and re-downloaded) the video on every hover.
+      if (this._hoverVid.getAttribute('src') !== v.url) this._hoverVid.setAttribute('src', v.url);
       if (this._hoverCropCleanup) this._hoverCropCleanup();
       this._hoverCropCleanup = null;
+      // Framing is measured against this element (the card), never the video
+      // itself — see utils/applyVideoCrop.js for why that matters.
       import('./utils/applyVideoCrop.js').then(({ applyVideoCrop }) => {
-        this._hoverCropCleanup = applyVideoCrop(this._hoverVid, v.crop || null);
+        if (this._hoverCropCleanup) this._hoverCropCleanup();
+        this._hoverCropCleanup = applyVideoCrop(this._hoverVid, v.crop || null, this);
       });
       this.setAttribute('data-hovering', '');
       // Always restart from the beginning — without this, a video paused
@@ -188,6 +198,7 @@
     _stopHoverVideo() {
       if (activeMedia === this) activeMedia = null;
       this.removeAttribute('data-hovering');
+      this.removeAttribute('data-vid-ready');
       this._hoverVid.pause();
       this._hoverVid.currentTime = 0;
     }
@@ -250,7 +261,8 @@
         if (this._posterCropCleanup) this._posterCropCleanup();
         this._posterCropCleanup = null;
         import('./utils/applyVideoCrop.js').then(({ applyVideoCrop }) => {
-          this._posterCropCleanup = applyVideoCrop(this._posterVid, active.crop || null);
+          if (this._posterCropCleanup) this._posterCropCleanup();
+          this._posterCropCleanup = applyVideoCrop(this._posterVid, active.crop || null, this);
         });
       } else {
         this._posterVid.style.display = 'none';

@@ -1,19 +1,23 @@
-// Applies a non-destructive video framing { x, y, scale } (set via
-// utils/videoCropper.js, saved on the product_media row) to a <video>
-// element with CSS positioning. Same pan/zoom math the cropper's own
-// preview uses, just resolved against the element's actual rendered size
-// instead of the cropper's fixed 380px preview box — so one saved framing
-// looks right whether it's a 110px admin tile, a full detail-page gallery,
-// or a thumbnail strip. No-ops (video keeps native sizing/object-fit) when
-// `crop` is falsy, which is the common case (most videos are never framed).
+// Shows a video framed by saved {x, y, scale} metadata (old-style framing
+// stored on product_media.crop) using CSS positioning, resolved against the
+// CONTAINER's size so one framing looks right in a card, a gallery or a
+// thumbnail. Videos processed on upload (server/lib/processVideo.js) are
+// already cut to their frame and have no crop metadata — for those this
+// just restores normal sizing (crop = null).
 //
-// Returns a cleanup function; call it if the video element or its framing
-// can change during the component's lifetime (unnecessary for a one-shot
-// static render that's about to be torn down anyway).
-export function applyVideoCrop(videoEl, crop) {
+// Measuring the container matters: inside <product-media>/<video-frame> the
+// video sits directly in a shadow root, so it has no parentElement. Falling
+// back to measuring the video itself (as this used to) meant every repeat
+// hover measured the video it had already enlarged and enlarged it again,
+// pushing the stone off-centre a little more each time.
+//
+// Returns a cleanup function.
+export function applyVideoCrop(videoEl, crop, container) {
   if (!videoEl) return () => {};
+  const root = videoEl.getRootNode && videoEl.getRootNode();
+  const box = container || videoEl.parentElement || (root && root.host) || null;
 
-  if (!crop) {
+  if (!crop || !box) {
     videoEl.style.position = '';
     videoEl.style.width = '';
     videoEl.style.height = '';
@@ -22,31 +26,32 @@ export function applyVideoCrop(videoEl, crop) {
     return () => {};
   }
 
-  const parent = videoEl.parentElement;
-  if (parent && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
-  if (parent) parent.style.overflow = 'hidden';
+  if (videoEl.parentElement && getComputedStyle(videoEl.parentElement).position === 'static') {
+    videoEl.parentElement.style.position = 'relative';
+  }
   videoEl.style.position = 'absolute';
 
   function place() {
     const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
-    const box = videoEl.parentElement || videoEl;
     const cw = box.clientWidth, ch = box.clientHeight;
     if (!vw || !vh || !cw || !ch) return;
     const base = Math.max(cw / vw, ch / vh);
     const k = base * (crop.scale || 1);
     const w = vw * k, h = vh * k;
-    const left = cw / 2 + ((crop.x || 0) / 100) * cw - w / 2;
-    const top = ch / 2 + ((crop.y || 0) / 100) * ch - h / 2;
+    // Same limits as the framing tool: never pan past the video's edge.
+    const mx = Math.max(0, (w / cw - 1) * 50), my = Math.max(0, (h / ch - 1) * 50);
+    const x = Math.max(-mx, Math.min(mx, crop.x || 0));
+    const y = Math.max(-my, Math.min(my, crop.y || 0));
     videoEl.style.width = w + 'px';
     videoEl.style.height = h + 'px';
-    videoEl.style.left = left + 'px';
-    videoEl.style.top = top + 'px';
+    videoEl.style.left = (cw / 2 + (x / 100) * cw - w / 2) + 'px';
+    videoEl.style.top = (ch / 2 + (y / 100) * ch - h / 2) + 'px';
   }
 
   if (videoEl.readyState >= 1) place();
   videoEl.addEventListener('loadedmetadata', place);
   const ro = new ResizeObserver(place);
-  if (videoEl.parentElement) ro.observe(videoEl.parentElement);
+  ro.observe(box);
 
   return () => {
     ro.disconnect();

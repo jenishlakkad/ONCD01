@@ -140,7 +140,7 @@ const SECTIONS = [
     settings: [
       { name: 'type', type: 'select', label: 'Product type', default: 'all', options: TYPE_OPTIONS },
       { name: 'limit', type: 'select', label: 'Pieces to show', default: 5, options: [2, 3, 4, 5].map((n) => ({ value: n, label: `${n} pieces` })) },
-      { name: 'photosOnly', type: 'toggle', label: 'Skip products without a photo', default: true },
+      { name: 'photosOnly', type: 'toggle', label: 'Show products with a photo first', default: true },
     ],
   },
   {
@@ -156,7 +156,7 @@ const SECTIONS = [
       { name: 'type', type: 'select', label: 'Tab selected by default', default: 'all', options: TYPE_OPTIONS },
       { name: 'rows', type: 'select', label: 'Rows of products', default: 2, options: [1, 2, 3].map(rowsOption) },
       { name: 'newBadgeDays', type: 'number', label: 'Show a NEW badge on products added within (days)', default: 14, min: 1, max: 90 },
-      { name: 'photosOnly', type: 'toggle', label: 'Skip products without a photo', default: true },
+      { name: 'photosOnly', type: 'toggle', label: 'Show products with a photo first', default: true },
     ],
   },
   {
@@ -186,7 +186,7 @@ const SECTIONS = [
       { name: 'days', type: 'select', label: 'Count inquiries from the last', default: 90, options: [30, 60, 90, 180, 365].map((n) => ({ value: n, label: `${n} days` })) },
       { name: 'type', type: 'select', label: 'Product type', default: 'all', options: TYPE_OPTIONS },
       { name: 'limit', type: 'select', label: 'Products to rank', default: 8, options: [4, 6, 8, 10, 12].map((n) => ({ value: n, label: `Top ${n}` })) },
-      { name: 'photosOnly', type: 'toggle', label: 'Skip products without a photo', default: true },
+      { name: 'photosOnly', type: 'toggle', label: 'Show products with a photo first', default: true },
     ],
   },
   {
@@ -211,7 +211,7 @@ const SECTIONS = [
     },
     settings: [
       { name: 'rows', type: 'select', label: 'Rows of products', default: 1, options: [1, 2].map(rowsOption) },
-      { name: 'photosOnly', type: 'toggle', label: 'Skip products without a photo', default: true },
+      { name: 'photosOnly', type: 'toggle', label: 'Show products with a photo first', default: true },
     ],
   },
   {
