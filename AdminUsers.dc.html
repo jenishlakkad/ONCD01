@@ -112,6 +112,9 @@ a:hover{color:var(--color-accent-700)}
 
     <p style="opacity:.65;font-size:13px;margin-top:-16px;">New registrations start Pending. Approve to grant login and pricing access, Suspend to revoke it.</p>
 
+    <sc-if value="{{ statusNotice }}" hint-placeholder-val="{{ false }}">
+      <p role="status" style="font-size:13px;margin-top:16px;padding:10px 14px;border-radius:var(--radius-md);background:#e6f2e8;color:#2c6a3c;">{{ statusNotice }}</p>
+    </sc-if>
     <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
       <p style="font-size:13px;color:var(--color-accent-700);margin-top:16px;">{{ errorMessage }}</p>
     </sc-if>
@@ -350,7 +353,7 @@ a:hover{color:var(--color-accent-700)}
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = {
-    admin: null, users: [], errorMessage: '', newContactCount: 0,
+    admin: null, users: [], errorMessage: '', statusNotice: '', newContactCount: 0,
     detailOpen: false, detailCustomer: null, cart: [], inquiries: [], savedItems: [], detailProducts: {}, contactMessages: [], detailLoading: false, detailError: '', inqSaving: {},
     searchTerm: '', currentPage: 1,
   };
@@ -461,6 +464,12 @@ class Component extends DCLogic {
       const res = await fetch(`/api/admin/customers/${id}/${action}`, { method: 'POST', credentials: 'same-origin' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Action failed.');
+      const d = json.data || {};
+      const verb = { approve: 'approved', reject: 'rejected', suspend: 'suspended', reactivate: 'reactivated' }[action] || 'updated';
+      const notice = `${d.full_name || 'Customer'} ${verb}.${d.notified ? ` We've emailed ${d.notified} to let them know.` : ''}`;
+      clearTimeout(this._noticeTimer);
+      this.setState({ statusNotice: notice, errorMessage: '' });
+      this._noticeTimer = setTimeout(() => this.setState({ statusNotice: '' }), 8000);
       this.loadUsers();
     } catch (err) {
       this.setState({ errorMessage: err.message });
@@ -559,6 +568,7 @@ class Component extends DCLogic {
       canPrevPage: currentPage > 1, canNextPage: currentPage < totalPages,
       prevPage: () => this.prevPage(), nextPage: () => this.nextPage(totalPages),
       errorMessage: this.state.errorMessage,
+      statusNotice: this.state.statusNotice,
       adminName: this.state.admin ? this.state.admin.fullName : '',
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,

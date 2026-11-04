@@ -1,5 +1,4 @@
 const db = require('../db/postgres');
-const { sendMail } = require('./mailer');
 
 // Shared pieces of the customer <-> sales desk messaging flow:
 //
@@ -88,11 +87,16 @@ async function deskAddress() {
 
 // Fire-and-forget email to the sales desk; a failed notification never
 // fails the customer's action (the message is already stored and visible
-// in the admin inbox).
-function notifyDesk({ subject, text }) {
+// in the admin inbox). `message` is { subject, text, html?, replyTo? } or a
+// function returning (a promise of) one — e.g. a branded template.
+function notifyDesk(message) {
   deskAddress()
-    .then((to) => (to ? sendMail({ to, subject, text }) : null))
-    .catch(() => {});
+    .then(async (to) => {
+      if (!to) return null;
+      const m = typeof message === 'function' ? await message() : message;
+      return m ? require('./mailer').sendMail({ to, ...m }) : null;
+    })
+    .catch((err) => console.error('[messaging] desk notification failed:', err && err.message));
 }
 
 function inquiryLabel(inq) {

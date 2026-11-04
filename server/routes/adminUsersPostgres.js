@@ -5,7 +5,9 @@ const requireAdmin = require('../middleware/requireAdminPostgres');
 const requirePermission = require('../middleware/requirePermission');
 const { writeAudit } = require('../lib/auditPostgres');
 const { loadAccountSnapshot } = require('../lib/accountSnapshot');
-const { INQUIRY_STATUSES, updateInquiryStatus } = require('../lib/messaging');
+const { INQUIRY_STATUSES, updateInquiryStatus, siteOrigin } = require('../lib/messaging');
+const { sendMailInBackground } = require('../lib/mailer');
+const T = require('../lib/emailTemplates');
 
 // PostgreSQL counterpart to server/routes/adminUsers.js (SQLite). Parallel/
 // isolated file only — NOT mounted in app.js.
@@ -67,9 +69,22 @@ function setStatus(status, actionLabel) {
     if (!customer) throw new ApiError(404, 'Customer not found.');
     await db.query("UPDATE customers SET status = $1, updated_at = NOW() WHERE id = $2", [status, customer.id]);
     await writeAudit({ actor: req.adminUser.full_name, action: actionLabel, target: customer.full_name, module: 'Users' });
-    // Same as the SQLite source: merges the PRE-update row with only the
-    // new status, does not re-fetch — updatedAt in this response is stale.
-    res.json({ data: publicCustomer({ ...customer, status }) });
+    // The customer hears about it by email (the login page promises "you'll
+    // be notified once access is granted"). Only on an actual change, so a
+    // double click doesn't send two. Suspensions are not emailed.
+    let notified = null;
+    if (customer.status !== status && (status === 'approved' || status === 'rejected')) {
+      const origin = siteOrigin(req);
+      const build = status === 'approved' ? T.accountApprovedEmail : T.accountRejectedEmail;
+      sendMailInBackground(async () => {
+        const brand = await T.getBrand();
+        const m = await build({ name: customer.full_name, origin });
+        return { to: customer.email, replyTo: brand.deskEmail || undefined, ...m };
+      });
+      notified = customer.email;
+    }
+    // Merges the pre-update row with the new status (not re-fetched).
+    res.json({ data: { ...publicCustomer({ ...customer, status }), notified } });
   });
 }
 

@@ -5,6 +5,7 @@ const requireAdmin = require('../middleware/requireAdminPostgres');
 const requirePermission = require('../middleware/requirePermission');
 const { writeAudit } = require('../lib/auditPostgres');
 const { sendMail } = require('../lib/mailer');
+const T = require('../lib/emailTemplates');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const {
   MESSAGING_MIGRATION_SQL, INQUIRY_STATUSES, getMessagingSchema, updateInquiryStatus, cleanBody, siteOrigin, inquiryLabel,
@@ -170,15 +171,14 @@ router.post('/:id/messages', asyncRoute(async (req, res) => {
 
   let emailed = false;
   if (wantsEmail && to) {
-    const itemsLine = inquiry.items.map((it) => `• ${it.name} (SKU ${it.sku}) × ${it.qty}`).join('\n');
-    const link = inquiry.customer
-      ? `\n\nView and reply to this conversation in your account:\n${siteOrigin(req)}/Dashboard.dc.html?tab=inquiries&inquiry=${inquiry.id}`
-      : '';
-    const result = await sendMail({
-      to,
-      subject: `Re: your inquiry ${inquiryLabel(inquiry)} — ONCD`,
-      text: `${body}\n\n— ${req.adminUser.full_name}, ONCD sales desk\n\nYour inquiry ${inquiryLabel(inquiry)}:\n${itemsLine}${link}`,
+    const origin = siteOrigin(req);
+    const mail = await T.inquiryReplyEmail({
+      name: inquiry.customer ? inquiry.customer.name : inquiry.guest.name,
+      ref: inquiryLabel(inquiry), body, adminName: req.adminUser.full_name, items: inquiry.items, origin,
+      accountUrl: inquiry.customer ? `${origin}/Dashboard.dc.html?tab=inquiries&inquiry=${inquiry.id}` : null,
     });
+    const brand = await T.getBrand();
+    const result = await sendMail({ to, replyTo: brand.deskEmail || undefined, ...mail });
     emailed = !result.error;
     if (emailed) await db.query('UPDATE inquiry_messages SET emailed = TRUE WHERE id = $1', [message.id]);
   }

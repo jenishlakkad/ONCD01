@@ -4,6 +4,7 @@ const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireAdmin = require('../middleware/requireAdminPostgres');
 const requirePermission = require('../middleware/requirePermission');
 const { sendMail } = require('../lib/mailer');
+const T = require('../lib/emailTemplates');
 const { writeAudit } = require('../lib/auditPostgres');
 const { getMessagingSchema, NEWSLETTER_SUBJECT, siteOrigin } = require('../lib/messaging');
 
@@ -159,10 +160,13 @@ router.post('/:id/reply', asyncRoute(async (req, res) => {
   // Registered customers can read and answer the whole thread in their
   // account, so the email links there.
   const account = await customerFor(existing);
-  const link = account
-    ? `\n\nView and reply to this conversation in your account:\n${siteOrigin(req)}/Dashboard.dc.html?tab=messages&message=${existing.id}`
-    : '';
-  await sendMail({ to: existing.email, subject: `Re: ${existing.subject}`, text: `${body}${link}` });
+  const origin = siteOrigin(req);
+  const mail = await T.contactReplyEmail({
+    id: existing.id, name: existing.full_name, subject: existing.subject, body, adminName: req.adminUser.full_name, origin,
+    accountUrl: account ? `${origin}/Dashboard.dc.html?tab=messages&message=${existing.id}` : null,
+  });
+  const brand = await T.getBrand();
+  await sendMail({ to: existing.email, replyTo: brand.deskEmail || undefined, ...mail });
 
   await writeAudit({ actor: req.adminUser.full_name, action: 'Replied to contact message', target: existing.subject, module: 'Contact' });
   const row = await messageRow(existing.id);

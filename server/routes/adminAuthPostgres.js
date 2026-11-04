@@ -1,15 +1,14 @@
 const express = require('express');
 const db = require('../db/postgres');
 const { hashPassword, verifyPassword } = require('../lib/password');
-const { createOtp, verifyOtp } = require('../lib/otpPostgres');
-const { sendMail } = require('../lib/mailer');
+const { createOtp, checkOtp, cooldownLeft, noteIssued, OtpRateError, OTP_TTL_MINUTES, RESEND_COOLDOWN_S } = require('../lib/otpPostgres');
+const { sendMailInBackground } = require('../lib/mailer');
+const T = require('../lib/emailTemplates');
+const { siteOrigin } = require('../lib/messaging');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireAdmin = require('../middleware/requireAdminPostgres');
 
-// PostgreSQL counterpart to server/routes/adminAuth.js (SQLite). Parallel/
-// isolated test route file only — NOT mounted in app.js, NOT reachable by
-// any real request. Exists so it can be exercised on its own before any
-// cutover decision is made.
+// Admin sign-in, password change and password reset (emailed code).
 
 const router = express.Router();
 
@@ -53,29 +52,38 @@ router.post('/change-password', requireAdmin, asyncRoute(async (req, res) => {
   res.json({ data: { changed: true } });
 }));
 
+// Codes are emailed in the background (the response doesn't wait for the
+// mail server) with a resend cooldown — see server/lib/otpPostgres.js.
 router.post('/forgot', asyncRoute(async (req, res) => {
   const email = String((req.body || {}).email || '').trim().toLowerCase();
-  const admin = email ? await db.get('SELECT id FROM admin_users WHERE email = $1', [email]) : null;
-  // Always respond 200 regardless of whether the account exists (no user enumeration).
+  if (!email) throw new ApiError(400, 'Email is required.');
+  const admin = await db.get('SELECT id, full_name FROM admin_users WHERE email = $1', [email]);
+  // Same response (and cooldown) whether or not the account exists.
   if (admin) {
-    const code = await createOtp(email, 'admin_reset');
-    await sendMail({ to: email, subject: 'Reset your ONCD admin password', text: `Your password reset code is ${code}. It expires in 10 minutes.` });
+    let code;
+    try {
+      code = await createOtp(email, 'admin_reset');
+    } catch (err) {
+      if (err instanceof OtpRateError) throw new ApiError(429, err.message, { retryAfter: err.retryAfter });
+      throw err;
+    }
+    const origin = siteOrigin(req);
+    sendMailInBackground(() => T.otpEmail({ purpose: 'admin_reset', code, name: admin.full_name, origin, minutes: OTP_TTL_MINUTES }).then((m) => ({ to: email, ...m })));
+  } else {
+    const wait = cooldownLeft(email, 'admin_reset');
+    if (wait > 0) throw new ApiError(429, `Please wait ${wait} seconds before requesting another code.`, { retryAfter: wait });
+    noteIssued(email, 'admin_reset');
   }
-  res.json({ data: { sent: true } });
+  res.json({ data: { sent: true, resendIn: RESEND_COOLDOWN_S } });
 }));
 
 router.post('/forgot/verify', asyncRoute(async (req, res) => {
   const { email, code } = req.body || {};
   if (!email || !code) throw new ApiError(400, 'Email and code are required.');
-  const row = await db.get(
-    `SELECT * FROM otp_tokens WHERE email = $1 AND purpose = 'admin_reset' AND consumed_at IS NULL ORDER BY id DESC LIMIT 1`,
-    [String(email).trim().toLowerCase()]
-  );
-  const crypto = require('crypto');
-  const hash = crypto.createHash('sha256').update(String(code)).digest('hex');
-  if (!row || row.code_hash !== hash || new Date(row.expires_at).getTime() < Date.now()) {
-    throw new ApiError(400, 'Invalid or expired code.');
-  }
+  // Checked without being used up (the /reset step uses it); wrong
+  // guesses still count towards the attempt limit.
+  const result = await checkOtp(String(email).trim().toLowerCase(), 'admin_reset', code, { consume: false });
+  if (!result.ok) throw new ApiError(400, result.message, { reason: result.reason });
   res.json({ data: { valid: true } });
 }));
 
@@ -83,10 +91,13 @@ router.post('/reset', asyncRoute(async (req, res) => {
   const { email, code, newPassword } = req.body || {};
   if (!email || !code || !newPassword) throw new ApiError(400, 'Email, code and new password are required.');
   if (newPassword.length < 8) throw new ApiError(400, 'Password must be at least 8 characters.');
-  const ok = await verifyOtp(String(email).trim().toLowerCase(), 'admin_reset', code);
-  if (!ok) throw new ApiError(400, 'Invalid or expired code.');
-  const result = await db.query('UPDATE admin_users SET password_hash = $1 WHERE email = $2', [hashPassword(newPassword), String(email).trim().toLowerCase()]);
-  if (result.rowCount === 0) throw new ApiError(404, 'No admin account found for this email.');
+  const addr = String(email).trim().toLowerCase();
+  const check = await checkOtp(addr, 'admin_reset', code);
+  if (!check.ok) throw new ApiError(400, check.message, { reason: check.reason });
+  const row = await db.get('UPDATE admin_users SET password_hash = $1 WHERE email = $2 RETURNING full_name', [hashPassword(newPassword), addr]);
+  if (!row) throw new ApiError(404, 'No admin account found for this email.');
+  const origin = siteOrigin(req);
+  sendMailInBackground(() => T.passwordChangedEmail({ name: row.full_name, origin, admin: true }).then((m) => ({ to: addr, ...m })));
   res.json({ data: { reset: true } });
 }));
 

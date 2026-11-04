@@ -9,7 +9,18 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
-<style>body{margin:0}a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-700)}</style>
+<style>body{margin:0}a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-700)}
+/* Verification-code step (shared look with Login / AdminLogin) */
+.otp-card{width:100%;max-width:440px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:clamp(24px,6vw,40px);text-align:center;background:var(--color-bg);box-sizing:border-box;}
+.otp-icon{width:56px;height:56px;border-radius:50%;background:var(--color-accent-100);color:var(--color-accent-700);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.otp-lead{opacity:.75;font-size:14px;margin:8px 0 22px;line-height:1.5;}
+.otp-notice{font-size:13px;line-height:1.5;margin:-6px 0 18px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-accent-100);color:var(--color-accent-900);text-align:left;}
+.otp-error{font-size:13px;color:#a3302f;margin:12px 0 0;}
+.otp-actions{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:16px;font-size:13px;flex-wrap:wrap;}
+.otp-link{background:none;border:none;padding:6px 2px;font:inherit;font-size:13px;color:var(--color-accent-700);font-weight:600;cursor:pointer;}
+.otp-link:disabled{color:var(--color-text);opacity:.5;font-weight:400;cursor:default;}
+.otp-help{font-size:12px;opacity:.6;margin:16px 0 0;line-height:1.5;}
+</style>
 </helmet>
 
 <div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
@@ -42,25 +53,33 @@
       <div style="max-width:480px;text-align:center;padding:64px 40px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="margin:0 auto 20px;"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
         <h2>Application Received</h2>
-        <p style="opacity:.75;">Your email is verified and your registration is <strong>pending review</strong>. Our team verifies every trade account before granting access to pricing — you'll receive an email once approved.</p>
+        <p style="opacity:.75;">Your email is verified and your application is <strong>with our team</strong>. We review every trade account — usually within one business day — and we'll email you the moment it's approved. A confirmation is already in your inbox.</p>
         <a href="Login.dc.html" class="btn btn-primary" style="margin-top:12px;">Go to Login</a>
       </div>
     </sc-if>
 
     <sc-if value="{{ isOtp }}" hint-placeholder-val="{{ false }}">
-      <form onSubmit="{{ handleVerify }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;text-align:center;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="margin:0 auto 16px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-        <h2>Verify Your Email</h2>
-        <p style="opacity:.7;font-size:13px;margin-top:8px;">We sent a 6-digit code to <strong>{{ pendingEmail }}</strong>. Enter it below to complete registration.</p>
-        <div class="field" style="margin-top:24px;text-align:left;">
-          <label>Verification Code</label>
-          <input class="input" style="text-align:center;letter-spacing:.4em;font-size:20px;" maxlength="6" placeholder="••••••" ref="{{ otpCodeRef }}" required=""/>
-        </div>
-        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
-          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+      <form onSubmit="{{ handleVerify }}" class="otp-card">
+        <div class="otp-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+        <h2 style="margin:0;">Check your email</h2>
+        <p class="otp-lead">Enter the 6-digit code we sent to <strong>{{ maskedEmail }}</strong></p>
+        <sc-if value="{{ notice }}" hint-placeholder-val="{{ false }}">
+          <p class="otp-notice" role="status">{{ notice }}</p>
         </sc-if>
-        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
-        <p style="font-size:12px;margin-top:16px;opacity:.7;">Didn't get a code? <a href="#" onClick="{{ resendOtp }}">Resend</a></p>
+        <otp-input ref="{{ bindOtp }}" autofocus=""></otp-input>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p class="otp-error" role="alert">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:22px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <div class="otp-actions">
+          <button type="button" class="otp-link" onClick="{{ resendOtp }}" disabled="{{ !canResend }}">{{ resendLabel }}</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" class="otp-link" onClick="{{ changeEmail }}">Change email</button>
+        </div>
+        <sc-if value="{{ inbox }}" hint-placeholder-val="{{ false }}">
+          <a href="{{ inboxHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block" style="margin-top:14px;">{{ inboxLabel }} ↗</a>
+        </sc-if>
+        <p class="otp-help">Can't find it? Check Spam or Promotions. The code expires in 10 minutes.</p>
       </form>
     </sc-if>
 
@@ -81,7 +100,7 @@
           <div class="field"><label>Business Type</label><input class="input" ref="{{ businessTypeRef }}" placeholder="Retailer, Wholesaler..."/></div>
           <div class="field"><label>Website</label><input class="input" ref="{{ websiteRef }}" placeholder="https://"/></div>
           <div class="field" style="grid-column:1/-1;"><label>Message</label><textarea class="input" rows="3" ref="{{ messageRef }}"></textarea></div>
-          <div class="field" style="grid-column:1/-1;"><label>Password *</label><input class="input" type="password" ref="{{ passwordRef }}" required=""/></div>
+          <div class="field" style="grid-column:1/-1;"><label>Password *</label><input class="input" type="password" ref="{{ passwordRef }}" required="" sc-camel-auto-complete="new-password"/><span style="font-size:11.5px;opacity:.6;margin-top:4px;">At least 8 characters.</span></div>
         </div>
 
         <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
@@ -169,16 +188,24 @@ function footerTaglineFor(d, j, g) {
 }
 class Component extends DCLogic {
   state = {
-    step: 'form', pendingEmail: '', submitting: false, showError: false, errorMessage: '',
+    step: 'form', pendingEmail: '', submitting: false, showError: false, errorMessage: '', notice: '', resendAt: 0, now: Date.now(),
     ...readTypeVisibility(),
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
   };
   fullNameRef = React.createRef(); mobileRef = React.createRef(); emailRef = React.createRef();
   countryRef = React.createRef(); stateRef = React.createRef(); cityRef = React.createRef();
   companyRef = React.createRef(); businessTypeRef = React.createRef(); websiteRef = React.createRef();
-  messageRef = React.createRef(); passwordRef = React.createRef(); otpCodeRef = React.createRef();
+  messageRef = React.createRef(); passwordRef = React.createRef();
+  otpEl = null;
+  // Callback ref for <otp-input>: a complete code is checked straight away.
+  bindOtp = (el) => {
+    if (el === this.otpEl) return;
+    this.otpEl = el;
+    if (el) el.addEventListener('otp-complete', (e) => this.verify(e.detail));
+  };
 
   async componentDidMount() {
+    import('./utils/otpInput.js').then((m) => { this.otpHelpers = m; this.forceUpdate(); });
     const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
     fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
     import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
@@ -196,8 +223,33 @@ class Component extends DCLogic {
     });
     let json = {};
     try { json = await res.json(); } catch { /* no body */ }
-    if (!res.ok) throw new Error((json && json.error) || 'Something went wrong. Please try again.');
+    if (!res.ok) {
+      const err = new Error((json && json.error) || 'Something went wrong. Please try again.');
+      err.info = json || {};
+      err.status = res.status;
+      throw err;
+    }
     return json.data;
+  }
+
+  componentWillUnmount() { clearInterval(this._tick); }
+
+  // Resend countdown (seconds from the server).
+  startCooldown(seconds) {
+    const resendAt = Date.now() + Math.max(0, Number(seconds) || 0) * 1000;
+    this.setState({ resendAt, now: Date.now() });
+    clearInterval(this._tick);
+    this._tick = setInterval(() => {
+      this.setState({ now: Date.now() });
+      if (Date.now() >= this.state.resendAt) clearInterval(this._tick);
+    }, 1000);
+  }
+
+  goOtp(email, resendIn, notice) {
+    this.setState({ step: 'otp', pendingEmail: email, submitting: false, showError: false, notice: notice || '' });
+    // The form is long; the code card starts at the top of the page.
+    try { document.body.scrollTop = 0; window.scrollTo(0, 0); } catch {}
+    this.startCooldown(resendIn == null ? 30 : resendIn);
   }
 
   fail(message) {
@@ -214,32 +266,75 @@ class Component extends DCLogic {
       message: this.messageRef.current ? this.messageRef.current.value.trim() : '',
       password: this.passwordRef.current ? this.passwordRef.current.value : '',
     };
+    if (payload.password.length < 8) return this.fail('Password must be at least 8 characters.');
+    this.lastPayload = payload;
     this.setState({ submitting: true, showError: false });
     this.postJson('/api/auth/register', payload)
-      .then(() => this.setState({ step: 'otp', pendingEmail: payload.email, submitting: false }))
-      .catch(err => this.fail(err.message));
+      .then((d) => this.goOtp(payload.email, d && d.resendIn))
+      .catch((err) => {
+        // Registered before but never verified: straight to the code step.
+        if (err.info && err.info.code === 'UNVERIFIED') return this.goOtp(err.info.email || payload.email, err.info.resendIn, err.message);
+        this.fail(err.message);
+      });
   }
 
   handleVerify(e) {
     e.preventDefault();
-    const code = this.otpCodeRef.current ? this.otpCodeRef.current.value.trim() : '';
-    this.setState({ submitting: true, showError: false });
+    const code = this.otpEl ? this.otpEl.value : '';
+    if (code.length < 6) {
+      if (this.otpEl) { this.otpEl.markInvalid(); this.otpEl.focus(); }
+      return this.fail('Enter all 6 digits of the code.');
+    }
+    this.verify(code);
+  }
+
+  verify(code) {
+    if (this.state.submitting) return;
+    this.setState({ submitting: true, showError: false, notice: '' });
     this.postJson('/api/auth/register/verify', { email: this.state.pendingEmail, code })
-      .then(() => this.setState({ step: 'done', submitting: false }))
-      .catch(err => this.fail(err.message));
+      .then(() => { clearInterval(this._tick); this.setState({ step: 'done', submitting: false }); })
+      .catch((err) => {
+        this.fail(err.message);
+        if (this.otpEl) { this.otpEl.markInvalid(); this.otpEl.clear(); this.otpEl.focus(); }
+      });
   }
 
   resendOtp(e) {
-    e.preventDefault();
-    this.setState({ submitting: true, showError: false });
+    if (e) e.preventDefault();
+    if (Date.now() < this.state.resendAt) return;
+    this.setState({ showError: false, notice: '' });
     this.postJson('/api/auth/register/resend', { email: this.state.pendingEmail })
-      .then(() => this.setState({ submitting: false }))
-      .catch(err => this.fail(err.message));
+      .then((d) => {
+        this.setState({ notice: 'A new code is on its way. Codes you received earlier no longer work.' });
+        this.startCooldown(d && d.resendIn);
+        if (this.otpEl) { this.otpEl.clear(); this.otpEl.focus(); }
+      })
+      .catch((err) => {
+        if (err.info && err.info.retryAfter) this.startCooldown(err.info.retryAfter);
+        this.fail(err.message);
+      });
+  }
+
+  // Back to the form with everything still filled in.
+  changeEmail(e) {
+    if (e) e.preventDefault();
+    clearInterval(this._tick);
+    this.setState({ step: 'form', showError: false, notice: '' }, () => {
+      requestAnimationFrame(() => {
+        const p = this.lastPayload || {};
+        const set = (ref, v) => { if (ref.current && v != null) ref.current.value = v; };
+        set(this.fullNameRef, p.fullName); set(this.mobileRef, p.mobile); set(this.emailRef, p.email || this.state.pendingEmail);
+        set(this.countryRef, p.country); set(this.stateRef, p.state); set(this.cityRef, p.city);
+        set(this.companyRef, p.companyName); set(this.businessTypeRef, p.businessType); set(this.websiteRef, p.website);
+        set(this.messageRef, p.message); set(this.passwordRef, p.password);
+        if (this.emailRef.current) { this.emailRef.current.focus(); this.emailRef.current.select(); }
+      });
+    });
   }
 
   renderVals() {
     const step = this.state.step;
-    const labelByStep = { form: 'Continue to Verification', otp: 'Verify & Complete Registration' };
+    const labelByStep = { form: 'Continue to Verification', otp: 'Verify email' };
     return {
       isForm: step === 'form', isOtp: step === 'otp', isDone: step === 'done',
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
@@ -247,13 +342,24 @@ class Component extends DCLogic {
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
       footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
       pendingEmail: this.state.pendingEmail || 'your email',
+      maskedEmail: this.otpHelpers ? this.otpHelpers.maskEmail(this.state.pendingEmail) : this.state.pendingEmail,
+      notice: this.state.notice,
+      canResend: this.state.now >= this.state.resendAt,
+      resendLabel: this.state.now >= this.state.resendAt ? 'Resend code'
+        : `Resend code in ${this.otpHelpers ? this.otpHelpers.formatWait((this.state.resendAt - this.state.now) / 1000) : Math.ceil((this.state.resendAt - this.state.now) / 1000) + 's'}`,
+      ...(() => {
+        const box = this.otpHelpers ? this.otpHelpers.inboxFor(this.state.pendingEmail) : null;
+        return { inbox: !!box, inboxHref: box ? box.href : '#', inboxLabel: box ? box.label : '' };
+      })(),
+      bindOtp: this.bindOtp,
+      changeEmail: (e) => this.changeEmail(e),
       submitting: this.state.submitting,
-      submitLabel: this.state.submitting ? 'Please wait…' : (labelByStep[step] || 'Continue'),
+      submitLabel: this.state.submitting ? (step === 'otp' ? 'Checking…' : 'Please wait…') : (labelByStep[step] || 'Continue'),
       showError: this.state.showError, errorMessage: this.state.errorMessage,
       fullNameRef: this.fullNameRef, mobileRef: this.mobileRef, emailRef: this.emailRef,
       countryRef: this.countryRef, stateRef: this.stateRef, cityRef: this.cityRef,
       companyRef: this.companyRef, businessTypeRef: this.businessTypeRef, websiteRef: this.websiteRef,
-      messageRef: this.messageRef, passwordRef: this.passwordRef, otpCodeRef: this.otpCodeRef,
+      messageRef: this.messageRef, passwordRef: this.passwordRef,
       handleSubmit: e => this.handleSubmit(e),
       handleVerify: e => this.handleVerify(e),
       resendOtp: e => this.resendOtp(e),

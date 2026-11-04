@@ -859,9 +859,9 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
             </sc-if>
 
             <sc-if value="{{ isPwSent }}" hint-placeholder-val="{{ false }}">
-              <div class="alert alert-ok">Code sent to {{ accountEmail }}. It expires in 10 minutes.</div>
+              <div class="alert alert-ok">Code sent to {{ accountEmail }}. It expires in 10 minutes.<sc-if value="{{ pwInbox }}" hint-placeholder-val="{{ false }}"> <a href="{{ pwInboxHref }}" target="_blank" rel="noopener" style="font-weight:600;">{{ pwInboxLabel }} ↗</a></sc-if></div>
               <form onSubmit="{{ submitPasswordChange }}" style="display:flex;flex-direction:column;gap:14px;">
-                <div class="field"><label>Verification code</label><input class="input" name="code" value="{{ pw.code }}" onChange="{{ onPwField }}" sc-camel-max-length="6" sc-camel-input-mode="numeric" sc-camel-auto-complete="one-time-code" placeholder="6-digit code" style="letter-spacing:.3em;"/></div>
+                <div class="field"><label>Verification code</label><otp-input ref="{{ bindPwOtp }}" style="margin:4px 0 0;max-width:340px;"></otp-input></div>
                 <div class="field"><label>New password</label>
                   <div class="pw-wrap"><input class="input" name="next" type="{{ pwInputType }}" value="{{ pw.next }}" onChange="{{ onPwField }}" sc-camel-auto-complete="new-password"/><button type="button" class="pw-toggle" onClick="{{ togglePwVisible }}">{{ pwToggleLabel }}</button></div>
                   <div class="strength" aria-hidden="true"><span class="{{ pwBar1 }}"></span><span class="{{ pwBar2 }}"></span><span class="{{ pwBar3 }}"></span><span class="{{ pwBar4 }}"></span></div>
@@ -1341,7 +1341,11 @@ class Component extends DCLogic {
     let json = {};
     try { json = await res.json(); } catch { /* no body */ }
     if (res.status === 401) { lsDel(CACHE_KEY); window.location.href = 'Login.dc.html'; }
-    if (!res.ok) throw new Error((json && json.error) || 'Something went wrong. Please try again.');
+    if (!res.ok) {
+      const err = new Error((json && json.error) || 'Something went wrong. Please try again.');
+      err.info = json || {};
+      throw err;
+    }
     return json.data;
   }
 
@@ -1488,20 +1492,47 @@ class Component extends DCLogic {
   }
 
   // ---- Password ----
+  // <otp-input> for the code: typing/pasting fills pw.code; a complete code
+  // moves the cursor on to the new password.
+  bindPwOtp = (el) => {
+    if (el === this.pwOtpEl) return;
+    this.pwOtpEl = el;
+    if (!el) return;
+    el.addEventListener('otp-change', (e) => this.setState((st) => ({ pw: { ...st.pw, code: e.detail }, pwError: '' })));
+    el.addEventListener('otp-complete', () => {
+      const next = document.querySelector('input[name="next"]');
+      if (next) next.focus();
+    });
+    setTimeout(() => el.focus(), 60);
+  };
+
+  startPwCooldown(seconds) {
+    this.setState({ pwCooldownUntil: Date.now() + Math.max(0, Number(seconds) || 0) * 1000, now: Date.now() });
+    clearInterval(this._tick);
+    this._tick = setInterval(() => {
+      this.setState({ now: Date.now() });
+      if (Date.now() >= this.state.pwCooldownUntil) clearInterval(this._tick);
+    }, 1000);
+  }
+
   sendPasswordCode(e) {
     if (e) e.preventDefault();
     if (this.state.pwSending || Date.now() < this.state.pwCooldownUntil) return;
+    import('./utils/otpInput.js').then((m) => { this.otpHelpers = m; });
     this.setState({ pwSending: true, pwError: '' });
     this.requestJson('POST', '/api/auth/change-password/request', {})
-      .then(() => {
-        this.setState({ pwStep: 'sent', pwSending: false, pwCooldownUntil: Date.now() + RESEND_COOLDOWN_MS, now: Date.now() });
-        clearInterval(this._tick);
-        this._tick = setInterval(() => {
-          this.setState({ now: Date.now() });
-          if (Date.now() >= this.state.pwCooldownUntil) clearInterval(this._tick);
-        }, 1000);
+      .then((d) => {
+        this.setState((st) => ({ pwStep: 'sent', pwSending: false, pw: { ...st.pw, code: '' } }));
+        if (this.pwOtpEl) { this.pwOtpEl.clear(); this.pwOtpEl.focus(); }
+        this.startPwCooldown(d && d.resendIn != null ? d.resendIn : RESEND_COOLDOWN_MS / 1000);
       })
-      .catch((err) => this.setState({ pwSending: false, pwError: err.message }));
+      .catch((err) => {
+        if (err.info && err.info.retryAfter) {
+          this.startPwCooldown(err.info.retryAfter);
+          if (this.state.pwStep === 'idle') return this.setState({ pwStep: 'sent', pwSending: false });
+        }
+        this.setState({ pwSending: false, pwError: err.message });
+      });
   }
 
   submitPasswordChange(e) {
@@ -1511,8 +1542,15 @@ class Component extends DCLogic {
     if (next.length < 8) return this.setState({ pwError: 'Password must be at least 8 characters.' });
     this.setState({ pwVerifying: true, pwError: '' });
     this.requestJson('POST', '/api/auth/change-password/verify', { code: code.trim(), newPassword: next })
-      .then(() => this.setState({ pwStep: 'done', pwVerifying: false, pw: { code: '', next: '', confirm: '' } }))
-      .catch((err) => this.setState({ pwVerifying: false, pwError: err.message }));
+      .then(() => { clearInterval(this._tick); this.setState({ pwStep: 'done', pwVerifying: false, pw: { code: '', next: '', confirm: '' } }); })
+      .catch((err) => {
+        this.setState({ pwVerifying: false, pwError: err.message });
+        // A wrong / expired code: shake, clear and put the cursor back.
+        if (err.info && err.info.reason && this.pwOtpEl) {
+          this.pwOtpEl.markInvalid(); this.pwOtpEl.clear(); this.pwOtpEl.focus();
+          this.setState((st) => ({ pw: { ...st.pw, code: '' }, ...(err.info.reason !== 'invalid' ? { pwCooldownUntil: 0 } : {}) }));
+        }
+      });
   }
 
   passwordScore(pw) {
@@ -1940,6 +1978,11 @@ class Component extends DCLogic {
       historyLabel: st.historyCount ? `${st.historyCount} product${st.historyCount === 1 ? '' : 's'} remembered` : 'Empty',
       hasHistory: st.historyCount > 0,
       isPwIdle: st.pwStep === 'idle', isPwSent: st.pwStep === 'sent', isPwDone: st.pwStep === 'done',
+      bindPwOtp: this.bindPwOtp,
+      ...(() => {
+        const box = this.otpHelpers && me ? this.otpHelpers.inboxFor(me.email) : null;
+        return { pwInbox: !!box, pwInboxHref: box ? box.href : '#', pwInboxLabel: box ? box.label : '' };
+      })(),
       pwError: st.pwError, pwSending: st.pwSending,
       pwSendLabel: st.pwSending ? 'Sending code…' : 'Email me a verification code',
       pw: st.pw, onPwField: (e) => {

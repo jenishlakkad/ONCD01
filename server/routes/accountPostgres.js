@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db/postgres');
+const T = require('../lib/emailTemplates');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireCustomer = require('../middleware/requireCustomerPostgres');
 const { loadAccountSnapshot } = require('../lib/accountSnapshot');
@@ -76,11 +77,12 @@ router.post('/inquiries/:id/messages', requireCustomer, asyncRoute(async (req, r
     return r.rows[0];
   });
 
-  const company = req.customer.company_name ? ` (${req.customer.company_name})` : '';
-  notifyDesk({
-    subject: `New message on inquiry ${inquiryLabel(inquiry)} from ${req.customer.full_name}`,
-    text: `${req.customer.full_name}${company} wrote:\n\n${body}\n\nOpen the conversation: ${siteOrigin(req)}/AdminInquiries.dc.html?id=${inquiry.id}`,
-  });
+  const origin = siteOrigin(req);
+  const c = req.customer;
+  notifyDesk(() => T.customerReplyDeskEmail({
+    kind: 'inquiry', who: c.full_name, company: c.company_name, email: c.email, label: inquiryLabel(inquiry), body,
+    adminUrl: `${origin}/AdminInquiries.dc.html?id=${inquiry.id}`, origin,
+  }).then((m) => ({ ...m, replyTo: c.email })));
   res.status(201).json({ data: { ...message, id: Number(message.id), status: 'pending' } });
 }));
 
@@ -123,10 +125,12 @@ router.post('/messages/:id/replies', requireCustomer, asyncRoute(async (req, res
     return r.rows[0];
   });
 
-  notifyDesk({
-    subject: `Re: ${msg.subject} (reply from ${req.customer.full_name})`,
-    text: `${req.customer.full_name} replied:\n\n${body}\n\nOpen the conversation: ${siteOrigin(req)}/AdminContact.dc.html?id=${msg.id}`,
-  });
+  const origin = siteOrigin(req);
+  const c = req.customer;
+  notifyDesk(() => T.customerReplyDeskEmail({
+    kind: 'contact', who: c.full_name, company: c.company_name, email: c.email, label: msg.subject, body,
+    adminUrl: `${origin}/AdminContact.dc.html?id=${msg.id}`, origin,
+  }).then((m) => ({ ...m, replyTo: c.email })));
   res.status(201).json({ data: { ...reply, id: Number(reply.id), status: 'new' } });
 }));
 

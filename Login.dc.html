@@ -9,7 +9,18 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
-<style>body{margin:0}a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-700)}</style>
+<style>body{margin:0}a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-700)}
+/* Verification-code step (same look as Register) */
+.otp-card{width:100%;max-width:440px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:clamp(24px,6vw,40px);text-align:center;background:var(--color-bg);box-sizing:border-box;}
+.otp-icon{width:56px;height:56px;border-radius:50%;background:var(--color-accent-100);color:var(--color-accent-700);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.otp-lead{opacity:.75;font-size:14px;margin:8px 0 22px;line-height:1.5;}
+.otp-notice{font-size:13px;line-height:1.5;margin:-6px 0 18px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-accent-100);color:var(--color-accent-900);text-align:left;}
+.otp-error{font-size:13px;color:#a3302f;margin:12px 0 0;}
+.otp-actions{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:16px;font-size:13px;flex-wrap:wrap;}
+.otp-link{background:none;border:none;padding:6px 2px;font:inherit;font-size:13px;color:var(--color-accent-700);font-weight:600;cursor:pointer;}
+.otp-link:disabled{color:var(--color-text);opacity:.5;font-weight:400;cursor:default;}
+.otp-help{font-size:12px;opacity:.6;margin:16px 0 0;line-height:1.5;}
+</style>
 </helmet>
 
 <div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
@@ -72,20 +83,62 @@
     </sc-if>
 
     <sc-if value="{{ isForgotOtp }}" hint-placeholder-val="{{ false }}">
-      <form onSubmit="{{ handleVerifyOtp }}" style="width:100%;max-width:420px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:40px;text-align:center;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="margin:0 auto 16px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-        <h2>Enter Verification Code</h2>
-        <p style="opacity:.7;font-size:13px;margin-top:8px;">We sent a 6-digit code to <strong>{{ resetEmail }}</strong>.</p>
-        <div class="field" style="margin-top:24px;text-align:left;">
-          <label>Verification Code</label>
-          <input class="input" style="text-align:center;letter-spacing:.4em;font-size:20px;" maxlength="6" placeholder="••••••" ref="{{ otpCodeRef }}" required=""/>
-        </div>
-        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
-          <p style="font-size:12px;color:var(--color-accent-700);margin-top:10px;">{{ errorMessage }}</p>
+      <form onSubmit="{{ handleVerifyOtp }}" class="otp-card">
+        <div class="otp-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+        <h2 style="margin:0;">Check your email</h2>
+        <p class="otp-lead">Enter the 6-digit code we sent to <strong>{{ maskedEmail }}</strong> to reset your password.</p>
+        <sc-if value="{{ notice }}" hint-placeholder-val="{{ false }}">
+          <p class="otp-notice" role="status">{{ notice }}</p>
         </sc-if>
-        <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
-        <p style="font-size:12px;margin-top:16px;opacity:.7;">Didn't get a code? <a href="#" onClick="{{ handleSendOtp }}">Resend</a></p>
+        <otp-input ref="{{ bindOtp }}" autofocus=""></otp-input>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p class="otp-error" role="alert">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:22px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <div class="otp-actions">
+          <button type="button" class="otp-link" onClick="{{ handleSendOtp }}" disabled="{{ !canResend }}">{{ resendLabel }}</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" class="otp-link" onClick="{{ goForgotEmail }}">Use a different email</button>
+        </div>
+        <sc-if value="{{ inbox }}" hint-placeholder-val="{{ false }}">
+          <a href="{{ inboxHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block" style="margin-top:14px;">{{ inboxLabel }} ↗</a>
+        </sc-if>
+        <p class="otp-help">Can't find it? Check Spam or Promotions. The code expires in 10 minutes.</p>
       </form>
+    </sc-if>
+
+    <sc-if value="{{ isVerifyEmail }}" hint-placeholder-val="{{ false }}">
+      <form onSubmit="{{ handleVerifyEmail }}" class="otp-card">
+        <div class="otp-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+        <h2 style="margin:0;">Verify your email</h2>
+        <p class="otp-lead">Enter the 6-digit code we sent to <strong>{{ maskedEmail }}</strong> to finish your registration.</p>
+        <sc-if value="{{ notice }}" hint-placeholder-val="{{ false }}">
+          <p class="otp-notice" role="status">{{ notice }}</p>
+        </sc-if>
+        <otp-input ref="{{ bindOtp }}" autofocus=""></otp-input>
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <p class="otp-error" role="alert">{{ errorMessage }}</p>
+        </sc-if>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:22px;" disabled="{{ submitting }}">{{ submitLabel }}</button>
+        <div class="otp-actions">
+          <button type="button" class="otp-link" onClick="{{ resendVerify }}" disabled="{{ !canResend }}">{{ resendLabel }}</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" class="otp-link" onClick="{{ goLogin }}">Back to login</button>
+        </div>
+        <sc-if value="{{ inbox }}" hint-placeholder-val="{{ false }}">
+          <a href="{{ inboxHref }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block" style="margin-top:14px;">{{ inboxLabel }} ↗</a>
+        </sc-if>
+        <p class="otp-help">Can't find it? Check Spam or Promotions. The code expires in 10 minutes.</p>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ isVerifiedPending }}" hint-placeholder-val="{{ false }}">
+      <div class="otp-card">
+        <div class="otp-icon" style="background:#e6f2e8;color:#2c6a3c;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+        <h2 style="margin:0;">Email verified</h2>
+        <p class="otp-lead" style="margin-bottom:8px;">Thank you! Your application is now with our team. We review every trade account — usually within one business day — and we'll email you the moment it's approved.</p>
+        <a href="Home.dc.html" class="btn btn-primary btn-block" style="margin-top:16px;">Browse the collection</a>
+      </div>
     </sc-if>
 
     <sc-if value="{{ isForgotReset }}" hint-placeholder-val="{{ false }}">
@@ -190,17 +243,28 @@ function footerTaglineFor(d, j, g) {
 class Component extends DCLogic {
   state = {
     mode: 'login', showError: false, errorMessage: '', submitting: false, resetEmail: '', resetCode: '',
+    verifyEmail: '', notice: '', resendAt: 0, now: Date.now(),
     ...readTypeVisibility(),
     settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
   };
   loginEmailRef = React.createRef();
   loginPasswordRef = React.createRef();
   resetEmailRef = React.createRef();
-  otpCodeRef = React.createRef();
+  otpEl = null;
+  // Callback ref for <otp-input>: a complete code is checked straight away.
+  bindOtp = (el) => {
+    if (el === this.otpEl) return;
+    this.otpEl = el;
+    if (el) el.addEventListener('otp-complete', (e) => {
+      if (this.state.mode === 'verifyEmail') this.verifyRegistration(e.detail);
+      else this.verifyReset(e.detail);
+    });
+  };
   newPasswordRef = React.createRef();
   confirmPasswordRef = React.createRef();
 
   async componentDidMount() {
+    import('./utils/otpInput.js').then((m) => { this.otpHelpers = m; this.forceUpdate(); });
     const { fetchProductTypeVisibility } = await import('./utils/productTypes.js');
     fetchProductTypeVisibility().then((v) => this.setState({ showDiamonds: v.diamond, showJewelry: v.jewelry, showGemstones: v.gemstone }));
     import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
@@ -218,8 +282,30 @@ class Component extends DCLogic {
     });
     let json = {};
     try { json = await res.json(); } catch { /* no body */ }
-    if (!res.ok) throw new Error((json && json.error) || 'Something went wrong. Please try again.');
+    if (!res.ok) {
+      const err = new Error((json && json.error) || 'Something went wrong. Please try again.');
+      err.info = json || {};
+      throw err;
+    }
     return json.data;
+  }
+
+  componentWillUnmount() { clearInterval(this._tick); }
+
+  // Resend countdown (seconds from the server).
+  startCooldown(seconds) {
+    const resendAt = Date.now() + Math.max(0, Number(seconds) || 0) * 1000;
+    this.setState({ resendAt, now: Date.now() });
+    clearInterval(this._tick);
+    this._tick = setInterval(() => {
+      this.setState({ now: Date.now() });
+      if (Date.now() >= this.state.resendAt) clearInterval(this._tick);
+    }, 1000);
+  }
+
+  otpFailed(err) {
+    this.fail(err.message);
+    if (this.otpEl) { this.otpEl.markInvalid(); this.otpEl.clear(); this.otpEl.focus(); }
   }
 
   fail(message) {
@@ -237,26 +323,92 @@ class Component extends DCLogic {
         setSessionHint();
         window.location.href = 'Dashboard.dc.html';
       })
-      .catch(err => this.fail(err.message));
+      .catch((err) => {
+        // Right password, email never verified: finish that here.
+        if (err.info && err.info.code === 'UNVERIFIED') {
+          this.setState({ mode: 'verifyEmail', verifyEmail: err.info.email || email, submitting: false, showError: false, notice: err.message });
+          this.startCooldown(err.info.resendIn);
+          return;
+        }
+        this.fail(err.message);
+      });
   }
 
+  // First send (from the email step) and "Resend code" (from the code step).
   handleSendOtp(e) {
-    e.preventDefault();
-    const email = (this.resetEmailRef.current ? this.resetEmailRef.current.value.trim() : '') || this.state.resetEmail;
+    if (e) e.preventDefault();
+    const resending = this.state.mode === 'forgotOtp';
+    const email = (!resending && this.resetEmailRef.current ? this.resetEmailRef.current.value.trim() : '') || this.state.resetEmail;
     if (!email) return this.fail('Enter your account email first.');
-    this.setState({ submitting: true, showError: false });
+    if (resending && Date.now() < this.state.resendAt) return;
+    this.setState({ submitting: !resending, showError: false, notice: '' });
     this.postJson('/api/auth/forgot', { email })
-      .then(() => this.setState({ mode: 'forgotOtp', resetEmail: email, submitting: false, showError: false }))
-      .catch(err => this.fail(err.message));
+      .then((d) => {
+        this.setState({ mode: 'forgotOtp', resetEmail: email, submitting: false, showError: false,
+          notice: resending ? 'A new code is on its way. Codes you received earlier no longer work.' : '' });
+        this.startCooldown(d && d.resendIn);
+        if (resending && this.otpEl) { this.otpEl.clear(); this.otpEl.focus(); }
+      })
+      .catch((err) => {
+        if (err.info && err.info.retryAfter) {
+          this.startCooldown(err.info.retryAfter);
+          // A code went out moments ago — carry on to the code step.
+          if (!resending) return this.setState({ mode: 'forgotOtp', resetEmail: email, submitting: false, notice: 'We sent you a code a moment ago — check your inbox.' });
+        }
+        this.fail(err.message);
+      });
+  }
+
+  handleVerifyEmail(e) {
+    e.preventDefault();
+    const code = this.otpEl ? this.otpEl.value : '';
+    if (code.length < 6) {
+      if (this.otpEl) { this.otpEl.markInvalid(); this.otpEl.focus(); }
+      return this.fail('Enter all 6 digits of the code.');
+    }
+    this.verifyRegistration(code);
+  }
+
+  verifyRegistration(code) {
+    if (this.state.submitting) return;
+    this.setState({ submitting: true, showError: false, notice: '' });
+    this.postJson('/api/auth/register/verify', { email: this.state.verifyEmail, code })
+      .then(() => { clearInterval(this._tick); this.setState({ mode: 'verifiedPending', submitting: false }); })
+      .catch((err) => this.otpFailed(err));
+  }
+
+  resendVerify(e) {
+    if (e) e.preventDefault();
+    if (Date.now() < this.state.resendAt) return;
+    this.setState({ showError: false, notice: '' });
+    this.postJson('/api/auth/register/resend', { email: this.state.verifyEmail })
+      .then((d) => {
+        this.setState({ notice: 'A new code is on its way. Codes you received earlier no longer work.' });
+        this.startCooldown(d && d.resendIn);
+        if (this.otpEl) { this.otpEl.clear(); this.otpEl.focus(); }
+      })
+      .catch((err) => {
+        if (err.info && err.info.retryAfter) this.startCooldown(err.info.retryAfter);
+        this.fail(err.message);
+      });
   }
 
   handleVerifyOtp(e) {
     e.preventDefault();
-    const code = this.otpCodeRef.current ? this.otpCodeRef.current.value.trim() : '';
-    this.setState({ submitting: true, showError: false });
+    const code = this.otpEl ? this.otpEl.value : '';
+    if (code.length < 6) {
+      if (this.otpEl) { this.otpEl.markInvalid(); this.otpEl.focus(); }
+      return this.fail('Enter all 6 digits of the code.');
+    }
+    this.verifyReset(code);
+  }
+
+  verifyReset(code) {
+    if (this.state.submitting) return;
+    this.setState({ submitting: true, showError: false, notice: '' });
     this.postJson('/api/auth/forgot/verify', { email: this.state.resetEmail, code })
-      .then(() => this.setState({ mode: 'forgotReset', resetCode: code, submitting: false }))
-      .catch(err => this.fail(err.message));
+      .then(() => { clearInterval(this._tick); this.setState({ mode: 'forgotReset', resetCode: code, submitting: false }); })
+      .catch((err) => this.otpFailed(err));
   }
 
   handleResetDone(e) {
@@ -268,17 +420,40 @@ class Component extends DCLogic {
     this.setState({ submitting: true, showError: false });
     this.postJson('/api/auth/reset', { email: this.state.resetEmail, code: this.state.resetCode, newPassword })
       .then(() => this.setState({ mode: 'forgotDone', submitting: false }))
-      .catch(err => this.fail(err.message));
+      .catch((err) => {
+        if (err.info && err.info.reason) {
+          this.setState({ mode: 'forgotOtp', submitting: false, resendAt: 0, showError: true, errorMessage: err.message });
+          return;
+        }
+        this.fail(err.message);
+      });
+  }
+
+  codeStepVals() {
+    const h = this.otpHelpers;
+    const email = (this.state.mode === 'verifyEmail' ? this.state.verifyEmail : this.state.resetEmail);
+    const wait = Math.max(0, (this.state.resendAt - this.state.now) / 1000);
+    const box = h ? h.inboxFor(email) : null;
+    return {
+      maskedEmail: h ? h.maskEmail(email) : email,
+      notice: this.state.notice,
+      canResend: wait <= 0,
+      resendLabel: wait > 0 ? `Resend code in ${h ? h.formatWait(wait) : Math.ceil(wait) + 's'}` : 'Resend code',
+      inbox: !!box, inboxHref: box ? box.href : '#', inboxLabel: box ? box.label : '',
+    };
   }
 
   renderVals() {
     const mode = this.state.mode;
     const labelByMode = {
-      login: 'Log In', forgotEmail: 'Send Verification Code', forgotOtp: 'Verify Code', forgotReset: 'Reset Password',
+      login: 'Log In', forgotEmail: 'Send Verification Code', forgotOtp: 'Verify code', verifyEmail: 'Verify email', forgotReset: 'Reset Password',
     };
     return {
       isLogin: mode === 'login', isForgotEmail: mode === 'forgotEmail', isForgotOtp: mode === 'forgotOtp',
       isForgotReset: mode === 'forgotReset', isForgotDone: mode === 'forgotDone',
+      isVerifyEmail: mode === 'verifyEmail', isVerifiedPending: mode === 'verifiedPending',
+      handleVerifyEmail: (e) => this.handleVerifyEmail(e),
+      resendVerify: (e) => this.resendVerify(e),
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       footerTagline: footerTaglineFor(this.state.showDiamonds, this.state.showJewelry, this.state.showGemstones),
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
@@ -289,11 +464,12 @@ class Component extends DCLogic {
       submitLabel: this.state.submitting ? 'Please wait…' : (labelByMode[mode] || 'Continue'),
       resetEmail: this.state.resetEmail || 'your email',
       loginEmailRef: this.loginEmailRef, loginPasswordRef: this.loginPasswordRef,
-      resetEmailRef: this.resetEmailRef, otpCodeRef: this.otpCodeRef,
+      resetEmailRef: this.resetEmailRef, bindOtp: this.bindOtp,
+      ...this.codeStepVals(),
       newPasswordRef: this.newPasswordRef, confirmPasswordRef: this.confirmPasswordRef,
       handleSubmit: e => this.handleSubmit(e),
-      goForgotEmail: e => { e.preventDefault(); this.setState({ mode: 'forgotEmail', showError: false }); },
-      goLogin: e => { e.preventDefault(); this.setState({ mode: 'login', showError: false }); },
+      goForgotEmail: e => { e.preventDefault(); clearInterval(this._tick); this.setState({ mode: 'forgotEmail', showError: false, notice: '' }); },
+      goLogin: e => { e.preventDefault(); clearInterval(this._tick); this.setState({ mode: 'login', showError: false, notice: '' }); },
       handleSendOtp: e => this.handleSendOtp(e),
       handleVerifyOtp: e => this.handleVerifyOtp(e),
       handleResetDone: e => this.handleResetDone(e),
