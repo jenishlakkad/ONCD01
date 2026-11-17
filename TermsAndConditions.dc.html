@@ -95,7 +95,7 @@ a:hover{color:var(--color-accent-700)}
   <section style="padding:64px clamp(20px,6vw,56px) 0;max-width:820px;">
     <h6 style="color:var(--color-accent-700);">Legal</h6>
     <h1 style="font-size:40px;margin-top:10px;">Terms and Conditions</h1>
-    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: August 26, 2026</p>
+    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: November 17, 2026</p>
 
     <div class="legal-toc">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:10px;">On this page</div>
@@ -155,7 +155,7 @@ a:hover{color:var(--color-accent-700)}
       <p>All text, photography, video, catalog data, design and branding on the Site are the property of ONCD or used under license, and are protected by applicable intellectual property laws. You may view and share individual product listings for personal, non-commercial reference (for example, sending a link to a colleague), but you may not otherwise copy, redistribute, or create derivative works from Site content without our written permission.</p>
 
       <h3 id="certification">9. Certification &amp; Product Accuracy</h3>
-      <p>Where a certificate is referenced for an item (for example GIA, IGI, HRD, or GRS), that certificate is issued by the independent grading laboratory named, not by ONCD. We do our best to represent every item's specifications accurately, but in the event of any discrepancy, the item's official certificate governs.</p>
+      <p>Where a grading certificate is referenced for an item, that certificate is issued by the independent laboratory named on it, not by ONCD. We do our best to represent every item's specifications accurately, but in the event of any discrepancy, the item's official certificate governs.</p>
 
       <h3 id="liability">10. Limitation of Liability</h3>
       <p>To the fullest extent permitted by law, ONCD is not liable for indirect, incidental, or consequential damages arising from your use of the Site, including reliance on catalog information that later changes (such as an item selling out before your inquiry is answered). Nothing in these Terms limits liability that cannot be limited under applicable law.</p>
@@ -167,7 +167,7 @@ a:hover{color:var(--color-accent-700)}
       <p>We may suspend or terminate your access to the Site, your account, or specific features (such as trade pricing or direct contact channels) at any time, with or without notice, for conduct we believe violates these Terms or is otherwise harmful to ONCD or other users.</p>
 
       <h3 id="law">13. Governing Law</h3>
-      <p>These Terms are governed by the laws of the jurisdiction in which ONCD is registered to do business, without regard to conflict-of-law principles. <em>(ONCD: please confirm and insert your specific governing jurisdiction here before relying on this policy.)</em></p>
+      <p>These Terms are governed by the laws of the jurisdiction in which ONCD is registered to do business, without regard to conflict-of-law principles.</p>
 
       <h3 id="changes">14. Changes to These Terms</h3>
       <p>We may update these Terms from time to time. The "Last updated" date at the top of this page reflects the most recent revision. Continued use of the Site after changes take effect means you accept the revised Terms.</p>
@@ -220,15 +220,14 @@ a:hover{color:var(--color-accent-700)}
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <span>{{ footerEmail }}</span>
-          <span>{{ footerPhone }}</span>
-          <span>New York · Antwerp · Surat</span>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
-      <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
 
@@ -251,9 +250,9 @@ function readTypeVisibility() {
 // Footer brand line naming only the catalogs that are switched on.
 function footerTaglineFor(d, j, g) {
   const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
-  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  if (!parts.length) return 'Fine pieces for trade and private collectors.';
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors.`;
 }
 class Component extends DCLogic {
   state = {

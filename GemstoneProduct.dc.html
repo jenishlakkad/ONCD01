@@ -23,6 +23,10 @@ a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
 .thumb{border:1px solid var(--color-divider);border-radius:var(--radius-md);cursor:pointer;overflow:hidden;background:var(--color-surface);transition:outline-color .15s ease;}
 .thumb:hover{outline:2px solid var(--color-accent-300);outline-offset:-2px;}
+.thumb:focus-visible{outline:2px solid var(--color-accent-700) !important;outline-offset:-2px;}
+/* Thumbnails: one scrollable row of fixed-size tiles. */
+.thumb-strip{position:relative;display:flex;gap:10px;margin-top:12px;padding:2px 2px 6px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;}
+.thumb-strip .thumb{flex:0 0 max(60px,calc((100% - 70px) / 8));scroll-snap-align:start;}
 .spec-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:14px;}
 .spec-row:last-child{border-bottom:none;}
 .pdp-save-btn{
@@ -139,11 +143,12 @@ a:hover{color:var(--color-accent-700)}
   <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(20px,6vw,56px);padding:32px clamp(20px,6vw,56px) 80px;">
     <div>
       <div class="plate" style="aspect-ratio:1;margin:0;">
-        <product-media media="{{ media }}" active-index="{{ activeIndex }}" zoom shape="rect" placeholder="{{ title }}, macro on black" style="width:100%;height:100%;"></product-media>
+        <product-media media="{{ media }}" active-index="{{ activeIndex }}" zoom gallery autoplay-video shape="rect" placeholder="{{ title }}, macro on black" style="width:100%;height:100%;"></product-media>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:10px;margin-top:12px;">
+      <sc-if value="{{ hasThumbs }}" hint-placeholder-val="{{ false }}">
+      <div class="thumb-strip" ref="{{ thumbsRef }}" role="group" aria-label="Product photos and videos">
         <sc-for list="{{ thumbs }}" as="t" hint-placeholder-count="0">
-          <div class="thumb" onClick="{{ t.select }}" style="aspect-ratio:1;position:relative;cursor:pointer;overflow:hidden;border-radius:6px;outline:2px solid {{ t.outlineColor }};outline-offset:-2px;">
+          <div class="thumb {{ t.activeClass }}" role="button" tabIndex="0" aria-label="{{ t.label }}" onClick="{{ t.select }}" onKeyDown="{{ t.onKey }}" style="aspect-ratio:1;position:relative;cursor:pointer;overflow:hidden;border-radius:6px;outline:2px solid {{ t.outlineColor }};outline-offset:-2px;">
             <sc-if value="{{ t.isImage }}" hint-placeholder-val="{{ true }}">
               <img src="{{ t.url }}" alt="{{ t.placeholder }}" style="width:100%;height:100%;object-fit:contain;display:block;"/>
             </sc-if>
@@ -153,6 +158,7 @@ a:hover{color:var(--color-accent-700)}
           </div>
         </sc-for>
       </div>
+      </sc-if>
     </div>
 
     <div>
@@ -172,7 +178,7 @@ a:hover{color:var(--color-accent-700)}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
             <div style="font-size:13px;">
               <sc-if value="{{ isPriceCtaLogin }}" hint-placeholder-val="{{ false }}">
-                <strong>{{ priceLabel }}</strong> — <a href="Login.dc.html">Log in</a> or <a href="Register.dc.html">register</a> to view pricing.
+                <strong>{{ priceLabel }}</strong> — <a href="{{ loginHref }}">Log in</a> or <a href="Register.dc.html">register</a> to view pricing.
               </sc-if>
               <sc-if value="{{ isPriceCtaPending }}" hint-placeholder-val="{{ false }}">
                 <strong>{{ priceLabel }}</strong> — your account doesn't currently have pricing access. <a href="Contact.dc.html">Contact us</a> if you believe this is a mistake.
@@ -208,7 +214,7 @@ a:hover{color:var(--color-accent-700)}
             <span style="opacity:.6;">Certificate</span>
             <span>{{ certificateLabel }}
               <sc-if value="{{ hasCertLink }}" hint-placeholder-val="{{ false }}">
-                <a href="{{ certLink }}" target="_blank" style="margin-left:6px;">View Certificate →</a>
+                <a href="{{ certLink }}" target="_blank" rel="noopener noreferrer" style="margin-left:6px;">View Certificate →</a>
               </sc-if>
             </span>
           </div>
@@ -219,6 +225,7 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </section>
 
+  <sc-if value="{{ hasRelated }}" hint-placeholder-val="{{ true }}">
   <section style="padding:0 clamp(20px,6vw,56px) 96px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px;">
       <h2 style="font-size:26px;margin:0;">You May Also Like</h2>
@@ -243,6 +250,7 @@ a:hover{color:var(--color-accent-700)}
       </sc-for>
     </div>
   </section>
+  </sc-if>
   </sc-if>
 
   </sc-if>
@@ -289,15 +297,14 @@ a:hover{color:var(--color-accent-700)}
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <span>{{ footerEmail }}</span>
-          <span>{{ footerPhone }}</span>
-          <span>New York · Antwerp · Surat</span>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
-      <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
 
@@ -360,9 +367,9 @@ function readTypeVisibility() {
 // Footer brand line naming only the catalogs that are switched on.
 function footerTaglineFor(d, j, g) {
   const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
-  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  if (!parts.length) return 'Fine pieces for trade and private collectors.';
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors.`;
 }
 class Component extends DCLogic {
   state = {
@@ -374,9 +381,13 @@ class Component extends DCLogic {
     inquiryOpen: false, inquiryProduct: null, inquiryNote: '',
   };
   relRef = React.createRef();
+  thumbsRef = React.createRef();
   relScroll(dir) { const el = this.relRef.current; if (el) el.scrollBy({ left: dir * 290, behavior: 'smooth' }); }
 
   async componentDidMount() {
+    // Arrows / swipe / keys in the main view move the selected thumbnail.
+    this._onMediaChange = (e) => { const i = e.detail && e.detail.index; if (Number.isInteger(i) && i !== this.state.activeIndex) this.setState({ activeIndex: i }); };
+    document.addEventListener('media-change', this._onMediaChange);
     const cartMod = await import('./utils/cart.js');
     this.cart = cartMod;
     this.refreshCart();
@@ -417,6 +428,7 @@ class Component extends DCLogic {
     }
   }
   componentWillUnmount() {
+    document.removeEventListener('media-change', this._onMediaChange);
     window.removeEventListener('aurum-cart-change', this._onChange);
     window.removeEventListener('storage', this._onChange);
   }
@@ -425,7 +437,7 @@ class Component extends DCLogic {
     this.setState({ cartItems: items });
   }
   toggleSaveSku(sku, name, priceLabel, productType) {
-    if (!this.state.customer) { window.location.href = 'Login.dc.html'; return; }
+    if (!this.state.customer) { window.location.href = 'Login.dc.html?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search); return; }
     import('./utils/savedItems.js').then(async (m) => {
       const saved = new Set(this.state.savedSkus);
       if (saved.has(sku)) { await m.unsaveItem(sku); saved.delete(sku); }
@@ -438,7 +450,19 @@ class Component extends DCLogic {
 
   // The browser tab / shared link shows the piece's name (e.g. "0.19ct Polki
   // Diamond | ONCD") once it has loaded.
-  componentDidUpdate() {
+  // Keeps the selected thumbnail visible when the arrows/swipe move past
+  // the edge of the strip. Scrolls only the strip, never the page.
+  scrollThumbIntoView() {
+    const strip = this.thumbsRef.current;
+    const el = strip && strip.querySelector('.thumb.is-active');
+    if (!el) return;
+    const l = el.offsetLeft, r = l + el.offsetWidth;
+    if (l < strip.scrollLeft) strip.scrollTo({ left: l - 8, behavior: 'smooth' });
+    else if (r > strip.scrollLeft + strip.clientWidth) strip.scrollTo({ left: r - strip.clientWidth + 8, behavior: 'smooth' });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState && prevState.activeIndex !== this.state.activeIndex) this.scrollThumbIntoView();
     const h = document.querySelector('h1');
     const name = h ? h.textContent.trim() : '';
     if (this.state.product && name && !name.includes('{{')) {
@@ -463,6 +487,7 @@ class Component extends DCLogic {
       otherCatalogs: [['showDiamonds', 'Diamonds.dc.html', 'Browse diamonds'], ['showJewelry', 'Jewelry.dc.html', 'Browse jewelry'], ['showGemstones', 'Gemstones.dc.html', 'Browse gemstones']]
         .filter(([k]) => k !== 'showGemstones' && this.state[k]).map(([, href, label]) => ({ href, label })),
       isLoggedIn: !!this.state.customer,
+      loginHref: 'Login.dc.html?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search),
       handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },
       accountMenuOpen: this.state.accountMenuOpen,
       toggleAccountMenu: (e) => { e.preventDefault(); e.stopPropagation(); this.setState({ accountMenuOpen: !this.state.accountMenuOpen }); },
@@ -489,6 +514,9 @@ class Component extends DCLogic {
       placeholder: p.stoneName || p.sku,
       outlineColor: i === activeIndex ? 'var(--color-accent-700)' : 'transparent',
       select: () => this.setState({ activeIndex: i }),
+      onKey: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.setState({ activeIndex: i }); } },
+      activeClass: i === activeIndex ? 'is-active' : '',
+      label: `${m.kind === 'video' ? 'Video' : 'Photo'} ${i + 1} of ${media.length}`,
     }));
     const related = (p.related || []).map((r) => {
       const title = r.stoneName || r.sku;
@@ -519,6 +547,9 @@ class Component extends DCLogic {
       media: JSON.stringify(media),
       activeIndex,
       thumbs,
+      hasThumbs: media.length > 1,
+      thumbsRef: this.thumbsRef,
+      hasRelated: related.length > 0,
       priceVisible: p.priceVisible,
       pricesLocked: !p.priceVisible,
       priceLabel: p.priceLabel || 'Pricing',

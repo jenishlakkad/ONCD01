@@ -214,15 +214,14 @@
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <span>{{ footerEmail }}</span>
-          <span>{{ footerPhone }}</span>
-          <span>New York · Antwerp · Surat</span>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
-      <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
 </div>
@@ -242,9 +241,18 @@ function readTypeVisibility() {
 // Footer brand line naming only the catalogs that are switched on.
 function footerTaglineFor(d, j, g) {
   const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
-  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  if (!parts.length) return 'Fine pieces for trade and private collectors.';
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors.`;
+}
+// Where to go after signing in: the page the visitor came from (?next=),
+// but only one of this site's own pages, never an outside address.
+function afterLoginUrl() {
+  try {
+    const next = new URLSearchParams(location.search).get('next') || '';
+    if (/^[A-Za-z][A-Za-z0-9_-]*\.dc\.html(\?[^#\s]*)?$/.test(next) && !/^(Admin|Login|Register)/.test(next)) return next;
+  } catch {}
+  return 'Dashboard.dc.html';
 }
 class Component extends DCLogic {
   state = {
@@ -276,7 +284,7 @@ class Component extends DCLogic {
     import('./utils/settings.js').then((m) => m.fetchPublicSettings()).then((s) => this.setState({ settings: s }));
     const { fetchCustomerSession } = await import('./utils/customerAuth.js');
     const me = await fetchCustomerSession();
-    if (me) window.location.href = 'Dashboard.dc.html';
+    if (me) window.location.href = afterLoginUrl();
   }
 
   async postJson(url, body) {
@@ -327,7 +335,7 @@ class Component extends DCLogic {
       .then(async () => {
         const { setSessionHint } = await import('./utils/customerAuth.js');
         setSessionHint();
-        window.location.href = 'Dashboard.dc.html';
+        window.location.href = afterLoginUrl();
       })
       .catch((err) => {
         // Right password, email never verified: finish that here.

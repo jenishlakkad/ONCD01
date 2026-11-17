@@ -95,7 +95,7 @@ a:hover{color:var(--color-accent-700)}
   <section style="padding:64px clamp(20px,6vw,56px) 0;max-width:820px;">
     <h6 style="color:var(--color-accent-700);">Legal</h6>
     <h1 style="font-size:40px;margin-top:10px;">Privacy Policy</h1>
-    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: August 26, 2026</p>
+    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: November 17, 2026</p>
 
     <div class="legal-toc">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:10px;">On this page</div>
@@ -128,7 +128,7 @@ a:hover{color:var(--color-accent-700)}
         <li><strong>Account registration:</strong> full name, email address, mobile number, country, state, city, and, for trade accounts, company name, business type, website and any message you provide with your application.</li>
         <li><strong>Inquiries:</strong> the item(s) you inquire about, the channel you choose to send the inquiry through (Email, WhatsApp, LINE or Skype), any message you write, and, for logged-in customers, your account details are attached to the inquiry so our sales desk knows who is asking.</li>
         <li><strong>Contact form submissions:</strong> your name, email, phone and message when you write to us via the Contact page.</li>
-        <li><strong>Saved items and Inquiry Cart:</strong> the products you save or add to your Inquiry Cart, kept on your device and, for logged-in customers, mirrored to our systems so our team can see your list if you need help.</li>
+        <li><strong>Saved items and Inquiry Cart:</strong> the products you add to your Inquiry Cart, kept on your device and, for logged-in customers, also stored with your account; and the items you save for later, which are stored with your account (saving requires logging in). This lets our team see your list if you need help.</li>
         <li><strong>Technical information:</strong> standard server logs (such as IP address and browser type) generated automatically when you use the site.</li>
       </ul>
 
@@ -148,10 +148,10 @@ a:hover{color:var(--color-accent-700)}
       <p>Registering an account does not automatically grant access to trade pricing or to our direct contact channels. The details you submit at registration are reviewed by our team to decide whether to approve, reject, or (later) suspend an account. This review exists to protect the integrity of our trade relationships and pricing — see our <a href="TermsAndConditions.dc.html">Terms and Conditions</a> for more on this. What pricing is shown to you (visible, hidden, "contact for price", or "login to view") depends on your account's approval status and our current pricing settings.</p>
 
       <h3 id="share">5. How We Share Information</h3>
-      <p>We do not sell or rent your personal information. Information you submit is accessible to our own sales and administrative staff so they can review applications, respond to inquiries, and manage your account. We may disclose information where required to comply with a legal obligation, or to protect the rights, property or safety of ONCD, our customers, or others.</p>
+      <p>We do not sell or rent your personal information. Information you submit is accessible to our own sales and administrative staff so they can review applications, respond to inquiries, and manage your account. We also rely on a small number of service providers to run the site — for website hosting, database and file storage, and delivering our emails (such as verification codes) — who process information only on our behalf and only to provide those services. We may disclose information where required to comply with a legal obligation, or to protect the rights, property or safety of ONCD, our customers, or others.</p>
 
       <h3 id="security">6. Data Security</h3>
-      <p>Account passwords are never stored in plain text — they are hashed before being saved. Login sessions are kept in a cookie that is not accessible to page scripts (<code>HttpOnly</code>) and expires automatically after a period of inactivity. Access to customer and inquiry data within our admin panel is restricted to authorized staff and, for meaningful actions, recorded in an internal audit log. No method of transmission or storage is perfectly secure, but we take reasonable, appropriate measures to protect your information.</p>
+      <p>Account passwords are never stored in plain text — they are hashed before being saved. Login sessions are kept in a cookie that is not accessible to page scripts (<code>HttpOnly</code>) and expires automatically after 7 days, or as soon as you log out. Access to customer and inquiry data within our admin panel is restricted to authorized staff and, for meaningful actions, recorded in an internal audit log. No method of transmission or storage is perfectly secure, but we take reasonable, appropriate measures to protect your information.</p>
 
       <h3 id="retention">7. Data Retention</h3>
       <p>We keep account and inquiry information for as long as your account is active, and for a reasonable period afterward to meet business, tax, and legal record-keeping needs. You may request deletion of your account as described in Section 8.</p>
@@ -216,15 +216,14 @@ a:hover{color:var(--color-accent-700)}
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <span>{{ footerEmail }}</span>
-          <span>{{ footerPhone }}</span>
-          <span>New York · Antwerp · Surat</span>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
-      <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
 
@@ -247,9 +246,9 @@ function readTypeVisibility() {
 // Footer brand line naming only the catalogs that are switched on.
 function footerTaglineFor(d, j, g) {
   const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
-  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  if (!parts.length) return 'Fine pieces for trade and private collectors.';
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors.`;
 }
 class Component extends DCLogic {
   state = {

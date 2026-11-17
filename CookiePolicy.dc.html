@@ -98,7 +98,7 @@ a:hover{color:var(--color-accent-700)}
   <section style="padding:64px clamp(20px,6vw,56px) 0;max-width:820px;">
     <h6 style="color:var(--color-accent-700);">Legal</h6>
     <h1 style="font-size:40px;margin-top:10px;">Cookie Policy</h1>
-    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: August 26, 2026</p>
+    <p style="opacity:.6;font-size:13px;margin-top:12px;">Last updated: November 17, 2026</p>
 
     <div class="legal-toc">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:10px;">On this page</div>
@@ -131,11 +131,14 @@ a:hover{color:var(--color-accent-700)}
       <h3 id="storage">3. Local Storage (Not a Cookie, But Similar)</h3>
       <p>Separately from cookies, your browser's local storage is used to remember a few things on your device:</p>
       <ul>
-        <li>The contents of your Inquiry Cart, so it survives a page reload;</li>
-        <li>A list of items you've saved for later;</li>
+        <li>The contents of your Inquiry Cart (and any note or preferred contact channel you've chosen for it), so it survives a page reload;</li>
+        <li>The items you've recently viewed, and when you last visited, so the home page can show "Recently Viewed", recommendations and what's new since your visit;</li>
+        <li>References to inquiries you've sent from this device, so you can find them again;</li>
+        <li>A few display preferences, such as which collections and contact options are currently available and whether you've closed the announcement bar, so pages show correctly straight away;</li>
+        <li>If you're logged in, a copy of your account overview, so your dashboard opens instantly — it's refreshed from our server each time and removed when you log out;</li>
         <li>A non-sensitive flag noting that you appear to be logged in, so the site can show the right navigation immediately rather than flashing a "guest" view while it double-checks with our server.</li>
       </ul>
-      <p>This information stays on your device and is not sent to us unless you submit an inquiry or are logged in and it needs to sync to your account.</p>
+      <p>This information stays on your device and is not sent to us unless you submit an inquiry or are logged in and it needs to sync to your account. Items you save for later are not kept here — they are stored with your account. You can clear all of it at any time through your browser's settings.</p>
 
       <h3 id="none">4. No Advertising or Tracking Cookies</h3>
       <p>We do not use third-party advertising cookies, analytics cookies, or cross-site tracking pixels on this Site. If that changes in the future, we will update this Policy to describe what's added and why.</p>
@@ -194,15 +197,14 @@ a:hover{color:var(--color-accent-700)}
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <span>{{ footerEmail }}</span>
-          <span>{{ footerPhone }}</span>
-          <span>New York · Antwerp · Surat</span>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
-      <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
 
@@ -225,9 +227,9 @@ function readTypeVisibility() {
 // Footer brand line naming only the catalogs that are switched on.
 function footerTaglineFor(d, j, g) {
   const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
-  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  if (!parts.length) return 'Fine pieces for trade and private collectors.';
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors.`;
 }
 class Component extends DCLogic {
   state = {

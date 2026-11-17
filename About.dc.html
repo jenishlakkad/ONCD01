@@ -93,12 +93,15 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </nav>
 
+  <sc-if value="{{ hasHero }}" hint-placeholder-val="{{ true }}">
   <section style="padding:64px clamp(20px,6vw,56px) 24px;max-width:760px;">
     <h6 style="color:var(--color-accent-700);">{{ hero.kicker }}</h6>
     <h1 style="font-size:44px;margin-top:10px;">{{ hero.title }}</h1>
     <p class="text-justify" style="opacity:.8;margin-top:20px;">{{ hero.body }}</p>
   </section>
+  </sc-if>
 
+  <sc-if value="{{ hasStory }}" hint-placeholder-val="{{ true }}">
   <section style="padding:24px clamp(20px,6vw,56px) 96px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(20px,6vw,56px);align-items:center;">
     <div>
       <h6 style="color:var(--color-accent-700);">{{ story.kicker }}</h6>
@@ -114,7 +117,9 @@ a:hover{color:var(--color-accent-700)}
       </sc-if>
     </div>
   </section>
+  </sc-if>
 
+  <sc-if value="{{ hasTimeline }}" hint-placeholder-val="{{ true }}">
   <section style="background:var(--color-surface);padding:80px clamp(20px,6vw,56px);">
     <h6 style="color:var(--color-accent-700);text-align:center;">Milestones</h6>
     <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Our Timeline</h2>
@@ -131,7 +136,9 @@ a:hover{color:var(--color-accent-700)}
       </sc-for>
     </div>
   </section>
+  </sc-if>
 
+  <sc-if value="{{ hasGallery }}" hint-placeholder-val="{{ true }}">
   <section style="padding:96px clamp(20px,6vw,56px);">
     <h6 style="color:var(--color-accent-700);text-align:center;">Inside the House</h6>
     <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Factory &amp; Manufacturing</h2>
@@ -149,12 +156,11 @@ a:hover{color:var(--color-accent-700)}
           </sc-if>
         </div>
       </sc-for>
-      <sc-if value="{{ !hasGallery }}" hint-placeholder-val="{{ false }}">
-        <p style="opacity:.6;font-size:13px;grid-column:1/-1;">No factory photos yet.</p>
-      </sc-if>
     </div>
   </section>
+  </sc-if>
 
+  <sc-if value="{{ hasTeam }}" hint-placeholder-val="{{ true }}">
   <section style="background:var(--color-surface);padding:96px clamp(20px,6vw,56px);">
     <h6 style="color:var(--color-accent-700);text-align:center;">The People Behind the Stones</h6>
     <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Our Team</h2>
@@ -175,40 +181,28 @@ a:hover{color:var(--color-accent-700)}
       </sc-for>
     </div>
   </section>
+  </sc-if>
 
+  <sc-if value="{{ hasMissionVision }}" hint-placeholder-val="{{ true }}">
   <section style="padding:96px clamp(20px,6vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:32px;">
+    <sc-if value="{{ hasMission }}" hint-placeholder-val="{{ true }}">
     <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:36px;">
       <h6 style="color:var(--color-accent-700);">{{ mission.kicker }}</h6>
       <h3 style="margin-top:8px;">{{ mission.title }}</h3>
       <p style="opacity:.8;">{{ mission.body }}</p>
     </div>
+    </sc-if>
+    <sc-if value="{{ hasVision }}" hint-placeholder-val="{{ true }}">
     <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);padding:36px;">
       <h6 style="color:var(--color-accent-700);">{{ vision.kicker }}</h6>
       <h3 style="margin-top:8px;">{{ vision.title }}</h3>
       <p style="opacity:.8;">{{ vision.body }}</p>
     </div>
+    </sc-if>
   </section>
+  </sc-if>
 
-  <section style="background:var(--color-surface);padding:80px clamp(20px,6vw,56px);">
-    <h6 style="color:var(--color-accent-700);text-align:center;">Accredited &amp; Verified</h6>
-    <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">Certificates</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:24px;">
-      <sc-for list="{{ certs }}" as="c" hint-placeholder-count="4">
-        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:24px;text-align:center;background:var(--color-bg);">
-          <div class="plate" style="aspect-ratio:1;width:64px;margin:0 auto 14px;overflow:hidden;">
-            <sc-if value="{{ c.hasLogo }}" hint-placeholder-val="{{ false }}">
-              <img src="{{ c.logoUrl }}" alt="{{ c.name }}" style="width:100%;height:100%;object-fit:contain;display:block;"/>
-            </sc-if>
-            <sc-if value="{{ !c.hasLogo }}" hint-placeholder-val="{{ true }}">
-              <div style="width:100%;height:100%;background:rgba(127,127,127,.08);"></div>
-            </sc-if>
-          </div>
-          <div style="font-family:var(--font-heading);font-weight:600;">{{ c.name }}</div>
-        </div>
-      </sc-for>
-    </div>
-  </section>
-
+  <sc-if value="{{ hasWhyUs }}" hint-placeholder-val="{{ true }}">
   <section style="padding:96px clamp(20px,6vw,56px);">
     <h6 style="color:var(--color-accent-700);text-align:center;">Why Choose Us</h6>
     <h2 style="font-size:32px;text-align:center;margin-top:8px;margin-bottom:48px;">What Sets the House Apart</h2>
@@ -221,6 +215,7 @@ a:hover{color:var(--color-accent-700)}
       </sc-for>
     </div>
   </section>
+  </sc-if>
 
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
     <div class="site-footer-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
@@ -264,15 +259,14 @@ a:hover{color:var(--color-accent-700)}
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <span>{{ footerEmail }}</span>
-          <span>{{ footerPhone }}</span>
-          <span>New York · Antwerp · Surat</span>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
+          <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom-row" style="display:flex;justify-content:space-between;padding-top:24px;font-size:12px;opacity:.55;">
       <span>© 2026 ONCD. All rights reserved.</span>
-      <span>GIA · IGI · HRD Certified Partners</span>
     </div>
   </footer>
 
@@ -295,9 +289,9 @@ function readTypeVisibility() {
 // Footer brand line naming only the catalogs that are switched on.
 function footerTaglineFor(d, j, g) {
   const parts = [d && 'certified diamonds', j && 'fine jewelry', g && 'rare gemstones'].filter(Boolean);
-  if (!parts.length) return 'Fine pieces for trade and private collectors, since 1994.';
+  if (!parts.length) return 'Fine pieces for trade and private collectors.';
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors, since 1994.`;
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors.`;
 }
 class Component extends DCLogic {
   state = {
@@ -364,6 +358,15 @@ class Component extends DCLogic {
     return {
       timeline, team, certs, whyUs, gallery, hero, story, mission, vision,
       hasGallery: gallery.length > 0,
+      // A section shows only when it has real content (Admin → About).
+      hasHero: !!(hero.title || hero.body),
+      hasStory: !!(story.title || story.body),
+      hasTimeline: timeline.length > 0,
+      hasTeam: team.length > 0,
+      hasMission: !!(mission.title || mission.body),
+      hasVision: !!(vision.title || vision.body),
+      hasMissionVision: !!(mission.title || mission.body || vision.title || vision.body),
+      hasWhyUs: whyUs.length > 0,
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       footerTagline: footerTaglineFor(this.state.showDiamonds, this.state.showJewelry, this.state.showGemstones),
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || '',
