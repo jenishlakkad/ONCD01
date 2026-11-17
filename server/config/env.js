@@ -12,7 +12,6 @@ module.exports = {
   nodeEnv: process.env.NODE_ENV || 'development',
   rootDir: path.join(__dirname, '..', '..'),
   uploadsDir: path.join(__dirname, '..', '..', 'uploads'),
-  dbFile: path.join(__dirname, '..', '..', 'data', 'aurum.db'),
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: Number(process.env.SMTP_PORT) || 587,

@@ -6,25 +6,17 @@ node_modules/
 
 # Logs
 *.log
-server-out.log
-server-err.log
-.server-*.log
 
-# SQLite database and temporary files
-data/*.db
-data/*.db-shm
-data/*.db-wal
+# Old SQLite database (the site now uses PostgreSQL). Never commit it.
+data/
 
-# Temporary migration / audit files
+# Uploaded media: every file is stored in Cloudflare R2. The server keeps a
+# local working copy while processing an upload; it never belongs in git.
+uploads/
+
+# Claude Code local settings
+.claude/
+
+# Local one-off test / migration scripts
+test-*.js
 migration/
-audit-r2-*.js
-recovery-matcher-dry-run.js
-check-db.js
-migrate-to-postgres.js
-
-# Temporary test scripts
-test-postgres-*.js
-test-r2-*.js
-
-test-postgres.js
-test-jewelry-save-fix.js

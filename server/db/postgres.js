@@ -1,10 +1,5 @@
-// PostgreSQL (Supabase) connection layer — STEP 1 of the SQLite -> Postgres
-// migration. This file is NOT wired into the running app yet: server/db/connection.js
-// (better-sqlite3) remains the live database for the website. This module exists
-// so later steps can convert routes one at a time against a proven async layer.
-//
-// Deliberately does NOT imitate better-sqlite3's synchronous prepare().get()/all()/run()
-// API — pg is async by nature, so every helper here returns a Promise.
+// PostgreSQL (Supabase) connection layer: the website's only database.
+// Every helper here returns a Promise (pg is async by nature).
 
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });

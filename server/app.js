@@ -88,7 +88,7 @@ const PUBLIC_FILE = new RegExp([
   '^/[A-Za-z0-9_-]+\\.dc\\.html$',
   '^/(index|404)\\.html$',
   '^/(robots\\.txt|favicon\\.svg|favicon-32\\.png|apple-touch-icon\\.png)$',
-  '^/(support|product-media|video-frame|image-slot)\\.js$',
+  '^/(support|product-media|video-frame)\\.js$',
   '^/utils/[A-Za-z0-9_-]+\\.js$',
   '^/_ds/[A-Za-z0-9_./-]+\\.(css|woff2?|ttf|otf|svg|png|jpe?g|webp|gif)$',
 ].join('|'));
