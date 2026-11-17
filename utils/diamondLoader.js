@@ -196,7 +196,10 @@
 
     var startedAt = Date.now();
     var QUIET_MS = 220;     // no /api/ activity for this long = data is in
-    var NO_API_GRACE_MS = 800;
+    // Upper bound for the post-render gap; it ends the moment the first
+    // request starts. ~0.1s locally, ~0.9s on the live site (helper modules
+    // come over the internet), so leave real headroom.
+    var NO_API_GRACE_MS = 2500;
     var MAX_AFTER_RENDER = 6000;
     var SLOW_MS = 12000;
 
@@ -223,7 +226,7 @@
       if (now - renderedAt > MAX_AFTER_RENDER) return finish();
       // Pages load their helper modules first and only then ask for data,
       // so right after the first render there is a short gap with no
-      // request yet. Wait for the data requests to begin (or ~0.8s if the
+      // request yet. Wait for the data requests to begin (or 2.5s if the
       // page makes none) before treating silence as "done".
       if (!apiAfterRender && now - renderedAt < NO_API_GRACE_MS) return;
       if (pending <= 0 && now - lastActivity >= QUIET_MS) finish();
