@@ -194,6 +194,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
 .savebar .btn-ghost{color:#f8f4f4;}
 .savebar span{font-size:13.5px;margin-right:auto;}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--color-divider);font-size:13.5px;}
+.cust-id{font-variant-numeric:tabular-nums;letter-spacing:.04em;font-weight:600;}
 .kv:first-of-type{border-top:none;}
 .kv span:first-child{color:color-mix(in srgb, var(--color-text) 60%, transparent);}
 .kv span:last-child{font-weight:500;text-align:right;overflow-wrap:anywhere;}
@@ -372,7 +373,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
           <div>
             <div class="eyebrow">{{ greeting }}</div>
             <h1>{{ firstName }}</h1>
-            <p class="muted">{{ companyLine }} · Member since {{ memberSince }}</p>
+            <p class="muted">{{ companyLine }} · Customer ID <strong class="cust-id">{{ customerId }}</strong> · Member since {{ memberSince }}</p>
             <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
               <span class="pill pill-approved">Approved trade account</span>
               <span class="sync-note muted"><span class="sync-dot {{ syncDotClass }}"></span>{{ syncLabel }}</span>
@@ -423,7 +424,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
                 </sc-for>
               </sc-if>
               <sc-if value="{{ !hasInquiries }}" hint-placeholder-val="{{ false }}">
-                <p class="muted" style="font-size:13.5px;margin:4px 0 14px;">You haven't sent an inquiry yet. Add pieces to your inquiry cart from any product page, then send them to our desk on WhatsApp, email, LINE or Skype.</p>
+                <p class="muted" style="font-size:13.5px;margin:4px 0 14px;">You haven't sent an inquiry yet. Add pieces to your inquiry cart from any product page, then send them to our desk on WhatsApp, email or LINE.</p>
                 <a href="{{ browseHref }}" class="btn btn-secondary" style="font-size:13px;">Start browsing</a>
               </sc-if>
             </div>
@@ -818,7 +819,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
               </div>
             </div>
             <div class="panel">
-              <div class="kv"><span>Customer ID</span><span>#{{ customerId }}</span></div>
+              <div class="kv"><span>Customer ID</span><span class="cust-id">{{ customerId }}</span></div>
               <div class="kv"><span>Last updated</span><span>{{ profileUpdated }}</span></div>
             </div>
           </aside>
@@ -840,7 +841,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
               <p class="muted">Quote your customer ID when you contact the desk.</p>
               <div class="kv"><span>Email</span><span>{{ accountEmail }}</span></div>
               <div class="kv"><span>Email verified</span><span>{{ emailVerifiedLabel }}</span></div>
-              <div class="kv"><span>Customer ID</span><span>#{{ customerId }}</span></div>
+              <div class="kv"><span>Customer ID</span><span class="cust-id">{{ customerId }}</span></div>
               <div class="kv"><span>Status</span><span><span class="pill pill-approved">Approved</span></span></div>
               <div class="kv"><span>Member since</span><span>{{ memberSince }}</span></div>
             </div>
@@ -1607,8 +1608,7 @@ class Component extends DCLogic {
     if (wa) links.push({ key: 'whatsapp', label: 'WhatsApp', value: '+' + wa, href: `https://wa.me/${wa}` });
     const email = s.inquiryEmail || s.supportEmail;
     if (email) links.push({ key: 'email', label: 'Email', value: email, href: `mailto:${email}` });
-    if (s.lineId) links.push({ key: 'line', label: 'LINE', value: s.lineId, href: `https://line.me/R/ti/p/${s.lineId}` });
-    if (s.skypeId) links.push({ key: 'skype', label: 'Skype', value: s.skypeId, href: `skype:${s.skypeId}?chat` });
+    if (s.lineId) links.push({ key: 'line', label: 'LINE', value: s.lineId, href: (String(s.lineId).trim().startsWith('@') ? 'https://line.me/R/ti/p/' + encodeURIComponent(String(s.lineId).trim()) : 'https://line.me/ti/p/~' + encodeURIComponent(String(s.lineId).trim().replace(/^~/, ''))) });
     if (!links.length) links.push({ key: 'contact', label: 'Contact', value: 'Contact page', href: 'Contact.dc.html' });
     return links;
   }
@@ -1976,7 +1976,7 @@ class Component extends DCLogic {
         const done = !!String(form[key] || '').trim();
         return { label, cls: done ? 'done' : '', glyph: done ? '✓' : '' };
       }),
-      customerId: me.id, profileUpdated: fmtDate(me.updated_at || me.created_at),
+      customerId: me.customer_code || "—", profileUpdated: fmtDate(me.updated_at || me.created_at),
 
       // settings
       emailVerifiedLabel: me.email_verified_at ? `Yes · ${fmtDate(me.email_verified_at)}` : 'Not verified',

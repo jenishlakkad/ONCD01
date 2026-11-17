@@ -8,8 +8,8 @@
 //
 // Sending: the customer picks a channel and presses one button. The
 // inquiry is recorded for the sales desk (submitInquiry — same reference
-// as in the message) and WhatsApp / Email / LINE / Skype opens with the
-// message ready. WhatsApp, LINE and Skype are for approved trade accounts;
+// as in the message) and WhatsApp / Email / LINE opens with the
+// message ready. WhatsApp and LINE are for approved trade accounts;
 // Email is always open. Channels without a contact set in Admin > Settings
 // are not offered.
 import {
@@ -39,7 +39,6 @@ const CHANNELS = [
   { key: 'whatsapp', label: 'WhatsApp', gated: true },
   { key: 'email', label: 'Email', gated: false },
   { key: 'line', label: 'LINE', gated: true },
-  { key: 'skype', label: 'Skype', gated: true },
 ];
 
 const ICON = {
@@ -340,7 +339,7 @@ function renderFoot() {
   if (locked) {
     gate = customer
       ? `<p class="icd-gate">${esc(ch.label)} opens once your trade account is approved — you’ll get an email. <strong>Email</strong> works right now.</p>`
-      : `<p class="icd-gate">WhatsApp, LINE and Skype are for approved trade accounts. <a href="Login.dc.html">Sign in</a> or <a href="Register.dc.html">register</a> — or send by <strong>Email</strong>, open to everyone.</p>`;
+      : `<p class="icd-gate">WhatsApp and LINE are for approved trade accounts. <a href="Login.dc.html">Sign in</a> or <a href="Register.dc.html">register</a> — or send by <strong>Email</strong>, open to everyone.</p>`;
   }
   const waiting = !locked && !ready;
   const sendLabel = locked ? `${ch.label} needs an approved account` : waiting ? 'Preparing…' : `Send inquiry via ${ch.label}`;

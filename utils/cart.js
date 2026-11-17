@@ -171,7 +171,7 @@ export function buildMessage(items, opts) {
 
   if (opts.customer && opts.customer.id) {
     const c = opts.customer;
-    lines.push('', bold('CUSTOMER DETAILS'), `Customer ID: ${c.id}`, `Name: ${bold(c.full_name || '')}`, `Email: ${c.email || ''}`);
+    lines.push('', bold('CUSTOMER DETAILS'), `Customer ID: ${c.customer_code || c.id}`, `Name: ${bold(c.full_name || '')}`, `Email: ${c.email || ''}`);
     if (c.mobile) lines.push(`Phone: ${c.mobile}`);
     if (c.company_name) lines.push(`Company: ${c.company_name}`);
   }
@@ -185,6 +185,14 @@ export function buildMessage(items, opts) {
 
 // contacts matches the shape returned by GET /api/settings/public:
 // { whatsapp, inquiryEmail, lineId, skypeId, ... }
+// Opens a chat with the business's LINE account. A personal LINE ID needs
+// line.me/ti/p/~ID; an official account (@ID) uses line.me/R/ti/p/@ID.
+export function lineChatUrl(id) {
+  const v = String(id || '').trim().replace(/^~/, '');
+  if (!v) return '';
+  return v.startsWith('@') ? 'https://line.me/R/ti/p/' + encodeURIComponent(v) : 'https://line.me/ti/p/~' + encodeURIComponent(v);
+}
+
 export function channelLink(channel, message, contacts) {
   const text = message || '';
   const c = contacts || {};
@@ -211,7 +219,7 @@ export function channelLink(channel, message, contacts) {
     // have to already have that ID as a friend and pick it manually, so
     // in practice the inquiry never reached the configured LINE account.
     case 'line':
-      return 'https://line.me/R/ti/p/' + (c.lineId || '');
+      return lineChatUrl(c.lineId) || '#';
     case 'skype':
       return 'skype:' + (c.skypeId || '') + '?chat&text=' + encodeURIComponent(text);
     default:

@@ -4,6 +4,7 @@ const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const { sendMailInBackground } = require('../lib/mailer');
 const T = require('../lib/emailTemplates');
 const { siteOrigin } = require('../lib/messaging');
+const { customerCode } = require('../lib/customerCode');
 
 // The public contact form. No login needed; a signed-in customer's message
 // is linked to their account. Two branded emails go out in the background
@@ -77,7 +78,7 @@ router.post('/', asyncRoute(async (req, res) => {
   sendMailInBackground(async () => {
     const brand = await T.getBrand();
     if (!brand.deskEmail) return null;
-    const m = await T.contactDeskEmail({ id, fullName, email, phone, subject, message, isCustomer, origin });
+    const m = await T.contactDeskEmail({ id, fullName, email, phone, subject, message, isCustomer, customerCode: customerId ? customerCode(customerId) : null, origin });
     return { to: brand.deskEmail, replyTo: { name: fullName.replace(/[\r\n"]/g, ''), address: email }, ...m };
   });
   if (shouldAck(email)) {

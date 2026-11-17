@@ -8,6 +8,7 @@ const { loadAccountSnapshot } = require('../lib/accountSnapshot');
 const { INQUIRY_STATUSES, updateInquiryStatus, siteOrigin } = require('../lib/messaging');
 const { sendMailInBackground } = require('../lib/mailer');
 const T = require('../lib/emailTemplates');
+const { customerCode } = require('../lib/customerCode');
 
 // PostgreSQL counterpart to server/routes/adminUsers.js (SQLite). Parallel/
 // isolated file only — NOT mounted in app.js.
@@ -55,7 +56,7 @@ router.use(requireAdmin, requirePermission('users', 'manage'));
 // not something unique to this file, and not "fixed" here in isolation.
 function publicCustomer(c) {
   const { password_hash, ...rest } = c;
-  return { ...rest, id: Number(rest.id) };
+  return { ...rest, id: Number(rest.id), customer_code: customerCode(rest.id) };
 }
 
 router.get('/', asyncRoute(async (req, res) => {
@@ -78,7 +79,7 @@ function setStatus(status, actionLabel) {
       const build = status === 'approved' ? T.accountApprovedEmail : T.accountRejectedEmail;
       sendMailInBackground(async () => {
         const brand = await T.getBrand();
-        const m = await build({ name: customer.full_name, origin });
+        const m = await build({ name: customer.full_name, origin, customerCode: customerCode(customer.id) });
         return { to: customer.email, replyTo: brand.deskEmail || undefined, ...m };
       });
       notified = customer.email;

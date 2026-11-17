@@ -169,7 +169,7 @@ a:hover{color:var(--color-accent-700)}
     <div class="toolbar">
       <div class="search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input class="input" type="search" value="{{ search }}" onChange="{{ setSearch }}" placeholder="Reference, #id, customer, company, email or SKU"/>
+        <input class="input" type="search" value="{{ search }}" onChange="{{ setSearch }}" placeholder="Reference, #id, customer ID, name, company, email or SKU"/>
       </div>
       <select class="input" style="width:auto;" value="{{ channel }}" onChange="{{ setChannel }}" aria-label="Channel">
         <option value="all">All channels</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="line">LINE</option><option value="skype">Skype</option>
@@ -445,7 +445,9 @@ class Component extends DCLogic {
       if (st.who === 'guests' && i.customer) return false;
       if (!term) return true;
       if (String(i.id) === idTerm) return true;
-      const hay = [i.ref, i.customer && i.customer.name, i.customer && i.customer.company, i.customer && i.customer.email,
+      // Customer ID: "100046", "#100046" or "ONCD-100046".
+      if (i.customer && i.customer.code && i.customer.code === term.replace(/^(#|oncd-?)\s*/, '')) return true;
+      const hay = [i.ref, i.customer && i.customer.code, i.customer && i.customer.name, i.customer && i.customer.company, i.customer && i.customer.email,
         i.guest && i.guest.name, i.guest && i.guest.email, ...i.items.map((x) => `${x.sku} ${x.name}`)].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(term);
     });
@@ -510,7 +512,7 @@ class Component extends DCLogic {
         noMessagesLine: st.threadsOn ? 'No replies yet — the customer is waiting to hear from you.' : 'Conversation threads are not enabled yet.',
         canEmail: !!contactEmail, emailLabel: contactEmail ? `Also email this reply to ${contactEmail}` : 'No email address on file',
         channelLabel: d.channelLabel,
-        whoHeading: c ? 'Customer' : 'Guest', whoName: c ? c.name : (d.guest.name || 'Guest visitor'), whoCompany: c ? c.company : 'Sent without an account',
+        whoHeading: c ? 'Customer' : 'Guest', whoName: c ? c.name : (d.guest.name || 'Guest visitor'), whoCompany: c ? [c.code ? `Customer ID ${c.code}` : '', c.company].filter(Boolean).join(' · ') : 'Sent without an account',
         facts: facts.map(([k, v]) => ({ k, v })), links,
       };
     }

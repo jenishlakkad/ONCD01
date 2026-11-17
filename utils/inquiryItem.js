@@ -97,7 +97,7 @@ export function inquiryMessage(p, note, customer) {
     lines.push(
       '',
       bold('CUSTOMER DETAILS'),
-      `Customer ID: ${customer.id}`,
+      `Customer ID: ${customer.customer_code || customer.id}`,
       `Name: ${bold(customer.full_name || '')}`,
       `Email: ${customer.email || ''}`,
     );

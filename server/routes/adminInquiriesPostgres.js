@@ -7,6 +7,7 @@ const { writeAudit } = require('../lib/auditPostgres');
 const { sendMail } = require('../lib/mailer');
 const T = require('../lib/emailTemplates');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
+const { customerCode } = require('../lib/customerCode');
 const {
   MESSAGING_MIGRATION_SQL, INQUIRY_STATUSES, getMessagingSchema, updateInquiryStatus, cleanBody, siteOrigin, inquiryLabel,
 } = require('../lib/messaging');
@@ -58,7 +59,7 @@ router.get('/', asyncRoute(async (req, res) => {
         id: Number(r.id), ref: r.ref, channel: r.channel, status: r.status, note: r.note || '',
         createdAt: r.created_at, updatedAt: r.updated_at || r.created_at,
         customer: r.customer_id ? {
-          id: Number(r.customer_id), name: r.full_name, company: r.company_name || '', email: r.email, mobile: r.mobile || '',
+          id: Number(r.customer_id), code: customerCode(r.customer_id), name: r.full_name, company: r.company_name || '', email: r.email, mobile: r.mobile || '',
         } : null,
         guest: r.customer_id ? null : { name: r.guest_name || '', email: r.guest_email || '' },
         itemCount: Number(r.item_count),
@@ -112,7 +113,7 @@ async function loadInquiry(id, schema) {
     id: Number(row.id), ref: row.ref, channel: row.channel, channelLabel: CHANNEL_LABELS[row.channel] || row.channel,
     status: row.status, note: row.note || '', createdAt: row.created_at, updatedAt: row.updated_at || row.created_at,
     customer: row.customer_id ? {
-      id: Number(row.customer_id), name: row.full_name, company: row.company_name || '', businessType: row.business_type || '',
+      id: Number(row.customer_id), code: customerCode(row.customer_id), name: row.full_name, company: row.company_name || '', businessType: row.business_type || '',
       email: row.email, mobile: row.mobile || '', location: [row.city, row.country].filter(Boolean).join(', '),
       status: row.customer_status, otherInquiries: Number(row.other_inquiries), contactMessages: Number(row.contact_count),
     } : null,

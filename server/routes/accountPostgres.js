@@ -80,7 +80,7 @@ router.post('/inquiries/:id/messages', requireCustomer, asyncRoute(async (req, r
   const origin = siteOrigin(req);
   const c = req.customer;
   notifyDesk(() => T.customerReplyDeskEmail({
-    kind: 'inquiry', who: c.full_name, company: c.company_name, email: c.email, label: inquiryLabel(inquiry), body,
+    kind: 'inquiry', who: c.full_name, company: c.company_name, email: c.email, code: c.customer_code, label: inquiryLabel(inquiry), body,
     adminUrl: `${origin}/AdminInquiries.dc.html?id=${inquiry.id}`, origin,
   }).then((m) => ({ ...m, replyTo: c.email })));
   res.status(201).json({ data: { ...message, id: Number(message.id), status: 'pending' } });
@@ -128,7 +128,7 @@ router.post('/messages/:id/replies', requireCustomer, asyncRoute(async (req, res
   const origin = siteOrigin(req);
   const c = req.customer;
   notifyDesk(() => T.customerReplyDeskEmail({
-    kind: 'contact', who: c.full_name, company: c.company_name, email: c.email, label: msg.subject, body,
+    kind: 'contact', who: c.full_name, company: c.company_name, email: c.email, code: c.customer_code, label: msg.subject, body,
     adminUrl: `${origin}/AdminContact.dc.html?id=${msg.id}`, origin,
   }).then((m) => ({ ...m, replyTo: c.email })));
   res.status(201).json({ data: { ...reply, id: Number(reply.id), status: 'new' } });

@@ -321,6 +321,13 @@ a:hover{color:var(--color-accent-700)}
                   <input class="input" type="number" min="{{ sf.min }}" max="{{ sf.max }}" value="{{ sf.value }}" onChange="{{ sf.onChange }}" disabled="{{ secDialogLocked }}" style="max-width:140px;"/>
                 </div>
               </sc-if>
+              <sc-if value="{{ sf.isDate }}" hint-placeholder-val="{{ false }}">
+                <div class="field">
+                  <label>{{ sf.label }}</label>
+                  <input class="input" type="date" value="{{ sf.value }}" onChange="{{ sf.onChange }}" disabled="{{ secDialogLocked }}" style="max-width:200px;"/>
+                  <p style="font-size:11.5px;opacity:.6;margin:6px 0 0;">Leave empty to keep it showing. It switches itself off after this date (India time).</p>
+                </div>
+              </sc-if>
               <sc-if value="{{ sf.isToggle }}" hint-placeholder-val="{{ false }}">
                 <div class="tg-row">
                   <button class="switch" onClick="{{ sf.onToggle }}" style="background:{{ sf.bg }};" disabled="{{ secDialogLocked }}" aria-pressed="{{ sf.pressed }}" aria-label="{{ sf.label }}"><span style="left:{{ sf.knobLeft }};"></span></button>
@@ -890,7 +897,10 @@ class Component extends DCLogic {
     }));
     const st = this.state.secSettings;
     const secSettingFields = s.settingsFields.map((f) => {
-      const base = { label: f.label, isSelect: f.type === 'select', isNumber: f.type === 'number', isToggle: f.type === 'toggle', isItems: f.type === 'items' };
+      const base = { label: f.label, isSelect: f.type === 'select', isNumber: f.type === 'number', isToggle: f.type === 'toggle', isItems: f.type === 'items', isDate: f.type === 'date' };
+      if (f.type === 'date') {
+        return { ...base, value: String(st[f.name] || ''), onChange: (e) => this.setSecSetting(f.name, e.target.value || '') };
+      }
       if (f.type === 'select') {
         return { ...base, value: String(st[f.name]), options: f.options.map((o) => ({ value: String(o.value), label: o.label })),
           onChange: (e) => { const o = f.options.find((x) => String(x.value) === e.target.value); this.setSecSetting(f.name, o ? o.value : e.target.value); } };

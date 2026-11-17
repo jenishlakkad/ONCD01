@@ -4,7 +4,7 @@ const { loadTypeVisibility, hrefAllowed } = require('../lib/productTypeVisibilit
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const { PUBLIC_FROM, PUBLIC_WHERE, loadPriceContext, serializePublicRows } = require('../lib/publicProducts');
-const { getMergedSections } = require('../lib/homepageSections');
+const { getMergedSections, isExpired } = require('../lib/homepageSections');
 
 const router = express.Router();
 
@@ -64,7 +64,8 @@ router.get('/', asyncRoute(async (req, res) => {
     const filterType = s.settings && s.settings.type;
     const typeOff = (onlyType && vis[onlyType] === false)
       || (SINGLE_TYPE_FILTER_SECTIONS.includes(s.key) && filterType && filterType !== 'all' && vis[filterType] === false);
-    const out = typeOff ? { ...s, enabled: false } : s;
+    // An offer whose end date has passed hides itself.
+    const out = typeOff || isExpired(s.settings) ? { ...s, enabled: false } : s;
     return out.ctaHref && !allowed(out.ctaHref) ? { ...out, ctaHref: '', ctaLabel: '' } : out;
   });
   // Legacy key -> enabled map, kept alongside the richer sectionList.

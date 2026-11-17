@@ -1,8 +1,9 @@
 const db = require('../db/postgres');
+const { customerCode } = require('../lib/customerCode');
 
-// PostgreSQL counterpart to server/middleware/requireCustomer.js (SQLite).
-// NOT wired into any route or app.js yet — exists so it can be
-// exercised/tested on its own before any cutover decision is made.
+// Signed-in customer guard: loads the account for this session and only
+// lets approved accounts through. Sets req.customer (no password hash,
+// numeric id, and the 6-digit customer_code shown across the site).
 module.exports = async function requireCustomer(req, res, next) {
   try {
     const id = req.session && req.session.customerId;
@@ -24,7 +25,8 @@ module.exports = async function requireCustomer(req, res, next) {
     }
 
     delete customer.password_hash;
-    customer.id = Number(customer.id); // BIGINT -> string from pg; kept as a number to match current behavior
+    customer.id = Number(customer.id); // BIGINT -> string from pg
+    customer.customer_code = customerCode(customer.id);
     req.customer = customer;
     next();
   } catch (err) {

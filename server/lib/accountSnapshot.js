@@ -4,6 +4,7 @@ const { serializeProduct } = require('./serializeProduct');
 const { toPublicMediaUrl, toPublicPreviewUrl } = require('./mediaUrl');
 const { PUBLIC_FROM, PUBLIC_WHERE } = require('./publicProducts');
 const { getMessagingSchema, NEWSLETTER_SUBJECT } = require('./messaging');
+const { customerCode } = require('./customerCode');
 
 // Everything the customer's account dashboard shows — profile, inquiries
 // with their items, saved items, the server-mirrored cart and the live
@@ -94,7 +95,7 @@ const toMessage = (m) => ({ id: Number(m.id), sender: m.sender, author: m.author
 
 function publicCustomer(c) {
   const { password_hash, ...rest } = c;
-  return { ...rest, id: Number(rest.id) };
+  return { ...rest, id: Number(rest.id), customer_code: customerCode(rest.id) };
 }
 
 // Same trimming as the homepage feed: a dashboard card only ever needs the

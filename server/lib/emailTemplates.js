@@ -9,6 +9,7 @@
 // Georgia headings). Anything a visitor typed is HTML-escaped.
 const db = require('../db/postgres');
 const { setSenderName } = require('./mailer');
+const { customerCode } = require('./customerCode');
 
 const C = {
   page: '#f3efe6', card: '#ffffff', ink: '#221f1c', muted: '#6b6459', line: '#e2dbcb',
@@ -213,33 +214,40 @@ async function passwordChangedEmail({ name, origin, admin }) {
   };
 }
 
-async function registrationReceivedEmail({ name, origin }) {
+// "Your customer ID is 100047 — quote it whenever you contact us."
+function customerIdLine(code) {
+  return code ? p(`Your customer ID is <strong>${esc(code)}</strong> — please quote it whenever you contact us.`) : '';
+}
+
+async function registrationReceivedEmail({ name, origin, customerCode }) {
   const brand = await getBrand();
   const body = [
     kicker('Application received'), h1('Thank you for registering'), p(esc(greeting(name))),
     p(`Your email is verified and your trade account application is now with our team. We review every application personally — usually within one business day — and we'll email you as soon as your account is approved.`),
+    customerIdLine(customerCode),
     p('Once approved you can sign in to see trade pricing, save pieces, and send and track inquiries in one place.'),
     button('Browse the collection', `${origin}/Home.dc.html`),
   ].join('');
   return {
     subject: `We've received your ${brand.name} trade application`,
     html: layout({ brand, origin, preheader: "Your email is verified — we'll let you know as soon as your account is approved.", body }),
-    text: textOf(brand, [greeting(name), '', 'Your email is verified and your trade account application is with our team.', "We review every application — usually within one business day — and will email you once it's approved.", '', `Browse the collection: ${origin}/Home.dc.html`]),
+    text: textOf(brand, [greeting(name), '', 'Your email is verified and your trade account application is with our team.', "We review every application — usually within one business day — and will email you once it's approved.", customerCode ? `Your customer ID: ${customerCode}` : null, '', `Browse the collection: ${origin}/Home.dc.html`]),
   };
 }
 
-async function accountApprovedEmail({ name, origin }) {
+async function accountApprovedEmail({ name, origin, customerCode }) {
   const brand = await getBrand();
   const body = [
     kicker('Account approved'), h1('Welcome — your account is ready'), p(esc(greeting(name))),
     p(`Good news: your ${brand.name} trade account has been approved. Sign in to see trade pricing, save pieces to your shortlist and send inquiries straight to our sales desk.`),
+    customerIdLine(customerCode),
     button('Sign in to your account', `${origin}/Login.dc.html`),
     small(`Questions? Just reply to this email${brand.phone ? ` or message us on WhatsApp at ${esc(brand.phone)}` : ''}.`),
   ].join('');
   return {
     subject: `Your ${brand.name} trade account is approved`,
     html: layout({ brand, origin, preheader: 'Sign in to see trade pricing and send inquiries.', body }),
-    text: textOf(brand, [greeting(name), '', `Your ${brand.name} trade account has been approved.`, `Sign in: ${origin}/Login.dc.html`]),
+    text: textOf(brand, [greeting(name), '', `Your ${brand.name} trade account has been approved.`, customerCode ? `Your customer ID: ${customerCode}` : null, `Sign in: ${origin}/Login.dc.html`]),
   };
 }
 
@@ -267,6 +275,7 @@ async function newApplicationDeskEmail({ customer, origin }) {
     kicker('New trade application'), h1(`${esc(c.full_name)} is waiting for approval`),
     p('A new account was created and its email address is verified. Review it in User Approval.'),
     details([
+      ['Customer ID', customerCode(c.id)],
       ['Name', c.full_name], ['Company', c.company_name], ['Business type', c.business_type],
       ['Email', c.email, `mailto:${c.email}`], ['Mobile', c.mobile],
       ['Location', [c.city, c.state, c.country].filter(Boolean).join(', ')], ['Website', c.website, c.website && /^https?:\/\//i.test(c.website) ? c.website : null],
@@ -275,20 +284,20 @@ async function newApplicationDeskEmail({ customer, origin }) {
     button('Review in User Approval', url),
   ].join('');
   return {
-    subject: `New trade application: ${c.full_name}${c.company_name ? ` (${c.company_name})` : ''}`,
+    subject: `New trade application: ${c.full_name}${c.company_name ? ` (${c.company_name})` : ''} · ID ${customerCode(c.id)}`,
     html: layout({ brand, origin, preheader: `${c.full_name} verified their email and is waiting for approval.`, body }),
-    text: textOf(brand, [`New trade application from ${c.full_name}${c.company_name ? ` (${c.company_name})` : ''}.`, `Email: ${c.email}`, c.mobile ? `Mobile: ${c.mobile}` : null, `Location: ${[c.city, c.state, c.country].filter(Boolean).join(', ')}`, c.message ? `\nMessage:\n${c.message}` : null, '', `Review: ${url}`]),
+    text: textOf(brand, [`New trade application from ${c.full_name}${c.company_name ? ` (${c.company_name})` : ''}.`, `Customer ID: ${customerCode(c.id)}`, `Email: ${c.email}`, c.mobile ? `Mobile: ${c.mobile}` : null, `Location: ${[c.city, c.state, c.country].filter(Boolean).join(', ')}`, c.message ? `\nMessage:\n${c.message}` : null, '', `Review: ${url}`]),
   };
 }
 
 // To the sales desk: a contact-form message. Reply-To is the visitor, so
 // "Reply" in Gmail answers them directly.
-async function contactDeskEmail({ id, fullName, email, phone, subject, message, isCustomer, origin }) {
+async function contactDeskEmail({ id, fullName, email, phone, subject, message, isCustomer, customerCode: code, origin }) {
   const brand = await getBrand();
   const url = `${origin}/AdminContact.dc.html?id=${encodeURIComponent(id)}`;
   const body = [
     kicker(isCustomer ? 'Contact form · registered customer' : 'Contact form'), h1(esc(subject)),
-    details([['From', fullName], ['Email', email, `mailto:${email}`], ['Phone', phone, `tel:${String(phone).replace(/[^\d+]/g, '')}`]]),
+    details([['From', fullName], ['Customer ID', code], ['Email', email, `mailto:${email}`], ['Phone', phone, `tel:${String(phone).replace(/[^\d+]/g, '')}`]]),
     quote(message, 'Message'),
     button('Open in Contact Messages', url),
     small('Tip: reply in Contact Messages so the conversation is saved and the customer can follow it in their account.'),
@@ -296,7 +305,7 @@ async function contactDeskEmail({ id, fullName, email, phone, subject, message, 
   return {
     subject: `New message: ${subject} — ${fullName}`,
     html: layout({ brand, origin, preheader: `${fullName}: ${String(message).slice(0, 90)}`, body }),
-    text: textOf(brand, [`New contact message from ${fullName} <${email}>`, phone ? `Phone: ${phone}` : null, `Subject: ${subject}`, '', message, '', `Open: ${url}`]),
+    text: textOf(brand, [`New contact message from ${fullName} <${email}>`, code ? `Customer ID: ${code}` : null, phone ? `Phone: ${phone}` : null, `Subject: ${subject}`, '', message, '', `Open: ${url}`]),
   };
 }
 
@@ -352,19 +361,19 @@ async function inquiryReplyEmail({ name, ref, body: reply, adminName, items, acc
 
 // To the sales desk: a customer answered in their account (inquiry thread
 // or contact conversation).
-async function customerReplyDeskEmail({ kind, who, company, email, label, body: reply, adminUrl, origin }) {
+async function customerReplyDeskEmail({ kind, who, company, email, code, label, body: reply, adminUrl, origin }) {
   const brand = await getBrand();
   const what = kind === 'inquiry' ? `inquiry ${label}` : `“${label}”`;
   const body = [
     kicker(kind === 'inquiry' ? `Inquiry ${label}` : 'Contact conversation'), h1(`${esc(who)} replied`),
-    small(`${esc(who)}${company ? ` · ${esc(company)}` : ''}${email ? ` · <a href="mailto:${esc(email)}" style="color:${C.gold};text-decoration:none;">${esc(email)}</a>` : ''} — on ${esc(what)}`),
+    small(`${esc(who)}${code ? ` · Customer ID ${esc(code)}` : ''}${company ? ` · ${esc(company)}` : ''}${email ? ` · <a href="mailto:${esc(email)}" style="color:${C.gold};text-decoration:none;">${esc(email)}</a>` : ''} — on ${esc(what)}`),
     quote(reply, 'New message'),
     button('Open the conversation', adminUrl),
   ].join('');
   return {
     subject: kind === 'inquiry' ? `New message on inquiry ${label} from ${who}` : `Re: ${label} (reply from ${who})`,
     html: layout({ brand, origin, preheader: `${who}: ${String(reply).slice(0, 100)}`, body }),
-    text: textOf(brand, [`${who}${company ? ` (${company})` : ''} wrote on ${what}:`, '', reply, '', `Open the conversation: ${adminUrl}`]),
+    text: textOf(brand, [`${who}${company ? ` (${company})` : ''}${code ? ` · Customer ID ${code}` : ''} wrote on ${what}:`, '', reply, '', `Open the conversation: ${adminUrl}`]),
   };
 }
 

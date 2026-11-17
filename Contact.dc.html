@@ -99,7 +99,6 @@ a:hover{color:var(--color-accent-700)}
         <sc-if value="{{ waHref }}" hint-placeholder-val="{{ true }}"><a href="{{ waHref }}" target="_blank" rel="noopener" class="btn btn-secondary">WhatsApp</a></sc-if>
         <sc-if value="{{ mailHref }}" hint-placeholder-val="{{ true }}"><a href="{{ mailHref }}" class="btn btn-secondary">Email</a></sc-if>
         <sc-if value="{{ lineHref }}" hint-placeholder-val="{{ true }}"><a href="{{ lineHref }}" target="_blank" rel="noopener" class="btn btn-secondary">LINE</a></sc-if>
-        <sc-if value="{{ skypeHref }}" hint-placeholder-val="{{ true }}"><a href="{{ skypeHref }}" class="btn btn-secondary">Skype</a></sc-if>
       </div>
     </div>
 
@@ -284,8 +283,7 @@ class Component extends DCLogic {
       waHref: s.whatsapp ? 'https://wa.me/' + String(s.whatsapp).replace(/[^\d]/g, '') : '',
       telHref: s.whatsapp ? 'tel:' + String(s.whatsapp).replace(/[^\d+]/g, '') : '',
       mailHref: (s.inquiryEmail || s.supportEmail) ? 'mailto:' + (s.inquiryEmail || s.supportEmail) : '',
-      lineHref: s.lineId ? 'https://line.me/R/ti/p/' + s.lineId : '',
-      skypeHref: s.skypeId ? 'skype:' + s.skypeId + '?chat' : '',
+      lineHref: s.lineId ? (String(s.lineId).trim().startsWith('@') ? 'https://line.me/R/ti/p/' + encodeURIComponent(String(s.lineId).trim()) : 'https://line.me/ti/p/~' + encodeURIComponent(String(s.lineId).trim().replace(/^~/, ''))) : '',
       form: this.state.form, fh,
       formError: this.state.formError,
       submitting: this.state.submitting,

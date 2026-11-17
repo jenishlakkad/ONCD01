@@ -56,6 +56,7 @@ const SECTIONS = [
     },
     settings: [
       { name: 'tone', type: 'select', label: 'Style', default: 'dark', options: [{ value: 'dark', label: 'Dark' }, { value: 'gold', label: 'Gold' }] },
+      { name: 'endsOn', type: 'date', label: 'Hide automatically after (optional)', default: '' },
     ],
   },
   {
@@ -116,7 +117,9 @@ const SECTIONS = [
   {
     key: 'promoBanner', label: 'Promo Banner', blockKey: 'promo', defaultEnabled: true,
     description: 'Dark split banner with an offer and photo. Edit its text and photo in the Content Blocks tab.',
-    text: {}, settings: [],
+    text: {}, settings: [
+      { name: 'endsOn', type: 'date', label: 'Hide automatically after (optional)', default: '' },
+    ],
   },
   {
     key: 'collections', label: 'Collections', defaultEnabled: true,
@@ -285,6 +288,14 @@ function settingDefaults(def) {
   return out;
 }
 
+// A time-limited section (an offer) switches itself off once its end date
+// has fully passed: the whole end day counts, in India time (IST).
+function isExpired(settings) {
+  const d = settings && settings.endsOn;
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  return Date.now() > Date.parse(`${d}T23:59:59.999+05:30`);
+}
+
 function cleanString(value, maxLength) {
   return String(value == null ? '' : value).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, maxLength || 300);
 }
@@ -306,6 +317,9 @@ function sanitizeSettings(def, input) {
     } else if (s.type === 'select') {
       const match = s.options.find((o) => String(o.value) === String(raw));
       out[s.name] = match ? match.value : s.default;
+    } else if (s.type === 'date') {
+      // YYYY-MM-DD, or empty for "no end date".
+      out[s.name] = /^\d{4}-\d{2}-\d{2}$/.test(String(raw)) ? String(raw) : '';
     } else if (s.type === 'items') {
       const list = Array.isArray(raw) ? raw : [];
       out[s.name] = list.slice(0, s.max).map((item) => {
@@ -427,4 +441,5 @@ module.exports = {
   mergeSection,
   getMergedSections,
   describeForAdmin,
+  isExpired,
 };

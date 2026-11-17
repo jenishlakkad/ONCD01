@@ -7,6 +7,7 @@ const T = require('../lib/emailTemplates');
 const { siteOrigin } = require('../lib/messaging');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const requireCustomer = require('../middleware/requireCustomerPostgres');
+const { customerCode } = require('../lib/customerCode');
 
 // Customer accounts: registration (with email verification), login, profile
 // and password reset/change.
@@ -23,7 +24,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 function publicCustomer(c) {
   const { password_hash, ...rest } = c;
   // customers.id is BIGINT — pg returns it as a string.
-  return { ...rest, id: Number(rest.id) };
+  return { ...rest, id: Number(rest.id), customer_code: customerCode(rest.id) };
 }
 
 function cleanEmail(v) {
@@ -138,7 +139,7 @@ router.post('/register/verify', asyncRoute(async (req, res) => {
   if (firstTime) {
     const origin = siteOrigin(req);
     // Confirmation to the customer, and a heads-up for whoever approves accounts.
-    sendMailInBackground(() => T.registrationReceivedEmail({ name: customer.full_name, origin }).then((m) => ({ to: email, ...m })));
+    sendMailInBackground(() => T.registrationReceivedEmail({ name: customer.full_name, origin, customerCode: customerCode(customer.id) }).then((m) => ({ to: email, ...m })));
     sendMailInBackground(async () => {
       const brand = await T.getBrand();
       if (!brand.deskEmail) return null;
