@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
+<script src="./utils/diamondLoader.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -259,8 +260,16 @@ a:hover{color:var(--color-accent-700)}
           </button>
         </div>
       </div>
+      <sc-if value="{{ showLoader }}" hint-placeholder-val="{{ false }}">
+        <oncd-loader label="Loading gemstones" style="min-height:44vh;"></oncd-loader>
+      </sc-if>
       <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
-        <p style="font-size:13px;color:var(--color-accent-700);">{{ errorMessage }}</p>
+      <div class="load-state" role="alert">
+        <oncd-loader static size="44"></oncd-loader>
+        <h3>We couldn't load the gemstones</h3>
+        <p>Please check your internet connection and try again.</p>
+        <div class="load-state-actions"><button type="button" class="btn btn-primary" onClick="{{ retryLoad }}">Try again</button></div>
+      </div>
       </sc-if>
       <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
         <p style="font-size:13px;opacity:.65;padding:32px 0;">No gemstones match these filters right now.</p>
@@ -610,7 +619,9 @@ class Component extends DCLogic {
     return {
       activeFilterChips,
       gems, pageGems, resultCount: gems.length, showResultsLabel: `Show ${gems.length} ${gems.length === 1 ? 'Result' : 'Results'}`,
-      isEmpty: !this.state.loading && gems.length === 0,
+      isEmpty: !this.state.loading && !this.state.errorMessage && gems.length === 0,
+      showLoader: this.state.loading && this.state.products.length === 0,
+      retryLoad: () => this.loadProducts(),
       hasMultiplePages: totalPages > 1,
       pageList: this.buildPageList(currentPage, totalPages),
       canPrevPage: currentPage > 1, canNextPage: currentPage < totalPages,

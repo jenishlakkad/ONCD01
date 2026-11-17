@@ -696,3 +696,16 @@ img,svg,video,canvas{max-width:100%;height:auto;}
    wordmark's own colour and gets a visible focus ring for keyboard users. */
 .brand-link,.brand-link:hover{color:inherit;text-decoration:none;}
 .brand-link:focus-visible{outline:2px solid var(--color-accent);outline-offset:4px;border-radius:2px;}
+
+/* Loading / empty / error states that replace a page section (product not
+   found, "couldn't load — try again"). The diamond is <oncd-loader static>;
+   the moving loader itself lives in utils/diamondLoader.js. */
+oncd-loader{display:flex;}
+oncd-loader[layout="inline"]{display:inline-flex;}
+.load-state{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
+  padding:clamp(48px,10vh,96px) clamp(20px,6vw,56px);min-height:44vh;justify-content:center;box-sizing:border-box;}
+.load-state oncd-loader{padding:0 0 6px;}
+.load-state h2,.load-state h3{margin:0;font-size:clamp(20px,4.5vw,26px) !important;}
+.load-state p{margin:0;max-width:440px;opacity:.7;line-height:1.6;}
+.load-state-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px;}
+.load-state-actions .btn{min-width:150px;}

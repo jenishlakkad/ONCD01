@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
+<script src="./utils/diamondLoader.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -87,7 +88,7 @@ a:hover{color:var(--color-accent-700)}
           <a href="{{ exportAllUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download All Stock</a>
         </sc-if>
         <label class="btn btn-ghost" style="font-size:12px;padding:6px 10px;cursor:pointer;">
-          {{ importButtonLabel }}
+          <sc-if value="{{ importBusy }}" hint-placeholder-val="{{ false }}"><oncd-loader size="14" layout="inline" style="margin-right:6px;"></oncd-loader></sc-if>{{ importButtonLabel }}
           <input type="file" accept=".xlsx,.xls" onChange="{{ handleImportFile }}" disabled="{{ importBusy }}" style="display:none;"/>
         </label>
         <button onClick="{{ openAdd }}" class="btn btn-primary">{{ addButtonLabel }}</button>
@@ -466,7 +467,7 @@ a:hover{color:var(--color-accent-700)}
 
           <div class="dialog-actions">
             <button onClick="{{ closeDialog }}" class="btn btn-secondary">Cancel</button>
-            <button onClick="{{ saveForm }}" class="btn btn-primary" disabled="{{ saveDisabled }}">{{ saveLabel }}</button>
+            <button onClick="{{ saveForm }}" class="btn btn-primary" disabled="{{ saveDisabled }}"><sc-if value="{{ saving }}" hint-placeholder-val="{{ false }}"><oncd-loader size="15" layout="inline" tone="light" style="margin-right:7px;"></oncd-loader></sc-if>{{ saveLabel }}</button>
           </div>
         </div>
       </div>

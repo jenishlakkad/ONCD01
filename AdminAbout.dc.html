@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
+<script src="./utils/diamondLoader.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -170,7 +171,7 @@ a:hover{color:var(--color-accent-700)}
         <input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ handleGallerySelect }}" style="display:none;"/>
       </label>
       <sc-if value="{{ galleryUploading }}" hint-placeholder-val="{{ false }}">
-        <span style="font-size:12px;opacity:.65;margin-left:10px;">Uploading…</span>
+        <span style="font-size:12px;opacity:.65;margin-left:10px;"><oncd-loader size="14" layout="inline" label="Uploading…"></oncd-loader></span>
       </sc-if>
       <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1200px (4:3) photos.</p>
     </div>
@@ -209,7 +210,7 @@ a:hover{color:var(--color-accent-700)}
                 </label>
                 <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 1600×1200px (4:3).</p>
                 <sc-if value="{{ blockImageUploading }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;"><oncd-loader size="14" layout="inline" label="Uploading…"></oncd-loader></div>
                 </sc-if>
               </div>
             </div>
@@ -247,7 +248,7 @@ a:hover{color:var(--color-accent-700)}
                 </label>
                 <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 800×800px (square).</p>
                 <sc-if value="{{ teamPhotoUploading }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;"><oncd-loader size="14" layout="inline" label="Uploading…"></oncd-loader></div>
                 </sc-if>
               </div>
             </div>
@@ -309,7 +310,7 @@ a:hover{color:var(--color-accent-700)}
                 </label>
                 <p style="font-size:11px;opacity:.55;margin-top:6px;">Recommended: 400×400px (square). A transparent PNG works best.</p>
                 <sc-if value="{{ certLogoUploading }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;"><oncd-loader size="14" layout="inline" label="Uploading…"></oncd-loader></div>
                 </sc-if>
               </div>
             </div>

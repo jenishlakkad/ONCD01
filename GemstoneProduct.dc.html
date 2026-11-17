@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
+<script src="./utils/diamondLoader.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -115,13 +116,23 @@ a:hover{color:var(--color-accent-700)}
   </div>
 
   <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
-    <p style="padding:64px clamp(20px,6vw,56px);opacity:.65;">Loading…</p>
+    <oncd-loader label="Loading gemstone" style="min-height:56vh;"></oncd-loader>
   </sc-if>
   <sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
-    <div style="padding:64px clamp(20px,6vw,56px);">
-      <h2>Gemstone Not Found</h2>
-      <p style="opacity:.7;">This gemstone is no longer available. <a href="Gemstones.dc.html">Back to Gemstones</a></p>
+    <div class="load-state">
+      <oncd-loader static size="44"></oncd-loader>
+      <h2>Gemstone not found</h2>
+      <p>This gemstone is no longer available, or the link may be mistyped.</p>
+      <div class="load-state-actions"><a class="btn btn-primary" href="Gemstones.dc.html">Back to Gemstones</a></div>
     </div>
+  </sc-if>
+  <sc-if value="{{ loadError }}" hint-placeholder-val="{{ false }}">
+    <div class="load-state" role="alert">
+        <oncd-loader static size="44"></oncd-loader>
+        <h3>We couldn't load this gemstone</h3>
+        <p>Please check your internet connection and try again.</p>
+        <div class="load-state-actions"><button type="button" class="btn btn-primary" onClick="{{ retryLoad }}">Try again</button><a class="btn btn-secondary" href="Gemstones.dc.html">Back to Gemstones</a></div>
+      </div>
   </sc-if>
 
   <sc-if value="{{ loaded }}" hint-placeholder-val="{{ false }}">
@@ -355,7 +366,7 @@ function footerTaglineFor(d, j, g) {
 }
 class Component extends DCLogic {
   state = {
-    cartItems: [], loading: true, notFound: false, product: null, activeIndex: 0,
+    cartItems: [], loading: true, notFound: false, loadError: false, product: null, activeIndex: 0,
     ...readTypeVisibility(),
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false, savedSkus: new Set(),
@@ -388,6 +399,11 @@ class Component extends DCLogic {
     });
     this.inquiryHelpers = await import('./utils/inquiryItem.js');
 
+    this.loadProduct();
+  }
+
+  async loadProduct() {
+    this.setState({ loading: true, loadError: false, notFound: false });
     const sku = new URLSearchParams(location.search).get('sku') || 'AC-G3004';
     try {
       const res = await fetch(`/api/products/${encodeURIComponent(sku)}`, { credentials: 'same-origin' });
@@ -397,7 +413,7 @@ class Component extends DCLogic {
       this.setState({ loading: false, product: json.data });
       import('./utils/recentlyViewed.js').then((m) => m.recordView(json.data.sku)).catch(() => {});
     } catch {
-      this.setState({ loading: false, notFound: true });
+      this.setState({ loading: false, loadError: true });
     }
   }
   componentWillUnmount() {
@@ -436,7 +452,8 @@ class Component extends DCLogic {
     const items = this.state.cartItems;
     const p = this.state.product;
     const base = {
-      loading: this.state.loading, notFound: this.state.notFound, loaded: !this.state.loading && !this.state.notFound && !!p,
+      loading: this.state.loading, notFound: this.state.notFound, loadError: this.state.loadError, retryLoad: () => this.loadProduct(),
+      loaded: !this.state.loading && !this.state.notFound && !this.state.loadError && !!p,
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       footerTagline: footerTaglineFor(this.state.showDiamonds, this.state.showJewelry, this.state.showGemstones),
       // Admin > Product Types switched this catalog off: no products, filters

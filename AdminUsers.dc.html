@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
+<script src="./utils/diamondLoader.js"></script>
 <script src="./support.js"></script>
 <script src="./product-media.js"></script>
 </head>
@@ -236,7 +237,7 @@ a:hover{color:var(--color-accent-700)}
             <h5 class="ud-section-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.3 0-2.5-.3-3.6-.8L3 21l1.8-5.4a8.4 8.4 0 0 1-.8-3.6A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg><span>{{ inquiryHeading }}</span></h5>
             <p style="font-size:12px;opacity:.6;margin-top:4px;">Changing a status updates the customer's own Inquiry History.</p>
             <sc-if value="{{ detailLoading }}" hint-placeholder-val="{{ false }}">
-              <p style="font-size:12px;opacity:.6;margin-top:8px;">Loading…</p>
+              <p style="font-size:12px;margin-top:8px;"><oncd-loader size="16" layout="inline" label="Loading inquiries…" style="opacity:.8;"></oncd-loader></p>
             </sc-if>
             <sc-if value="{{ hasInquiries }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">

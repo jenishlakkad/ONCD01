@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
+<script src="./utils/diamondLoader.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -407,7 +408,7 @@ a:hover{color:var(--color-accent-700)}
                   <p style="font-size:11px;opacity:.55;margin-top:6px;max-width:280px;">{{ recommendedImageSize }}</p>
                 </sc-if>
                 <sc-if value="{{ imageUploading }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size:12px;opacity:.65;margin-top:6px;">Uploading…</div>
+                  <div style="font-size:12px;opacity:.65;margin-top:6px;"><oncd-loader size="14" layout="inline" label="Uploading…"></oncd-loader></div>
                 </sc-if>
               </div>
             </div>
