@@ -259,7 +259,7 @@ a:hover{color:var(--color-accent-700)}
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmailUser }}<wbr>{{ footerEmailAt }}</a></sc-if>
           <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
           <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
@@ -276,6 +276,12 @@ a:hover{color:var(--color-accent-700)}
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+// Footer email split at the @ (rendered with a <wbr> between) so a narrow
+// footer column wraps it as "name" / "@domain" instead of mid-word.
+function splitEmail(email) {
+  const s = String(email || ''); const i = s.lastIndexOf('@');
+  return i > 0 ? { footerEmail: s, footerEmailUser: s.slice(0, i), footerEmailAt: s.slice(i) } : { footerEmail: s, footerEmailUser: s, footerEmailAt: '' };
+}
 // Catalog switches from Admin > Product Types, as last seen by
 // utils/productTypes.js — read synchronously so the first paint already
 // hides disabled catalogs (the live answer is fetched on mount).
@@ -370,6 +376,7 @@ class Component extends DCLogic {
       showDiamonds: this.state.showDiamonds, showJewelry: this.state.showJewelry, showGemstones: this.state.showGemstones,
       footerTagline: footerTaglineFor(this.state.showDiamonds, this.state.showJewelry, this.state.showGemstones),
       footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || '',
+      ...splitEmail(this.state.settings.supportEmail || this.state.settings.inquiryEmail || ''),
       footerPhone: this.state.settings.whatsapp || '',
       isLoggedIn: !!this.state.customer,
       handleLogout: (e) => { e.preventDefault(); this.logoutCustomer && this.logoutCustomer(); },

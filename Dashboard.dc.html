@@ -19,10 +19,19 @@
 <link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
 <style>
 body{margin:0}
+/* The shared stylesheet's html,body{overflow-x:hidden} makes <body> a scroll
+   container that never scrolls (the window does), which silently disables
+   every position:sticky here — header, tab bar, sidebar, save bar. clip
+   blocks sideways overflow the same way without creating a scroller. */
+@supports (overflow-x:clip){html,body{overflow-x:clip;}}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
 .account-menu-link{display:block;padding:11px 16px;font-size:13px;color:var(--color-text);text-decoration:none;}
 .account-menu-link:hover{background:var(--color-accent-100);}
+.acct-menu{right:0;max-width:calc(100vw - 32px);}
+/* Below 1024px the avatar sits at the left of the opened phone menu, so the
+   dropdown opens rightwards from it instead of off the left edge. */
+@media (max-width:1023px){.acct-menu{right:auto;left:0;}}
 .muted{color:color-mix(in srgb, var(--color-text) 62%, transparent);}
 .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600;}
 
@@ -95,7 +104,7 @@ a:hover{color:var(--color-accent-700)}
 .desk-row:hover{color:var(--color-accent-700);}
 .rail-head{display:flex;justify-content:space-between;align-items:baseline;margin:36px 0 14px;gap:12px;}
 .rail-head h3{font-size:20px;margin:0;}
-.rail{display:grid;grid-auto-flow:column;grid-auto-columns:clamp(170px,calc((100% - 64px) / 5),240px);gap:16px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory;}
+.rail{display:grid;grid-auto-flow:column;grid-auto-columns:clamp(170px,calc((100% - 64px) / 5),240px);gap:16px;overflow-x:auto;padding:4px 0 8px;margin-top:-4px;scroll-snap-type:x mandatory;}
 .rail > *{scroll-snap-align:start;}
 
 /* ── Product mini cards ────────────────────────────────────────────── */
@@ -108,11 +117,11 @@ a:hover{color:var(--color-accent-700)}
 .pcard-spec{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pcard-price{font-size:13.5px;font-weight:600;margin-top:4px;}
 .pcard-reason{font-size:11.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.pcard-flag{position:absolute;left:10px;top:10px;z-index:2;}
+.pcard-flag{position:absolute;left:10px;top:10px;z-index:2;max-width:calc(100% - 62px);overflow:hidden;text-overflow:ellipsis;}
 .pcard-x{position:absolute;right:8px;top:8px;z-index:3;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.92);box-shadow:var(--shadow-sm);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text);}
 .pcard-x:hover{background:#fff;color:var(--color-accent-700);}
 .pcard.gone{opacity:.72;}
-.pcard.gone .pcard-media::after{content:"No longer available";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,26,22,.55);color:#fff;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;z-index:1;}
+.pcard.gone .pcard-media::after{content:"No longer available";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 14px;line-height:1.4;background:rgba(30,26,22,.72);color:#fff;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;z-index:1;}
 .pcard-actions{display:flex;gap:8px;margin-top:10px;}
 .pcard-actions .btn{flex:1;padding:7px 10px;font-size:12.5px;justify-content:center;}
 .saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:18px;}
@@ -196,8 +205,8 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--color-divider);font-size:13.5px;}
 .cust-id{font-variant-numeric:tabular-nums;letter-spacing:.04em;font-weight:600;}
 .kv:first-of-type{border-top:none;}
-.kv span:first-child{color:color-mix(in srgb, var(--color-text) 60%, transparent);}
-.kv span:last-child{font-weight:500;text-align:right;overflow-wrap:anywhere;}
+.kv > span:first-child{color:color-mix(in srgb, var(--color-text) 60%, transparent);flex:none;}
+.kv > span:last-child{font-weight:500;text-align:right;overflow-wrap:anywhere;min-width:0;}
 .pw-wrap{position:relative;}
 .pw-wrap .input{padding-right:64px;width:100%;box-sizing:border-box;}
 .pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font:inherit;font-size:12px;color:var(--color-accent-700);padding:4px 6px;}
@@ -223,36 +232,146 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:#3b9a5b;}
 .sync-dot.stale{background:#c89430;}
 
+/* ── Responsive ────────────────────────────────────────────────────────
+   Layout decisions key off the width of the content column itself
+   (container queries), not the window: with the sidebar showing, a 1024px
+   laptop has a narrower column than a 768px tablet without it. */
+.acct-main{container-type:inline-size;container-name:acct;}
+.nowrap{white-space:nowrap;}
+.hero-meta{display:flex;flex-wrap:wrap;column-gap:6px;row-gap:2px;}
+.hero-meta > span + span::before{content:"·";margin-right:6px;opacity:.6;}
+.ov-side{display:grid;gap:16px;align-content:start;}
+.ov-side .panel + .panel{margin-top:0;}
+.mini-inq-pills{display:flex;gap:6px;align-items:center;flex:none;}
+.rail-block{position:relative;}
+.rail-nav{display:none;gap:6px;}
+.rail-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--color-divider);background:var(--color-bg);color:var(--color-text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,opacity .15s;}
+.rail-btn:hover:not(:disabled){border-color:var(--color-accent);color:var(--color-accent-700);}
+.rail-btn:disabled{opacity:.35;cursor:default;}
+.rail-head-end{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end;}
+@media (hover:hover) and (pointer:fine) and (min-width:641px){ .rail-nav{display:inline-flex;} }
+.rail-block.rail-fits .rail-nav{display:none;}
+.rail-clear{font-size:12.5px;padding:4px 8px;min-height:36px !important;}
+.lbl-short{display:none;}
+.saved-grid .pcard{container-type:inline-size;}
+@container (max-width:200px){
+  .pcard-actions .lbl-long{display:none;}
+  .pcard-actions .lbl-short{display:inline;}
+}
+@container acct (min-width:620px){ .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr));} }
+@container acct (max-width:619px){ .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@container acct (min-width:560px) and (max-width:899px){
+  /* Overview stacked: the side panels sit two-up instead of one long column. */
+  .ov-side{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ov-side > :last-child:nth-child(odd){grid-column:1/-1;}
+}
+
 @media (prefers-reduced-motion: reduce){.sk,.toast{animation:none}.stat,.pcard{transition:none}}
-@media (max-width:1180px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.ov-grid,.profile-layout{grid-template-columns:minmax(0,1fr);}.profile-aside{position:static;}}
+@media (max-width:1180px){.ov-grid,.profile-layout{grid-template-columns:minmax(0,1fr);}.profile-aside{position:static;}}
+@media (max-width:1180px) and (min-width:901px){
+  /* Profile stacked under the form: strength + ID side by side. */
+  .profile-aside{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start;}
+  .profile-aside .panel + .panel{margin-top:0;}
+}
+@media (max-width:1023px){
+  /* The shared stylesheet pads every <main>/<section> below 1024px; the
+     shell already provides the gutter, so the column would be inset twice. */
+  main.acct-main{padding-left:0 !important;padding-right:0 !important;}
+}
 @media (max-width:900px){
-  .acct-shell{grid-template-columns:minmax(0,1fr);gap:20px;padding-top:16px;}
-  .acct-side{position:sticky;top:72px;z-index:30;background:var(--color-bg);margin:0 calc(-1 * clamp(16px,5vw,32px));padding:8px clamp(16px,5vw,32px);border-bottom:1px solid var(--color-divider);gap:0;}
+  .acct-shell{grid-template-columns:minmax(0,1fr);gap:20px;padding-top:0;}
+  section.acct-shell{padding-top:0 !important;padding-bottom:64px !important;}
+  .acct-side{position:sticky;top:var(--acct-nav-h,70px);z-index:30;background:var(--color-bg);margin:0 calc(-1 * clamp(16px,5vw,32px));padding:0;border-bottom:1px solid var(--color-divider);gap:0;}
   .acct-id,.acct-side-foot{display:none;}
-  .acct-tabs{flex-direction:row;overflow-x:auto;gap:6px;scrollbar-width:none;}
+  .acct-tabs{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none;padding:8px clamp(16px,5vw,32px);scroll-padding-inline:clamp(16px,5vw,32px);
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%);}
   .acct-tabs::-webkit-scrollbar{display:none;}
-  .acct-tab{padding:8px 12px;font-size:13px;flex:none;}
+  .acct-tab{padding:0 14px;min-height:40px;font-size:13.5px;flex:none;border-radius:999px;}
   .acct-tab-badge{margin-left:2px;}
   .acct-tab svg{display:none;}
+  .profile-aside{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;align-items:start;}
+  .profile-aside .panel + .panel{margin-top:0;}
+}
+@media (max-width:767px){
+  /* 16px inputs: iOS Safari zooms the page into any smaller focused field. */
+  .acct-main .input,.acct-main .select,.acct-main textarea{font-size:16px;}
+}
+@media (max-width:767px), (pointer:coarse){
+  /* Finger-sized targets wherever the pointer is a finger, tablets included. */
+  .panel-link{display:inline-flex;align-items:center;min-height:40px;margin:-10px 0;}
+  .pcard-x{width:36px;height:36px;}
+  .pcard-actions .btn{min-height:40px;}
+  .acct-main .input,.acct-main .select,.acct-main textarea{font-size:16px;}
+}
+@media (max-width:400px){
+  /* Smallest phones: label above value so a full email address fits on one line. */
+  .desk-row{flex-direction:column;align-items:flex-start !important;gap:2px;}
+  .desk-row > span:first-child{width:auto !important;}
 }
 @media (max-width:640px){
-  .stat-grid{gap:10px;}
+  .stat-grid{gap:10px;margin-top:16px;}
   .stat{padding:14px;}
   .stat-value{font-size:24px;}
-  .ov-hero{padding:22px 20px;}
-  .form-grid{grid-template-columns:minmax(0,1fr);}
-  .inq-head{flex-wrap:wrap;gap:12px;padding:14px;}
-  .inq-side{width:100%;justify-content:space-between;}
+  .ov-hero{padding:22px 18px;flex-direction:column;align-items:stretch;gap:18px;}
+  .ov-hero-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));}
+  .ov-hero-actions .btn{justify-content:center;min-height:46px;padding-top:10px;padding-bottom:10px;}
+  .hero-meta{flex-direction:column;}
+  .hero-meta > span + span::before{display:none;}
+  .ov-grid{margin-top:20px;gap:16px;}
+  .panel{padding:16px;}
+  .mini-inq{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:12px;row-gap:6px;align-items:start;}
+  .mini-inq .thumb{width:44px;height:44px;grid-row:span 2;}
+  .mini-inq-pills{grid-column:2;}
+  .mini-inq-title{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .desk-row{align-items:flex-start;}
+  .desk-row > span:last-child{white-space:normal !important;overflow-wrap:anywhere;}
+  .rail-head{margin:28px 0 12px;flex-wrap:wrap;row-gap:2px;}
+  .rail-head-end{justify-content:flex-start;}
+  .rail{grid-auto-columns:clamp(150px,44%,200px);gap:12px;margin:0 calc(-1 * clamp(16px,5vw,32px));padding:4px clamp(16px,5vw,32px) 8px;scroll-padding-inline:clamp(16px,5vw,32px);}
+  .acct-head{margin-bottom:18px;}
+  .acct-head > .btn,.acct-head > sc-if > .btn{width:100%;justify-content:center;}
+  .form-card{padding:18px 16px;}
+  .form-grid{grid-template-columns:minmax(0,1fr);gap:14px;}
+  .toolbar{gap:10px;}
+  .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * clamp(16px,5vw,32px));padding:2px clamp(16px,5vw,32px);width:calc(100% + 2 * clamp(16px,5vw,32px));}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{flex:none;min-height:38px;}
+  .inq-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;padding:14px;align-items:start;}
+  .inq-head:not(:has(.inq-thumbs)){grid-template-columns:minmax(0,1fr);}
+  .inq-thumbs .thumb{width:44px;height:44px;}
+  .inq-thumbs .thumb + .thumb{margin-left:-24px;}
+  .inq-side{grid-column:1/-1;justify-content:space-between;}
+  .inq-title{font-size:14.5px;}
   .inq-body{padding:4px 14px 14px;}
+  .convo-head{flex-wrap:wrap;row-gap:6px;}
+  .ref-tag{white-space:nowrap;}
   .composer{flex-direction:column;align-items:stretch;}
-  .bubble{max-width:95%;}
+  .bubble{max-width:92%;}
+  .inq-item{gap:12px;}
+  .inq-item .thumb{width:44px;height:44px;}
+  .inq-item-title{font-size:13.5px;}
+  .inq-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .inq-actions > a.btn{grid-column:1/-1;order:-1;}
+  .inq-actions > button.btn:only-of-type{grid-column:1/-1;}
+  .inq-actions .btn{justify-content:center;margin-left:0 !important;}
+  .inq-actions .btn-ghost{border:1px solid var(--color-divider);}
   .saved-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
-  .pcard-media{height:150px;}
+  .pcard-media{height:auto;aspect-ratio:1/1;}
+  .pcard-body{padding:10px 12px 12px;}
+  .saved-grid .pcard-title{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:13.5px;}
   .pcard-actions{flex-direction:column;}
+  .pcard-actions .btn{min-height:38px;}
+  .pcard-flag{font-size:10.5px;padding:3px 8px;}
   .search{max-width:none;margin-left:0;flex-basis:100%;}
+  .sort-label{margin-left:0 !important;width:100%;justify-content:space-between;}
+  .sort-label .select{flex:1;max-width:240px;}
   .notice{flex-wrap:wrap;}
   .notice .btn{margin-left:0;}
-  .step{width:70px;}
+  .step{width:64px;}
+  .savebar{bottom:10px;padding:10px 12px;}
+  .savebar span{flex-basis:100%;}
+  .savebar .btn{flex:1;justify-content:center;}
+  .empty{padding:36px 16px;}
 }
 </style>
 </helmet>
@@ -292,7 +411,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
         <button onClick="{{ toggleAccountMenu }}" aria-label="Account menu" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:var(--color-accent-100);color:var(--color-accent-800);border:none;cursor:pointer;font-family:var(--font-heading);font-weight:600;font-size:13px;">{{ initials }}</button>
         <sc-if value="{{ accountMenuOpen }}" hint-placeholder-val="{{ false }}">
           <div onClick="{{ closeAccountMenu }}" style="position:fixed;inset:0;z-index:60;"></div>
-          <div style="position:absolute;top:calc(100% + 10px);right:0;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);width:224px;z-index:61;overflow:hidden;">
+          <div class="acct-menu" style="position:absolute;top:calc(100% + 10px);background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);width:224px;z-index:61;overflow:hidden;">
             <div style="padding:14px 16px;border-bottom:1px solid var(--color-divider);">
               <div style="font-size:13px;font-weight:600;">{{ accountName }}</div>
               <div style="font-size:11px;opacity:.6;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ accountEmail }}</div>
@@ -373,7 +492,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
           <div>
             <div class="eyebrow">{{ greeting }}</div>
             <h1>{{ firstName }}</h1>
-            <p class="muted">{{ companyLine }} · Customer ID <strong class="cust-id">{{ customerId }}</strong> · Member since {{ memberSince }}</p>
+            <p class="muted hero-meta"><span>{{ companyLine }}</span><span class="nowrap">Customer ID <strong class="cust-id">{{ customerId }}</strong></span><span class="nowrap">Member since {{ memberSince }}</span></p>
             <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
               <span class="pill pill-approved">Approved trade account</span>
               <span class="sync-note muted"><span class="sync-dot {{ syncDotClass }}"></span>{{ syncLabel }}</span>
@@ -418,8 +537,10 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
                       <div class="mini-inq-title">{{ q.headline }}</div>
                       <div class="mini-inq-sub muted">{{ q.subLabel }}</div>
                     </div>
-                    <sc-if value="{{ q.isUpdated }}" hint-placeholder-val="{{ false }}"><span class="pill pill-new">Updated</span></sc-if>
-                    <span class="pill {{ q.pillClass }}">{{ q.statusLabel }}</span>
+                    <span class="mini-inq-pills">
+                      <sc-if value="{{ q.isUpdated }}" hint-placeholder-val="{{ false }}"><span class="pill pill-new">Updated</span></sc-if>
+                      <span class="pill {{ q.pillClass }}">{{ q.statusLabel }}</span>
+                    </span>
                   </button>
                 </sc-for>
               </sc-if>
@@ -430,7 +551,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
             </div>
           </div>
 
-          <div>
+          <div class="ov-side">
             <sc-if value="{{ profileIncomplete }}" hint-placeholder-val="{{ false }}">
               <div class="panel">
                 <div class="panel-head"><h3>Complete your profile</h3><span style="font-weight:600;font-size:14px;">{{ profilePct }}%</span></div>
@@ -467,8 +588,9 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
         </div>
 
         <sc-if value="{{ hasSavedPreview }}" hint-placeholder-val="{{ false }}">
-          <div class="rail-head"><h3>Saved for later</h3><a href="Dashboard.dc.html?tab=saved" onClick="{{ goSaved }}" class="panel-link">View all {{ savedCount }} →</a></div>
-          <div class="rail">
+          <div class="rail-block" onPointerEnter="{{ railSync }}">
+          <div class="rail-head"><h3>Saved for later</h3><div class="rail-head-end"><a href="Dashboard.dc.html?tab=saved" onClick="{{ goSaved }}" class="panel-link">{{ viewAllSavedLabel }}</a><span class="rail-nav"><button type="button" class="rail-btn" data-dir="-1" aria-label="Scroll saved items left" onClick="{{ railStep }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button><button type="button" class="rail-btn" data-dir="1" aria-label="Scroll saved items right" onClick="{{ railStep }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span></div></div>
+          <div class="rail" onScroll="{{ railSync }}">
             <sc-for list="{{ savedPreview }}" as="p" hint-placeholder-count="4">
               <a href="{{ p.href }}" class="pcard {{ p.goneClass }}">
                 <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media></div>
@@ -476,11 +598,13 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
               </a>
             </sc-for>
           </div>
+          </div>
         </sc-if>
 
         <sc-if value="{{ hasRecentlyViewed }}" hint-placeholder-val="{{ false }}">
-          <div class="rail-head"><h3>Recently viewed</h3><button class="btn btn-ghost" style="font-size:12.5px;padding:4px 8px;" onClick="{{ clearHistory }}">Clear history</button></div>
-          <div class="rail">
+          <div class="rail-block" onPointerEnter="{{ railSync }}">
+          <div class="rail-head"><h3>Recently viewed</h3><div class="rail-head-end"><button class="btn btn-ghost rail-clear" onClick="{{ clearHistory }}">Clear history</button><span class="rail-nav"><button type="button" class="rail-btn" data-dir="-1" aria-label="Scroll recently viewed left" onClick="{{ railStep }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button><button type="button" class="rail-btn" data-dir="1" aria-label="Scroll recently viewed right" onClick="{{ railStep }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span></div></div>
+          <div class="rail" onScroll="{{ railSync }}">
             <sc-for list="{{ recentlyViewed }}" as="p" hint-placeholder-count="4">
               <a href="{{ p.href }}" class="pcard">
                 <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media></div>
@@ -488,17 +612,20 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
               </a>
             </sc-for>
           </div>
+          </div>
         </sc-if>
 
         <sc-if value="{{ hasRecommended }}" hint-placeholder-val="{{ false }}">
-          <div class="rail-head"><h3>Picked for you</h3><span class="muted" style="font-size:12.5px;">Based on what you've saved and viewed</span></div>
-          <div class="rail">
+          <div class="rail-block" onPointerEnter="{{ railSync }}">
+          <div class="rail-head"><h3>Picked for you</h3><div class="rail-head-end"><span class="muted" style="font-size:12.5px;">Based on what you've saved and viewed</span><span class="rail-nav"><button type="button" class="rail-btn" data-dir="-1" aria-label="Scroll recommendations left" onClick="{{ railStep }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button><button type="button" class="rail-btn" data-dir="1" aria-label="Scroll recommendations right" onClick="{{ railStep }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span></div></div>
+          <div class="rail" onScroll="{{ railSync }}">
             <sc-for list="{{ recommended }}" as="p" hint-placeholder-count="4">
               <a href="{{ p.href }}" class="pcard">
                 <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media></div>
                 <div class="pcard-body"><div class="pcard-kicker">{{ p.typeLabel }}</div><div class="pcard-title">{{ p.title }}</div><div class="pcard-price">{{ p.priceLabel }}</div><div class="pcard-reason muted">{{ p.reason }}</div></div>
               </a>
             </sc-for>
+          </div>
           </div>
         </sc-if>
       </sc-if>
@@ -706,7 +833,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
                 <button class="chip {{ f.activeClass }}" aria-pressed="{{ f.selected }}" onClick="{{ f.select }}">{{ f.label }} <span class="chip-count">{{ f.count }}</span></button>
               </sc-for>
             </div>
-            <label style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;" class="muted">Sort
+            <label style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;" class="muted sort-label">Sort
               <select class="select" value="{{ savedSort }}" onChange="{{ setSavedSort }}">
                 <option value="recent">Recently saved</option>
                 <option value="oldest">Oldest first</option>
@@ -729,7 +856,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
                   <div class="muted" style="font-size:11.5px;">Saved {{ p.savedAgo }}</div>
                   <div class="pcard-actions">
                     <sc-if value="{{ p.available }}" hint-placeholder-val="{{ true }}">
-                      <button class="btn {{ p.cartBtnClass }}" onClick="{{ p.toggleCart }}">{{ p.cartBtnLabel }}</button>
+                      <button class="btn {{ p.cartBtnClass }}" onClick="{{ p.toggleCart }}" aria-label="{{ p.cartBtnLabel }}"><span class="lbl-long">{{ p.cartBtnLabel }}</span><span class="lbl-short">{{ p.cartBtnShort }}</span></button>
                     </sc-if>
                     <sc-if value="{{ !p.available }}" hint-placeholder-val="{{ false }}">
                       <a href="{{ p.similarHref }}" class="btn btn-secondary">Find similar</a>
@@ -944,7 +1071,7 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
       <div>
         <h6 style="color:#f8f4f4;opacity:.6;">Reach the Desk</h6>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13px;">
-          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmail }}</a></sc-if>
+          <sc-if value="{{ footerEmail }}" hint-placeholder-val="{{ true }}"><a href="mailto:{{ footerEmail }}" style="color:var(--color-neutral-300);">{{ footerEmailUser }}<wbr>{{ footerEmailAt }}</a></sc-if>
           <sc-if value="{{ footerPhone }}" hint-placeholder-val="{{ true }}"><span>{{ footerPhone }}</span></sc-if>
           <a href="Contact.dc.html" style="color:var(--color-neutral-300);">Send us a message &rarr;</a>
         </div>
@@ -958,6 +1085,12 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+// Footer email split at the @ (rendered with a <wbr> between) so a narrow
+// footer column wraps it as "name" / "@domain" instead of mid-word.
+function splitEmail(email) {
+  const s = String(email || ''); const i = s.lastIndexOf('@');
+  return i > 0 ? { footerEmail: s, footerEmailUser: s.slice(0, i), footerEmailAt: s.slice(i) } : { footerEmail: s, footerEmailUser: s, footerEmailAt: '' };
+}
 // Catalog switches from Admin > Product Types, as last seen by
 // utils/productTypes.js — read synchronously so the first paint already
 // hides disabled catalogs (the live answer is fetched on mount).
@@ -1106,8 +1239,12 @@ class Component extends DCLogic {
     this._onCart = () => this.refreshCart();
     window.addEventListener('aurum-cart-change', this._onCart);
     window.addEventListener('storage', this._onCart);
-    this._onPop = () => this.setState({ activeTab: tabFromUrl() });
+    this._onPop = () => this.setState({ activeTab: tabFromUrl() }, () => this.revealActiveTab());
     window.addEventListener('popstate', this._onPop);
+    this._onResize = () => this.syncNavHeight();
+    window.addEventListener('resize', this._onResize);
+    this.syncNavHeight();
+    this.revealActiveTab();
     // Keep the page in step with the sales desk: re-check when the customer
     // comes back to the tab, and every minute while it's visible.
     this._onVisible = () => {
@@ -1127,6 +1264,7 @@ class Component extends DCLogic {
     window.removeEventListener('aurum-cart-change', this._onCart);
     window.removeEventListener('storage', this._onCart);
     window.removeEventListener('popstate', this._onPop);
+    window.removeEventListener('resize', this._onResize);
     document.removeEventListener('visibilitychange', this._onVisible);
     window.removeEventListener('focus', this._onVisible);
     window.removeEventListener('beforeunload', this._onBeforeUnload);
@@ -1212,6 +1350,10 @@ class Component extends DCLogic {
     this.setState(patch, () => {
       if (this.state.activeTab === 'inquiries') this.markSeen('i');
       if (this.state.activeTab === 'messages') this.markSeen('c');
+      // Count badges arriving widen the tab row; re-centre the active tab
+      // until the first fresh load (later polls leave the row where the
+      // customer put it).
+      if (!this._tabRevealed) { this.revealActiveTab(); if (!fromCache) this._tabRevealed = true; }
       if (!this._scrolledToDeepLink) {
         if (this.state.expandedId) { this._scrolledToDeepLink = true; this.scrollToInquiry(this.state.expandedId); }
         else if (this.state.expandedMsgId) { this._scrolledToDeepLink = true; this.scrollToAnchor(`msg-${this.state.expandedMsgId}`); }
@@ -1373,8 +1515,53 @@ class Component extends DCLogic {
       if (tab === 'inquiries') this.markSeen('i');
       if (tab === 'messages') this.markSeen('c');
       if (!(extra && extra.expandedId)) { try { document.body.scrollTop = 0; } catch {} window.scrollTo(0, 0); }
+      this.revealActiveTab();
     });
     try { document.getElementById('navCheck').checked = false; } catch {}
+  }
+
+  // On phones/tablets the section tabs are one horizontally scrolling row:
+  // keep the selected one fully in view (only the row scrolls, never the page).
+  revealActiveTab(tries = 0) {
+    requestAnimationFrame(() => {
+      const row = document.querySelector('.acct-tabs');
+      const tab = row && row.querySelector('.acct-tab.active');
+      // Not laid out yet (start-up overlay still up): try again shortly.
+      if ((!row || !tab || !row.clientWidth) && tries < 40) { setTimeout(() => this.revealActiveTab(tries + 1), 100); return; }
+      if (!row || !tab || row.scrollWidth <= row.clientWidth) return;
+      const pad = 24;
+      const left = tab.offsetLeft - row.offsetLeft;
+      if (left - pad < row.scrollLeft) row.scrollTo({ left: Math.max(0, left - pad), behavior: 'smooth' });
+      else if (left + tab.offsetWidth + pad > row.scrollLeft + row.clientWidth) row.scrollTo({ left: left + tab.offsetWidth + pad - row.clientWidth, behavior: 'smooth' });
+    });
+  }
+
+  // The tab row sticks right under the site header, whose height changes
+  // with the viewport, so it's measured rather than guessed.
+  syncNavHeight() {
+    const nav = document.querySelector('nav.nav');
+    if (nav && !document.getElementById('navCheck')?.checked) document.documentElement.style.setProperty('--acct-nav-h', `${Math.round(nav.getBoundingClientRect().height)}px`);
+  }
+
+  // Product rails: arrow buttons (mouse/trackpad only — touch swipes) page
+  // through the row and dim at either end.
+  railStep(e) {
+    const btn = e.currentTarget;
+    const rail = btn.closest('.rail-block')?.querySelector('.rail');
+    if (!rail) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    rail.scrollBy({ left: Number(btn.dataset.dir || 1) * Math.max(160, rail.clientWidth * 0.85), behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  railSync(e) {
+    const block = e.currentTarget.closest('.rail-block');
+    const rail = block && block.querySelector('.rail');
+    if (!rail) return;
+    const max = rail.scrollWidth - rail.clientWidth;
+    block.classList.toggle('rail-fits', max <= 2);
+    const [prev, next] = block.querySelectorAll('.rail-btn');
+    if (prev) prev.disabled = rail.scrollLeft <= 2;
+    if (next) next.disabled = rail.scrollLeft >= max - 2;
   }
 
   openInquiry(id) {
@@ -1639,7 +1826,9 @@ class Component extends DCLogic {
     const updatedSet = new Set(st.updatedIds);
     const threadsOn = !!(data.messaging && data.messaging.inquiryThreads);
     const contactRepliesOn = !!(data.messaging && data.messaging.contactReplies);
-    const deskName = (m) => (m.author ? `${m.author} · ONCD sales desk` : 'ONCD sales desk');
+    // A desk member's own name gets the team label after it; a reply already
+    // signed as the desk ("ONCD Sales Desk", "Priya — ONCD") isn't labelled twice.
+    const deskName = (m) => (!m.author ? 'ONCD sales desk' : /oncd|sales desk/i.test(m.author) ? m.author : `${m.author} · ONCD sales desk`);
     const bubble = (m) => ({
       body: m.body, cls: m.sender === 'admin' ? 'b-desk' : 'b-mine',
       meta: `${m.sender === 'admin' ? deskName(m) : 'You'} · ${fmtDate(m.createdAt)} ${toDate(m.createdAt) ? toDate(m.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}`.trim(),
@@ -1777,14 +1966,14 @@ class Component extends DCLogic {
           ...card, type, available: true, savedAt: s.createdAt, savedAgo: timeAgo(s.createdAt, now),
           priceValue: p.priceVisible && p.totalPrice != null ? Number(p.totalPrice) : null,
           priceChanged: !!(snap && liveValue != null && Math.abs(Number(liveValue) - snap.value) >= 1),
-          cartBtnClass: inCart ? 'btn-added' : 'btn-primary', cartBtnLabel: inCart ? '✓ In inquiry cart' : 'Add to inquiry cart',
+          cartBtnClass: inCart ? 'btn-added' : 'btn-primary', cartBtnLabel: inCart ? '✓ In inquiry cart' : 'Add to inquiry cart', cartBtnShort: inCart ? '✓ In cart' : 'Add to cart',
           toggleCart: () => this.toggleCartFor(card),
           remove: () => this.removeSaved(s.sku),
         };
       }
       return {
         sku: s.sku, type, available: false, title: s.name || s.sku, spec: `SKU ${s.sku}`, priceLabel: '',
-        typeLabel: TYPE_LABEL[type] || '', href: '#', media: '[]', placeholder: s.name || s.sku,
+        typeLabel: TYPE_LABEL[type] || '', href: '#', media: '[]', placeholder: '',
         goneClass: 'gone', savedAt: s.createdAt, savedAgo: timeAgo(s.createdAt, now), priceValue: null, priceChanged: false,
         similarHref: LISTING_PAGE[type] || browseHref,
         remove: () => this.removeSaved(s.sku),
@@ -1898,6 +2087,7 @@ class Component extends DCLogic {
       showDiamonds: st.showDiamonds, showJewelry: st.showJewelry, showGemstones: st.showGemstones,
       footerTagline: footerTaglineFor(st.showDiamonds, st.showJewelry, st.showGemstones),
       footerEmail: st.settings.supportEmail || st.settings.inquiryEmail || '',
+      ...splitEmail(st.settings.supportEmail || st.settings.inquiryEmail || ''),
       footerPhone: st.settings.whatsapp || '',
       hasToast: !!st.toast, toast: st.toast || { message: '', actionLabel: '', action: null },
       dismissToast: () => this.setState({ toast: null }),
@@ -1927,7 +2117,8 @@ class Component extends DCLogic {
       hasInquiries: inquiries.length > 0, recentInquiries: inquiries.slice(0, 4),
       profileIncomplete: savedPct < 100, profileMissing: PROFILE_FIELDS.filter(([, col]) => !String(me[col] || '').trim()).map(([, , label]) => label).slice(0, 4),
       deskLinks, deskPrimaryHref: deskLinks[0].href,
-      hasSavedPreview: savedAll.length > 0, savedPreview: savedAll.slice(0, 8), savedCount: savedAll.length,
+      hasSavedPreview: savedAll.length > 0, savedPreview: savedAll.slice(0, 8), savedCount: savedAll.length, viewAllSavedLabel: `View all ${savedAll.length} →`,
+      railStep: (e) => this.railStep(e), railSync: (e) => this.railSync(e),
       hasRecentlyViewed: recentlyViewed.length > 0, recentlyViewed,
       hasRecommended: recommended.length > 0, recommended,
       clearHistory: () => {
