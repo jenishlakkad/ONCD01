@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONCD — Certified Diamonds, Fine Jewelry &amp; Gemstones</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#201d18">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -406,7 +411,7 @@ a:hover{color:var(--color-accent-700)}
   </sc-if>
 
   <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
-    <div class="nav-brand" style="letter-spacing:.1em;">ONCD</div>
+    <div class="nav-brand" style="letter-spacing:.1em;"><a href="Home.dc.html" class="brand-link" aria-label="ONCD home">ONCD</a></div>
     <input type="checkbox" class="nav-check" id="navCheck" hidden>
     <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
     <button onClick="{{ toggleCart }}" class="nav-cart-mobile" aria-label="Cart">
@@ -986,7 +991,7 @@ a:hover{color:var(--color-accent-700)}
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
     <div class="site-footer-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
       <div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">ONCD</div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;"><a href="Home.dc.html" class="brand-link" aria-label="ONCD home">ONCD</a></div>
         <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">{{ footerTagline }}</p>
       </div>
       <div>
@@ -1133,7 +1138,7 @@ class Component extends DCLogic {
     feed: null, feedLoading: true, personal: null,
     heroIndex: 0, heroPaused: false, heroCycle: 0,
     arrivalsTab: null, gridCols: gridColumnsFor(typeof window !== 'undefined' ? window.innerWidth : 1440),
-    settings: { whatsapp: '15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
+    settings: (() => { try { return JSON.parse(localStorage.getItem('oncd_public_settings_v1') || 'null') || {}; } catch { return {}; } })(),
     inquiryOpen: false, inquiryProduct: null, inquiryNote: '', showScrollTop: false,
     newsletterEmail: '', newsletterStatus: 'idle', newsletterError: '',
     announcementDismissed: (() => { try { return localStorage.getItem(ANNOUNCE_DISMISS_KEY) || ''; } catch { return ''; } })(),
@@ -1590,8 +1595,8 @@ class Component extends DCLogic {
       closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
       accountName: fullName,
       accountEmail: (customer && customer.email) || '',
-      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || 'sales@oncd.com',
-      footerPhone: this.state.settings.whatsapp || '+1 (555) 123-4567',
+      footerEmail: this.state.settings.supportEmail || this.state.settings.inquiryEmail || '',
+      footerPhone: this.state.settings.whatsapp || '',
       showScrollTop: this.state.showScrollTop,
       scrollToTop: () => window.scrollTo({ top: 0, behavior: this.reducedMotion ? 'auto' : 'smooth' }),
 

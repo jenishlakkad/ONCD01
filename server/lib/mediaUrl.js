@@ -23,4 +23,12 @@ function toPublicMediaUrl(value) {
   return r2Storage.getPublicUrl(key);
 }
 
-module.exports = { toPublicMediaUrl };
+// The hover-preview clip stored next to a video (see lib/videoPreview.js).
+// Product cards try it first and fall back to the full video if it's missing.
+function toPublicPreviewUrl(storedUrl) {
+  const { previewPathFor } = require('./videoPreview');
+  const p = previewPathFor(storedUrl);
+  return p ? toPublicMediaUrl(p) : null;
+}
+
+module.exports = { toPublicMediaUrl, toPublicPreviewUrl };

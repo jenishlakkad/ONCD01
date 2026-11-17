@@ -70,9 +70,27 @@ function runFfmpeg(args, timeoutMs) {
   });
 }
 
+// iPhones record in HDR (HLG/PQ, usually HEVC). Converted to an ordinary
+// H.264 video without tone-mapping, small HDR clips come out a little grey
+// and flat; the hover previews (videoPreview.js) tone-map HDR sources.
+function probeIsHdr(inputPath) {
+  return new Promise((resolve) => {
+    execFile(ffmpegPath, ['-hide_banner', '-i', inputPath], { timeout: 30000, maxBuffer: 4 * 1024 * 1024 }, (err, stdout, stderr) => {
+      const line = String(stderr || '').split(/\r?\n/).find((l) => /Video:/.test(l)) || '';
+      resolve(/arib-std-b67|smpte2084/.test(line));
+    });
+  });
+}
+const HDR_TO_SDR = 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p';
+const SDR_TAGS = ['-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709'];
+
 // Returns the path of a NEW .mp4 next to the input. Never touches the input.
 async function processVideo(inputPath, rawFrame) {
   const frame = normalizeFrame(rawFrame);
+  // Full-size videos skip tone-mapping: at 1080px it doubles processing time
+  // (an 18 s iPhone clip: 14 s -> 28 s) for a difference you can barely see.
+  // The small hover previews do use it (see videoPreview.js).
+  const hdr = false;
   const base = path.basename(inputPath, path.extname(inputPath));
   const outputPath = path.join(path.dirname(inputPath), `${base}-v${crypto.randomBytes(4).toString('hex')}.mp4`);
   try {
@@ -81,10 +99,11 @@ async function processVideo(inputPath, rawFrame) {
       '-i', inputPath,
       '-t', String(MAX_SECONDS),
       '-map', '0:v:0',
-      '-vf', filterFor(frame),
+      '-vf', hdr ? `${filterFor(frame)},${HDR_TO_SDR}` : filterFor(frame),
       '-an',
       '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26',
       '-pix_fmt', 'yuv420p', '-profile:v', 'high',
+      ...(hdr ? SDR_TAGS : []),
       '-movflags', '+faststart',
       outputPath,
     ], 5 * 60 * 1000);
@@ -96,4 +115,4 @@ async function processVideo(inputPath, rawFrame) {
   }
 }
 
-module.exports = { processVideo, normalizeFrame, filterFor, MAX_SIDE, MAX_SECONDS };
+module.exports = { processVideo, normalizeFrame, filterFor, probeIsHdr, HDR_TO_SDR, SDR_TAGS, MAX_SIDE, MAX_SECONDS };

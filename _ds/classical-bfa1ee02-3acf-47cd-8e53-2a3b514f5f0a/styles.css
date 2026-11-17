@@ -691,3 +691,8 @@ img,svg,video,canvas{max-width:100%;height:auto;}
 @media (max-width:1023px){
   .nav > a.nav-cart-mobile{display:flex !important;flex-basis:auto;order:1;padding:0;border-top:none;}
 }
+
+/* The ONCD logo (nav, footer, admin sidebar) is a link home: it keeps the
+   wordmark's own colour and gets a visible focus ring for keyboard users. */
+.brand-link,.brand-link:hover{color:inherit;text-decoration:none;}
+.brand-link:focus-visible{outline:2px solid var(--color-accent);outline-offset:4px;border-radius:2px;}

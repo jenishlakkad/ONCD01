@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /api/
+Disallow: /Admin
+Disallow: /Dashboard.dc.html
+Allow: /

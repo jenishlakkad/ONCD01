@@ -12,6 +12,7 @@ const { toPublicMediaUrl } = require('../lib/mediaUrl');
 const { persistUploadedFile, discardPersistedFile, removeR2ObjectForUrl } = require('../lib/mediaUpload');
 const { stripVideoAudio } = require('../lib/stripVideoAudio');
 const { processVideo } = require('../lib/processVideo');
+const { createAndStorePreview, removePreview } = require('../lib/videoPreview');
 const r2Storage = require('../services/r2Storage');
 const os = require('os');
 const crypto = require('crypto');
@@ -145,10 +146,11 @@ router.delete('/:id', asyncRoute(async (req, res) => {
   // read-side toPublicMediaUrl() resolver. Cleanup needs the actual stored
   // /uploads/... value to derive the right R2 key/local path regardless of
   // R2_MEDIA_READS_ENABLED's state.
-  const media = await db.all('SELECT url FROM product_media WHERE product_id = $1', [existing.id]);
+  const media = await db.all('SELECT url, kind FROM product_media WHERE product_id = $1', [existing.id]);
   await db.query('DELETE FROM products WHERE id = $1', [existing.id]);
   for (const m of media) {
     await removeR2ObjectForUrl(m.url);
+    if (m.kind === 'video') await removePreview(m.url);
     const p = path.join(env.rootDir, m.url.replace(/^\//, ''));
     fs.unlink(p, () => {});
   }
@@ -230,7 +232,10 @@ router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(asy
     } catch (err) {
       await discardPersistedFile(url, f);
       failed.push({ originalName: f.originalname, error: 'Failed to save this file. Please try again.' });
+      continue;
     }
+    // Small hover-preview clip for product cards (best effort, ~1s).
+    if (kind === 'video') await createAndStorePreview(f.path, url);
   }
   if (created.length) {
     await writeAudit({ actor: req.adminUser.full_name, action: 'Uploaded media', target: product.sku, module: 'Products' });
@@ -268,6 +273,7 @@ router.delete('/:id/media/:mediaId', asyncRoute(async (req, res) => {
   const product = await db.get('SELECT sku FROM products WHERE id = $1', [req.params.id]);
   await db.query('DELETE FROM product_media WHERE id = $1', [media.id]); // authoritative — commits first
   await removeR2ObjectForUrl(media.url); // best-effort cleanup after the DB delete commits
+  if (media.kind === 'video') await removePreview(media.url);
   const p = path.join(env.rootDir, media.url.replace(/^\//, ''));
   fs.unlink(p, () => {});
   await writeAudit({ actor: req.adminUser.full_name, action: 'Removed media', target: product ? product.sku : `#${req.params.id}`, module: 'Products' });
@@ -308,8 +314,10 @@ router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute
     throw new ApiError(502, 'Failed to save the replacement. The existing media was not changed.');
   }
 
+  if (newKind === 'video') await createAndStorePreview(req.file.path, newUrl);
   // DB UPDATE committed — only now clean up the superseded OLD media.
   await removeR2ObjectForUrl(media.url);
+  if (media.kind === 'video') await removePreview(media.url);
   const oldPath = path.join(env.rootDir, media.url.replace(/^\//, ''));
   fs.unlink(oldPath, () => {});
 
@@ -365,8 +373,10 @@ router.post('/:id/media/:mediaId/reframe', asyncRoute(async (req, res) => {
   await cleanupTmp();
 
   await db.query('UPDATE product_media SET url = $1, crop = NULL WHERE id = $2', [newUrl, media.id]);
+  await createAndStorePreview(path.join(env.rootDir, newUrl.replace(/^\//, '')), newUrl);
   // Only after the database points at the new file is the old one removed.
   await removeR2ObjectForUrl(media.url);
+  await removePreview(media.url);
   fs.unlink(path.join(env.rootDir, media.url.replace(/^\//, '')), () => {});
   await writeAudit({ actor: req.adminUser.full_name, action: 'Re-framed video', target: product.sku, module: 'Products' });
   res.json({ data: { id: Number(media.id), kind: 'video', url: toPublicMediaUrl(newUrl), originalName: media.original_name } });

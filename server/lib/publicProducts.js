@@ -1,7 +1,7 @@
 const db = require('../db/postgres');
 const { applyPriceVisibility } = require('./priceVisibility');
 const { serializeProduct } = require('./serializeProduct');
-const { toPublicMediaUrl } = require('./mediaUrl');
+const { toPublicMediaUrl, toPublicPreviewUrl } = require('./mediaUrl');
 
 // Shared building blocks for every PUBLIC (storefront-facing) product
 // response — the catalog routes (routes/productsPostgres.js) and the
@@ -63,6 +63,7 @@ async function batchMedia(productIds) {
       kind: r.kind,
       url: toPublicMediaUrl(r.url),
       sortOrder: r.sortOrder,
+      ...(r.kind === 'video' ? { previewUrl: toPublicPreviewUrl(r.url) } : {}),
       crop: r.crop ? JSON.parse(r.crop) : null,
     });
   }

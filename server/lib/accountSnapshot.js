@@ -1,7 +1,7 @@
 const db = require('../db/postgres');
 const { applyPriceVisibility } = require('./priceVisibility');
 const { serializeProduct } = require('./serializeProduct');
-const { toPublicMediaUrl } = require('./mediaUrl');
+const { toPublicMediaUrl, toPublicPreviewUrl } = require('./mediaUrl');
 const { PUBLIC_FROM, PUBLIC_WHERE } = require('./publicProducts');
 const { getMessagingSchema, NEWSLETTER_SUBJECT } = require('./messaging');
 
@@ -108,6 +108,7 @@ function trimMedia(media) {
     kind: m.kind,
     url: toPublicMediaUrl(m.url),
     sortOrder: m.sortOrder,
+    ...(m.kind === 'video' ? { previewUrl: toPublicPreviewUrl(m.url) } : {}),
     crop: m.crop ? JSON.parse(m.crop) : null,
   }));
 }

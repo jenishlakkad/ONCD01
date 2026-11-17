@@ -39,6 +39,45 @@
   // an invariant instead of something each card has to get right on its own.
   let activeMedia = null;
 
+  // Hover previews start instantly because each card loads its small
+  // preview clip (see server/lib/videoPreview.js) while it's on screen —
+  // but only on devices that can hover (mouse/trackpad) and when the
+  // visitor hasn't asked to save data. Phones load on tap instead.
+  const canPreload = (() => {
+    try {
+      const conn = navigator.connection || {};
+      if (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || '')) return false;
+      return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    } catch { return false; }
+  })();
+  // Cards start loading when they come within ~1.5 screens of view. On this
+  // site the page scrolls inside <body> (not the window), and an observer
+  // rooted at the window is clipped to what's visible — its margin would be
+  // ignored — so it's rooted at whichever element actually scrolls.
+  let observer = null;
+  const preloadObserver = canPreload && 'IntersectionObserver' in window ? {
+    observe(el) {
+      if (!observer) {
+        let root = null;
+        try {
+          const b = document.body;
+          if (b && /(auto|scroll)/.test(getComputedStyle(b).overflowY)) root = b;
+        } catch {}
+        observer = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            observer.unobserve(e.target);
+            e.target._preloadHoverVideo();
+          }
+        }, { root, rootMargin: '1200px 0px' });
+      }
+      observer.observe(el);
+    },
+    unobserve(el) { if (observer) observer.unobserve(el); },
+  } : null;
+  // The URL a card should play on hover: the small preview when there is one.
+  function hoverSrc(v) { return (v && (v.previewUrl || v.url)) || ''; }
+
   // Tapping/clicking ANYWHERE that isn't the currently active card (not just
   // tapping a different card, which _startHoverVideo() already handles, but
   // e.g. tapping blank page area) also deactivates it. Registered once, at
@@ -120,6 +159,23 @@
       this._onClick = (e) => this._handleClick(e);
       this._onPlaying = () => { if (this.hasAttribute('data-hovering')) this.setAttribute('data-vid-ready', ''); };
       this._hoverVid.addEventListener('playing', this._onPlaying);
+      // A missing/broken preview clip falls back to the full video.
+      this._onVidError = () => {
+        const v = firstVideo(this._media);
+        if (!v || !v.previewUrl || this._hoverVid.getAttribute('src') !== v.previewUrl) return;
+        this._previewFailed = true;
+        this._hoverVid.setAttribute('src', v.url);
+        if (this.hasAttribute('data-hovering')) {
+          const p = this._hoverVid.play();
+          if (p && p.catch) p.catch(() => {});
+        }
+      };
+      this._hoverVid.addEventListener('error', this._onVidError);
+      // Same fallback for a thumbnail's still frame.
+      this._posterVid.addEventListener('error', () => {
+        const a = this._posterActive;
+        if (a && a.previewUrl && this._posterVid.getAttribute('src') === a.previewUrl) this._posterVid.src = a.url;
+      });
       this._upgradeProperty('media');
     }
 
@@ -142,12 +198,14 @@
     }
 
     connectedCallback() {
+      if (preloadObserver && this.hasAttribute('hover-video')) preloadObserver.observe(this);
       this.addEventListener('pointerenter', this._onEnter);
       this.addEventListener('pointerleave', this._onLeave);
       this.addEventListener('click', this._onClick);
       this._render();
     }
     disconnectedCallback() {
+      if (preloadObserver) preloadObserver.unobserve(this);
       this.removeEventListener('pointerenter', this._onEnter);
       this.removeEventListener('pointerleave', this._onLeave);
       this.removeEventListener('click', this._onClick);
@@ -156,13 +214,28 @@
       if (this._hoverCropCleanup) this._hoverCropCleanup();
     }
     attributeChangedCallback(name, oldVal, newVal) {
-      if (name === 'media' && oldVal !== newVal) this._media = safeParseJson(newVal || '[]');
+      if (name === 'media' && oldVal !== newVal) {
+        this._media = safeParseJson(newVal || '[]');
+        this._previewFailed = false;
+        if (preloadObserver && this.isConnected && this.hasAttribute('hover-video')) preloadObserver.observe(this);
+      }
       this._render();
     }
 
     _activeIndex() {
       const n = parseInt(this.getAttribute('active-index'), 10);
       return Number.isFinite(n) ? n : 0;
+    }
+
+    // Points the hover video at its clip and lets the browser buffer it, so
+    // a later hover plays at once. Called when the card nears the screen.
+    _preloadHoverVideo() {
+      if (!this.hasAttribute('hover-video')) return;
+      const v = firstVideo(this._media);
+      if (!v) return;
+      const src = this._previewFailed ? v.url : hoverSrc(v);
+      if (this._hoverVid.getAttribute('src') !== src) this._hoverVid.setAttribute('src', src);
+      this._hoverVid.preload = 'auto';
     }
 
     _startHoverVideo() {
@@ -177,7 +250,9 @@
       // Compare the attribute, not the .src property: the property is
       // always absolute while stored URLs are usually relative, so comparing
       // the property re-assigned (and re-downloaded) the video on every hover.
-      if (this._hoverVid.getAttribute('src') !== v.url) this._hoverVid.setAttribute('src', v.url);
+      const src = this._previewFailed ? v.url : hoverSrc(v);
+      if (this._hoverVid.getAttribute('src') !== src) this._hoverVid.setAttribute('src', src);
+      this._hoverVid.preload = 'auto';
       if (this._hoverCropCleanup) this._hoverCropCleanup();
       this._hoverCropCleanup = null;
       // Framing is measured against this element (the card), never the video
@@ -191,7 +266,7 @@
       // mid-playback (on a previous hover) resumes from that same stale
       // position instead of the start, which is the exact "diamond appears
       // lower in the frame on the second hover" bug this fixes.
-      this._hoverVid.currentTime = 0;
+      if (this._hoverVid.currentTime > 0) this._hoverVid.currentTime = 0;
       const p = this._hoverVid.play();
       if (p && p.catch) p.catch(() => {});
     }
@@ -200,7 +275,7 @@
       this.removeAttribute('data-hovering');
       this.removeAttribute('data-vid-ready');
       this._hoverVid.pause();
-      this._hoverVid.currentTime = 0;
+      if (this._hoverVid.currentTime > 0) this._hoverVid.currentTime = 0;
     }
 
     _handleClick(e) {
@@ -246,8 +321,15 @@
       // its own paused first frame with a big play affordance — it must NOT
       // autoplay here; only hover-video (cards) or the zoom lightbox actually play.
       if (showVideoPoster) {
-        if (this._posterVid.getAttribute('src') !== active.url) {
-          this._posterVid.src = active.url;
+        // A small box (gallery thumbnail, card) shows its still frame from
+        // the light preview clip instead of pulling in the full video —
+        // some older originals are 10–50 MB. Large displays keep the
+        // full-quality file.
+        const small = this.clientWidth > 0 && this.clientWidth <= 360;
+        const posterSrc = small && active.previewUrl ? active.previewUrl : active.url;
+        this._posterActive = active;
+        if (this._posterVid.getAttribute('src') !== posterSrc) {
+          this._posterVid.src = posterSrc;
           // preload="metadata" doesn't guarantee a frame has been decoded
           // and painted — without forcing one, this sits blank/white
           // instead of showing the video at all until played. Seeking to a
@@ -275,7 +357,9 @@
       // The small corner "this product has a video" badge only makes sense on
       // hover-video cards, and only while the video isn't already the thing shown.
       this._badge.style.display = (vid && this.hasAttribute('hover-video') && !showVideoPoster) ? 'flex' : 'none';
-      this._hoverVid.preload = vid ? 'metadata' : 'none';
+      // 'auto' once the card has asked for its clip (preload/hover); until
+      // then only the tiny header so an off-screen grid costs nothing.
+      if (this._hoverVid.preload !== 'auto') this._hoverVid.preload = vid ? 'metadata' : 'none';
     }
   }
 

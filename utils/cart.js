@@ -188,12 +188,15 @@ export function buildMessage(items, opts) {
 export function channelLink(channel, message, contacts) {
   const text = message || '';
   const c = contacts || {};
+  // Not set up in Admin > Settings: no link rather than a made-up contact.
+  const contact = { whatsapp: c.whatsapp, email: c.inquiryEmail || c.supportEmail, line: c.lineId, skype: c.skypeId }[channel];
+  if (!contact || !String(contact).trim()) return '#';
   switch (channel) {
     case 'whatsapp':
-      return 'https://wa.me/' + (c.whatsapp || '15551234567').replace(/[^\d]/g, '') + '?text=' + encodeURIComponent(text);
+      return 'https://wa.me/' + (c.whatsapp || '').replace(/[^\d]/g, '') + '?text=' + encodeURIComponent(text);
     case 'email':
       return (
-        'mailto:' + (c.inquiryEmail || 'sales@oncd.com') + '?subject=' +
+        'mailto:' + (c.inquiryEmail || c.supportEmail || '') + '?subject=' +
         encodeURIComponent('Product Inquiry') +
         '&body=' +
         encodeURIComponent(text)
@@ -208,9 +211,9 @@ export function channelLink(channel, message, contacts) {
     // have to already have that ID as a friend and pick it manually, so
     // in practice the inquiry never reached the configured LINE account.
     case 'line':
-      return 'https://line.me/R/ti/p/' + (c.lineId || '@oncd');
+      return 'https://line.me/R/ti/p/' + (c.lineId || '');
     case 'skype':
-      return 'skype:' + (c.skypeId || 'live:.cid.oncd') + '?chat&text=' + encodeURIComponent(text);
+      return 'skype:' + (c.skypeId || '') + '?chat&text=' + encodeURIComponent(text);
     default:
       return '#';
   }

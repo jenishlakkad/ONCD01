@@ -27,7 +27,7 @@
   const PLAY_ICON = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7Z"/></svg>';
 
   class VideoFrame extends HTMLElement {
-    static get observedAttributes() { return ['src', 'crop', 'play-icon']; }
+    static get observedAttributes() { return ['src', 'crop', 'play-icon', 'fallback']; }
 
     constructor() {
       super();
@@ -39,6 +39,17 @@
       this._video = root.querySelector('video');
       this._playIcon = root.querySelector('.play');
       this._cleanupCrop = null;
+      // `fallback`: used if `src` fails to load (e.g. a thumbnail given the
+      // light preview clip falls back to the full video).
+      this._failedSrc = null;
+      this._video.addEventListener('error', () => {
+        const src = this.getAttribute('src') || '';
+        const fb = this.getAttribute('fallback') || '';
+        if (fb && fb !== src && this._video.getAttribute('src') === src) {
+          this._failedSrc = src;
+          this._render();
+        }
+      });
     }
 
     connectedCallback() { this._render(); }
@@ -46,7 +57,8 @@
     attributeChangedCallback() { this._render(); }
 
     _render() {
-      const src = this.getAttribute('src') || '';
+      const wanted = this.getAttribute('src') || '';
+      const src = wanted && wanted === this._failedSrc ? (this.getAttribute('fallback') || wanted) : wanted;
       if (this._video.getAttribute('src') !== src) {
         this._video.src = src;
         // preload="metadata" guarantees duration/dimensions but not that a

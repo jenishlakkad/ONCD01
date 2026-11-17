@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact the Sales Desk | ONCD</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#201d18">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -21,7 +26,7 @@ a:hover{color:var(--color-accent-700)}
 <div style="background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column;">
 
   <nav class="nav" style="position:sticky;top:0;background:var(--color-bg);z-index:50;padding:18px clamp(20px,6vw,56px);">
-    <div class="nav-brand" style="letter-spacing:.1em;">ONCD</div>
+    <div class="nav-brand" style="letter-spacing:.1em;"><a href="Home.dc.html" class="brand-link" aria-label="ONCD home">ONCD</a></div>
     <input type="checkbox" class="nav-check" id="navCheck" hidden>
     <label for="navCheck" class="nav-burger" aria-label="Toggle menu"><span></span><span></span><span></span></label>
     <a href="Home.dc.html">Home</a>
@@ -73,14 +78,18 @@ a:hover{color:var(--color-accent-700)}
       <p style="opacity:.75;margin-top:12px;max-width:420px;">Whether you're sourcing for trade or a single piece, our team responds within one business day.</p>
 
       <div style="margin-top:36px;display:flex;flex-direction:column;gap:20px;">
-        <div style="display:flex;gap:14px;align-items:flex-start;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-          <div><div style="font-size:13px;opacity:.6;">Email</div><div>{{ supportEmail }}</div></div>
-        </div>
-        <div style="display:flex;gap:14px;align-items:flex-start;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><path d="M5 4h4l2 5-2.5 2.5a12 12 0 0 0 5 5L16 14l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg>
-          <div><div style="font-size:13px;opacity:.6;">Phone / WhatsApp</div><div>{{ whatsappNumber }}</div></div>
-        </div>
+        <sc-if value="{{ supportEmail }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            <div><div style="font-size:13px;opacity:.6;">Email</div><a href="{{ mailHref }}" style="color:var(--color-text);">{{ supportEmail }}</a></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ whatsappNumber }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><path d="M5 4h4l2 5-2.5 2.5a12 12 0 0 0 5 5L16 14l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg>
+            <div><div style="font-size:13px;opacity:.6;">Phone / WhatsApp</div><a href="{{ telHref }}" style="color:var(--color-text);">{{ whatsappNumber }}</a></div>
+          </div>
+        </sc-if>
         <div style="display:flex;gap:14px;align-items:flex-start;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:2px;flex:none;"><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></svg>
           <div><div style="font-size:13px;opacity:.6;">Showrooms</div><div>New York · Antwerp · Surat</div></div>
@@ -90,10 +99,10 @@ a:hover{color:var(--color-accent-700)}
       <div class="hr"></div>
       <p style="font-size:13px;opacity:.6;margin-bottom:10px;">Or message us directly</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a href="{{ waHref }}" target="_blank" class="btn btn-secondary">WhatsApp</a>
-        <a href="{{ mailHref }}" class="btn btn-secondary">Email</a>
-        <a href="{{ lineHref }}" target="_blank" class="btn btn-secondary">LINE</a>
-        <a href="{{ skypeHref }}" class="btn btn-secondary">Skype</a>
+        <sc-if value="{{ waHref }}" hint-placeholder-val="{{ true }}"><a href="{{ waHref }}" target="_blank" rel="noopener" class="btn btn-secondary">WhatsApp</a></sc-if>
+        <sc-if value="{{ mailHref }}" hint-placeholder-val="{{ true }}"><a href="{{ mailHref }}" class="btn btn-secondary">Email</a></sc-if>
+        <sc-if value="{{ lineHref }}" hint-placeholder-val="{{ true }}"><a href="{{ lineHref }}" target="_blank" rel="noopener" class="btn btn-secondary">LINE</a></sc-if>
+        <sc-if value="{{ skypeHref }}" hint-placeholder-val="{{ true }}"><a href="{{ skypeHref }}" class="btn btn-secondary">Skype</a></sc-if>
       </div>
     </div>
 
@@ -134,7 +143,7 @@ a:hover{color:var(--color-accent-700)}
   <footer style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:64px clamp(20px,6vw,56px) 32px;border-top:1px solid rgba(248,244,244,.1);">
     <div class="site-footer-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:40px;padding-bottom:40px;border-bottom:1px solid rgba(248,244,244,.12);">
       <div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;">ONCD</div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;color:#f8f4f4;letter-spacing:.08em;"><a href="Home.dc.html" class="brand-link" aria-label="ONCD home">ONCD</a></div>
         <p style="font-size:13px;margin-top:14px;max-width:280px;opacity:.75;">{{ footerTagline }}</p>
       </div>
       <div>
@@ -212,7 +221,7 @@ class Component extends DCLogic {
     submitted: false, ...readTypeVisibility(),
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false,
-    settings: { supportEmail: 'sales@oncd.com', whatsapp: '+15551234567', inquiryEmail: 'sales@oncd.com', lineId: '@oncd', skypeId: 'live:.cid.oncd' },
+    settings: (() => { try { return JSON.parse(localStorage.getItem('oncd_public_settings_v1') || 'null') || {}; } catch { return {}; } })(),
     form: this.emptyForm, formError: '', submitting: false,
   };
 
@@ -273,12 +282,14 @@ class Component extends DCLogic {
       accountName: (this.state.customer && this.state.customer.full_name) || '',
       accountEmail: (this.state.customer && this.state.customer.email) || '',
       supportEmail: s.supportEmail || s.inquiryEmail, whatsappNumber: s.whatsapp,
-      footerEmail: s.supportEmail || s.inquiryEmail || 'sales@oncd.com',
-      footerPhone: s.whatsapp || '+1 (555) 123-4567',
-      waHref: 'https://wa.me/' + (s.whatsapp || '').replace(/[^\d]/g, ''),
-      mailHref: 'mailto:' + (s.inquiryEmail || s.supportEmail),
-      lineHref: 'https://line.me/R/ti/p/' + (s.lineId || ''),
-      skypeHref: 'skype:' + (s.skypeId || '') + '?chat',
+      footerEmail: s.supportEmail || s.inquiryEmail || '',
+      footerPhone: s.whatsapp || '',
+      // Only channels actually set up in Admin > Settings get a button.
+      waHref: s.whatsapp ? 'https://wa.me/' + String(s.whatsapp).replace(/[^\d]/g, '') : '',
+      telHref: s.whatsapp ? 'tel:' + String(s.whatsapp).replace(/[^\d+]/g, '') : '',
+      mailHref: (s.inquiryEmail || s.supportEmail) ? 'mailto:' + (s.inquiryEmail || s.supportEmail) : '',
+      lineHref: s.lineId ? 'https://line.me/R/ti/p/' + s.lineId : '',
+      skypeHref: s.skypeId ? 'skype:' + s.skypeId + '?chat' : '',
       form: this.state.form, fh,
       formError: this.state.formError,
       submitting: this.state.submitting,
