@@ -27,4 +27,29 @@ async function getVariants(productId) {
   return rows.slice().sort((a, b) => METAL_OPTIONS.indexOf(a.metal) - METAL_OPTIONS.indexOf(b.metal));
 }
 
-module.exports = { METAL_OPTIONS, getVariants };
+// Variations for a whole listing in ONE query (the catalog page shows color
+// swatches on every card). Only what a card needs — metal + its photo —
+// never the per-variant price, which stays on the product page where price
+// visibility is applied. Returns Map(productId -> [{metal, coverMediaId}])
+// in the same canonical metal order as getVariants.
+async function batchVariants(productIds) {
+  const unique = [...new Set(productIds.map((id) => String(id)))];
+  const map = new Map();
+  if (!unique.length) return map;
+  let rows;
+  try {
+    rows = await db.all('SELECT product_id, metal, cover_media_id FROM product_variants WHERE product_id = ANY($1::bigint[])', [unique]);
+  } catch (err) {
+    if (err && err.code === '42P01') return map; // table not created yet: no variants anywhere
+    throw err;
+  }
+  for (const r of rows) {
+    const pid = Number(r.product_id);
+    if (!map.has(pid)) map.set(pid, []);
+    map.get(pid).push({ metal: r.metal, coverMediaId: r.cover_media_id ? Number(r.cover_media_id) : null });
+  }
+  for (const list of map.values()) list.sort((a, b) => METAL_OPTIONS.indexOf(a.metal) - METAL_OPTIONS.indexOf(b.metal));
+  return map;
+}
+
+module.exports = { METAL_OPTIONS, getVariants, batchVariants };

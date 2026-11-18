@@ -83,6 +83,21 @@ a:hover{color:var(--color-accent-700)}
 }
 .active-filter-chip svg{opacity:.65;transition:opacity .15s;}
 .active-filter-chip:hover svg{opacity:1;}
+/* ── Metal colour swatches (cards + Color filter) ──────────────────────── */
+.swatch-row{display:flex;align-items:center;gap:7px;margin:7px 0 1px;min-height:20px;min-width:0;}
+.swatch{position:relative;flex:none;width:16px;height:16px;padding:0;border:none;border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(30,24,18,.16),0 1px 2px rgba(30,24,18,.14);transition:transform .15s ease,box-shadow .15s ease;}
+button.swatch{cursor:pointer;}
+button.swatch::after{content:"";position:absolute;inset:-5px;border-radius:50%;}
+button.swatch:hover{transform:scale(1.14);}
+button.swatch:focus-visible{outline:2px solid var(--color-accent-700);outline-offset:3px;}
+.swatch.is-active{box-shadow:0 0 0 2px var(--color-bg),0 0 0 3.5px var(--color-accent-700);}
+.swatch-note{margin-left:3px;font-size:11.5px;color:color-mix(in srgb, var(--color-text) 62%, transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+@media (pointer:coarse){ .swatch{width:20px;height:20px;} .swatch-row{gap:11px;min-height:24px;} }
+/* Two-up phone cards: the colour name gets its own line under the dots. */
+@media (max-width:479px){ .swatch-row{flex-wrap:wrap;row-gap:4px;} .swatch-note{flex-basis:100%;margin-left:0;} }
+.chip-dot{width:12px;height:12px;border-radius:50%;flex:none;margin-right:7px;box-shadow:inset 0 0 0 1px rgba(30,24,18,.18);}
+.filter-chip:has(input:checked) .chip-dot{box-shadow:0 0 0 1.5px rgba(255,255,255,.85);}
 .clear-all-link{background:none;border:none;color:var(--color-accent-700);font-size:12px;cursor:pointer;padding:6px 4px;text-decoration:underline;}
 </style>
 </helmet>
@@ -217,10 +232,10 @@ a:hover{color:var(--color-accent-700)}
       </div>
       <div class="hr" style="margin:0;"></div>
       <div>
-        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8 8 5 11 5 15a7 7 0 0 0 14 0c0-4-3-7-7-13Z"/></svg>Gold Color</h6>
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8 8 5 11 5 15a7 7 0 0 0 14 0c0-4-3-7-7-13Z"/></svg>Metal Color</h6>
         <div class="filter-chip-group">
           <sc-for list="{{ goldColors }}" as="gc" hint-placeholder-count="3">
-            <label class="filter-chip"><input type="radio" name="goldColor" checked="{{ gc.checked }}" onChange="{{ gc.select }}"/>{{ gc.name }}</label>
+            <label class="filter-chip"><input type="radio" name="goldColor" checked="{{ gc.checked }}" onChange="{{ gc.select }}"/><sc-if value="{{ gc.hasDot }}" hint-placeholder-val="{{ false }}"><span class="chip-dot" style="background:{{ gc.bg }};"></span></sc-if>{{ gc.name }}</label>
           </sc-for>
         </div>
       </div>
@@ -288,6 +303,22 @@ a:hover{color:var(--color-accent-700)}
               <div class="card-kicker product-card-kicker">{{ p.sku }}</div>
               <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
               <p class="card-body product-card-spec">{{ p.spec }}</p>
+              <sc-if value="{{ p.swatchInteractive }}" hint-placeholder-val="{{ false }}">
+                <div class="swatch-row" role="group" aria-label="{{ p.swatchGroupLabel }}" onPointerLeave="{{ p.swatchLeave }}">
+                  <sc-for list="{{ p.swatches }}" as="sw" hint-placeholder-count="3">
+                    <button type="button" class="swatch {{ sw.activeClass }}" style="background:{{ sw.bg }};" title="{{ sw.name }}" aria-label="{{ sw.ariaLabel }}" aria-pressed="{{ sw.pressed }}" onClick="{{ sw.pick }}" onPointerEnter="{{ sw.hoverIn }}"></button>
+                  </sc-for>
+                  <span class="swatch-note" aria-live="polite">{{ p.swatchNote }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ p.swatchStatic }}" hint-placeholder-val="{{ false }}">
+                <div class="swatch-row" role="img" aria-label="{{ p.swatchGroupLabel }}">
+                  <sc-for list="{{ p.swatches }}" as="sw" hint-placeholder-count="1">
+                    <span class="swatch" style="background:{{ sw.bg }};" title="{{ sw.name }}"></span>
+                  </sc-for>
+                  <span class="swatch-note">{{ p.swatchNote }}</span>
+                </div>
+              </sc-if>
               <div class="product-card-price-row">
                 <span class="product-card-price">{{ p.priceLabel }}</span>
               </div>
@@ -421,6 +452,37 @@ function splitEmail(email) {
 // Catalog switches from Admin > Product Types, as last seen by
 // utils/productTypes.js — read synchronously so the first paint already
 // hides disabled catalogs (the live answer is fetched on mount).
+// Metal colours a piece comes in. Pieces with metal variations list every
+// variation; the rest map their single free-text gold colour ("Yellow",
+// "White", "Silver"…) onto the same names, so the swatches and the Color
+// filter speak one vocabulary. Order is fixed so rows never reshuffle.
+const METAL_ORDER = ['Yellow Gold', 'Rose Gold', 'White Gold', 'Silver'];
+const METAL_SWATCH = {
+  'Yellow Gold': 'linear-gradient(135deg,#f8e58e 0%,#d4af37 50%,#a8841f 100%)',
+  'Rose Gold': 'linear-gradient(135deg,#f7d0c1 0%,#d99a86 50%,#ad6860 100%)',
+  'White Gold': 'linear-gradient(135deg,#ffffff 0%,#ece9e1 50%,#c3bfb3 100%)',
+  'Silver': 'linear-gradient(135deg,#fbfbfb 0%,#cfd2d6 50%,#979ba2 100%)',
+};
+function colorFromText(goldColor, metal) {
+  const c = String(goldColor || '').trim();
+  if (/rose|pink/i.test(c)) return 'Rose Gold';
+  if (/white/i.test(c)) return 'White Gold';
+  if (/yellow/i.test(c)) return 'Yellow Gold';
+  if (/silver|925|platinum/i.test(c) || (!c && /silver|925/i.test(String(metal || '')))) return 'Silver';
+  return c || null; // an unrecognised colour stays filterable, just without a swatch
+}
+function metalRank(name) { const i = METAL_ORDER.indexOf(name); return i < 0 ? 99 : i; }
+function productColors(p) {
+  const fromVariants = (p.variants || []).map((v) => v.metal).filter(Boolean);
+  const list = fromVariants.length ? fromVariants : [colorFromText(p.goldColor, p.metal)].filter(Boolean);
+  return [...new Set(list)].sort((a, b) => metalRank(a) - metalRank(b));
+}
+// "18K" / "18k" / "18 k" are one purity.
+const normPurity = (v) => String(v || '').replace(/\s+/g, '').toUpperCase();
+const isGoldPiece = (p) => /gold/i.test(p.metal || '') || /^\d+K$/.test(normPurity(p.goldPurity));
+const isSilverPiece = (p) => /silver|925/i.test(p.metal || '');
+function joinNames(list) { return list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}` : (list[0] || ''); }
+
 function readTypeVisibility() {
   try {
     const v = JSON.parse(localStorage.getItem('oncd_type_visibility_v1') || 'null');
@@ -442,6 +504,7 @@ class Component extends DCLogic {
     products: [], loading: true, errorMessage: '', ...readTypeVisibility(),
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false, savedSkus: new Set(), filtersOpen: false,
+    cardMetal: {}, hoverMetal: null,
     settings: (() => { try { return JSON.parse(localStorage.getItem('oncd_public_settings_v1') || 'null') || {}; } catch { return {}; } })(),
     inquiryOpen: false, inquiryProduct: null, inquiryNote: '',
     sortBy: 'newest', currentPage: 1,
@@ -559,20 +622,21 @@ class Component extends DCLogic {
     const subcats = subNames.map((name) => ({ name, checked: this.state.subcat === name, select: () => this.setState({ subcat: name, currentPage: 1 }) }));
     const metalNames = ['Any', '18k Gold', 'Silver'];
     const metals = metalNames.map((name) => ({ name, checked: this.state.metal === name, select: () => this.setState({ metal: name, currentPage: 1 }) }));
-    const purityOptions = this.filters ? this.filters.distinctValues(this.state.products, 'goldPurity') : [];
+    const purityOptions = [...new Set(this.state.products.map((p) => normPurity(p.goldPurity)).filter(Boolean))].sort();
     const goldPurities = ['Any', ...purityOptions].map((name) => ({ name, checked: this.state.goldPurity === name, select: () => this.setState({ goldPurity: name, currentPage: 1 }) }));
-    const colorOptions = this.filters ? this.filters.distinctValues(this.state.products, 'goldColor') : [];
-    const goldColors = ['Any', ...colorOptions].map((name) => ({ name, checked: this.state.goldColor === name, select: () => this.setState({ goldColor: name, currentPage: 1 }) }));
+    const colorOptions = [...new Set(this.state.products.flatMap(productColors))].sort((a, b) => metalRank(a) - metalRank(b) || a.localeCompare(b));
+    const goldColors = ['Any', ...colorOptions].map((name) => ({ name, bg: METAL_SWATCH[name] || '', hasDot: !!METAL_SWATCH[name], checked: this.state.goldColor === name, select: () => this.setState({ goldColor: name, currentPage: 1 }) }));
 
     const filtered = this.state.products.filter((p) => {
       if (this.state.activeCategory !== 'All' && (!p.category || p.category.name !== this.state.activeCategory)) return false;
       if (this.state.subcat !== 'All Pieces' && (!p.subcategory || p.subcategory.name !== this.state.subcat)) return false;
-      if (this.state.metal === '18k Gold' && !(p.metal === 'Gold' && p.goldPurity === '18k')) return false;
-      if (this.state.metal === 'Silver' && p.metal !== 'Silver') return false;
-      if (this.state.goldPurity !== 'Any' && p.goldPurity !== this.state.goldPurity) return false;
-      if (this.state.goldColor !== 'Any' && p.goldColor !== this.state.goldColor) return false;
+      // Stored as "18K Gold", "Gold"+"18k", "925 Silver"… — compared loosely.
+      if (this.state.metal === '18k Gold' && !(isGoldPiece(p) && normPurity(p.goldPurity) === '18K')) return false;
+      if (this.state.metal === 'Silver' && !isSilverPiece(p)) return false;
+      if (this.state.goldPurity !== 'Any' && normPurity(p.goldPurity) !== this.state.goldPurity) return false;
+      if (this.state.goldColor !== 'Any' && !productColors(p).includes(this.state.goldColor)) return false;
       if (this.filters && !this.filters.searchMatch(p, this.state.search, [
-        (x) => x.sku, (x) => x.stoneName, (x) => x.metal, (x) => x.goldColor,
+        (x) => x.sku, (x) => x.stoneName, (x) => x.metal, (x) => x.goldColor, (x) => productColors(x).join(' '),
         (x) => x.category && x.category.name, (x) => x.subcategory && x.subcategory.name,
       ])) return false;
       return true;
@@ -609,12 +673,51 @@ class Component extends DCLogic {
       raw: p,
     })).map((p) => {
       const cartItem = this.state.cartItems.find((i) => i.sku === p.sku);
+      // Colour swatches. With metal variations each swatch is a button:
+      // hovering (mouse) previews that metal's photo on the card, clicking or
+      // tapping keeps it, and the product page opens on that metal.
+      const colors = productColors(p.raw);
+      const variantByMetal = new Map((p.raw.variants || []).map((v) => [v.metal, v]));
+      const interactive = variantByMetal.size > 1;
+      const hover = this.state.hoverMetal;
+      const chosen = interactive ? ((hover && hover.sku === p.sku && hover.metal) || this.state.cardMetal[p.sku] || null) : null;
+      const chosenVariant = chosen ? variantByMetal.get(chosen) : null;
+      let media = p.media;
+      if (chosenVariant && chosenVariant.coverMediaId) {
+        const list = p.raw.media || [];
+        const cover = list.find((m) => m.id === chosenVariant.coverMediaId);
+        if (cover) media = JSON.stringify([cover, ...list.filter((m) => m !== cover)]);
+      }
+      const picked = this.state.cardMetal[p.sku];
+      const href = interactive && picked && variantByMetal.has(picked) ? `${p.href}&metal=${encodeURIComponent(picked)}` : p.href;
+      const shown = colors.filter((c) => METAL_SWATCH[c]);
+      const swatches = shown.map((name) => ({
+        name, bg: METAL_SWATCH[name],
+        activeClass: chosen === name ? 'is-active' : '',
+        pressed: chosen === name ? 'true' : 'false',
+        ariaLabel: `Show in ${name}`,
+        pick: (e) => {
+          e.preventDefault(); e.stopPropagation();
+          const next = { ...this.state.cardMetal };
+          if (next[p.sku] === name) delete next[p.sku]; else next[p.sku] = name;
+          this.setState({ cardMetal: next });
+        },
+        hoverIn: (e) => { if (e.pointerType === 'mouse') this.setState({ hoverMetal: { sku: p.sku, metal: name } }); },
+      }));
       return {
         ...p,
+        media, href,
+        hasSwatches: shown.length > 0,
+        swatchInteractive: interactive && shown.length > 0,
+        swatchStatic: !interactive && shown.length > 0,
+        swatches,
+        swatchGroupLabel: `Available in ${joinNames(colors)}`,
+        swatchNote: chosen || (colors.length > 1 ? `${colors.length} metal colors` : colors[0] || ''),
+        swatchLeave: (e) => { if (e.pointerType === 'mouse' && this.state.hoverMetal) this.setState({ hoverMetal: null }); },
         addToCart: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleCart(p); },
         toggleSave: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleSave(p); },
         openInquire: (e) => { e.preventDefault(); e.stopPropagation(); this.openInquiry(p.raw); },
-        goToProduct: () => { window.location.href = p.href; },
+        goToProduct: () => { window.location.href = href; },
         savedClass: this.state.savedSkus.has(p.sku) ? 'saved' : '',
         heartGlyph: this.state.savedSkus.has(p.sku) ? '♥' : '♡',
         cartBtnClass: cartItem ? 'btn-added' : 'btn-secondary',

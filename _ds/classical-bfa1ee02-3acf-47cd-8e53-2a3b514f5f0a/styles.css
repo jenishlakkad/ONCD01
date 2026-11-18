@@ -555,9 +555,21 @@ img,svg,video,canvas{max-width:100%;height:auto;}
   .nav-check:checked ~ a{display:block !important;}
   .nav-check:checked ~ div:not(.nav-brand){
     display:flex !important;flex-wrap:wrap;
-    padding-top:14px;margin-top:2px;
+    /* The desktop auth row carries an inline margin-left:28px (spacing it
+       off the last link); in the stacked phone menu that pushed the whole
+       row — and its divider — 28px right of every link above it. */
+    margin-left:0 !important;
+    padding-top:16px;padding-bottom:6px;margin-top:2px;
     border-top:1px solid var(--color-divider);
+    gap:10px !important;
   }
+  /* Login / Register: two equal buttons spanning the menu width. */
+  .nav-check:checked ~ div:not(.nav-brand) > .btn{flex:1 1 0;justify-content:center;min-height:46px;}
+  /* Signed in, the avatar sits at the LEFT of the opened menu, so its
+     dropdown (anchored right:0 for the desktop header) must open rightwards
+     or it runs off the left edge of the screen. */
+  .nav > div:not(.nav-brand) div[style*="position:absolute"],
+  .nav > div:not(.nav-brand) div[style*="position: absolute"]{left:0 !important;right:auto !important;max-width:calc(100vw - 32px);}
 }
 @media (min-width:1024px) and (max-width:1439px){
   /* The full desktop nav (brand + 6 links + cart + Login + Register)

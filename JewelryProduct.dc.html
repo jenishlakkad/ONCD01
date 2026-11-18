@@ -455,7 +455,12 @@ class Component extends DCLogic {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load.');
       const variants = json.data.variants || [];
-      this.setState({ loading: false, product: json.data, selectedVariantMetal: variants.length ? variants[0].metal : null });
+      // ?metal= (set when a colour swatch was picked on the Jewelry listing)
+      // opens the page on that variation; anything unknown falls back to the first.
+      const wanted = new URLSearchParams(window.location.search).get('metal');
+      const start = variants.find((v) => v.metal === wanted) || variants[0];
+      const coverIdx = start ? this.variantCoverIndex(json.data, start.metal) : -1;
+      this.setState({ loading: false, product: json.data, selectedVariantMetal: start ? start.metal : null, activeIndex: coverIdx >= 0 ? coverIdx : 0 });
       import('./utils/recentlyViewed.js').then((m) => m.recordView(json.data.sku)).catch(() => {});
     } catch {
       this.setState({ loading: false, loadError: true });
@@ -465,8 +470,17 @@ class Component extends DCLogic {
   // Pure client-side — no network call. All of this product's variations
   // (price + which photo) already arrived with the initial fetch, since
   // they're sub-rows of this ONE product now, not separate linked products.
+  // The selected variant's own photo takes over the main viewer — a jump of
+  // the same activeIndex the thumbnails use. A variant without its own photo
+  // (coverMediaId null, or that photo since deleted) leaves the viewer as is.
+  variantCoverIndex(product, metal) {
+    const v = ((product && product.variants) || []).find((x) => x.metal === metal);
+    if (!v || !v.coverMediaId) return -1;
+    return ((product && product.media) || []).findIndex((m) => m.id === v.coverMediaId);
+  }
   selectVariant(metal) {
-    this.setState({ selectedVariantMetal: metal });
+    const idx = this.variantCoverIndex(this.state.product, metal);
+    this.setState(idx >= 0 ? { selectedVariantMetal: metal, activeIndex: idx } : { selectedVariantMetal: metal });
   }
   componentWillUnmount() {
     document.removeEventListener('media-change', this._onMediaChange);
@@ -559,16 +573,26 @@ class Component extends DCLogic {
       select: () => this.selectVariant(v.metal),
     }));
 
-    let activeIndex = Math.max(0, Math.min(this.state.activeIndex, Math.max(media.length - 1, 0)));
-    // The selected variant's own photo takes over the main viewer — jumps
-    // the SAME activeIndex thumbnails already use, nothing hidden, nothing
-    // re-fetched. Falls back to the normal cover when a variant has no
-    // photo of its own assigned (coverMediaId null) or that photo was since
-    // removed (server already nulls a deleted media's coverMediaId).
-    if (activeVariant && activeVariant.coverMediaId) {
-      const idx = media.findIndex((m) => m.id === activeVariant.coverMediaId);
-      if (idx >= 0) activeIndex = idx;
-    }
+    // Which photo is showing is ONLY state.activeIndex. Choosing a metal
+    // jumps it to that metal's photo once (selectVariant / first load); it
+    // must not be re-derived here on every render — that pinned the viewer
+    // to the variant photo, so thumbnail clicks did nothing and the arrows
+    // left the highlighted thumbnail out of step with the main image.
+    const activeIndex = Math.max(0, Math.min(this.state.activeIndex, Math.max(media.length - 1, 0)));
+    // Subtitle + Metal/Purity/Colour rows follow the chosen metal, so picking
+    // Silver no longer leaves "18K Yellow Gold" on screen. Without
+    // variations they show the piece's own saved values, as before.
+    const metalLine = (() => {
+      const vm = activeVariant && activeVariant.metal;
+      if (!vm) return { subtitle: p.goldPurity ? `${p.goldPurity} ${p.goldColor || ''} Gold`.replace(/\s+/g, ' ').trim() : '', metal: p.metal || '—', purity: p.goldPurity || '—', color: p.goldColor || '—' };
+      if (vm === 'Silver') return { subtitle: 'Silver', metal: /silver|925/i.test(p.metal || '') ? p.metal : 'Silver', purity: '—', color: '—' };
+      return {
+        subtitle: [p.goldPurity, vm].filter(Boolean).join(' '),
+        metal: /gold/i.test(p.metal || '') ? p.metal : 'Gold',
+        purity: p.goldPurity || '—',
+        color: vm.replace(/\s*Gold$/, ''),
+      };
+    })();
     const thumbs = media.map((m, i) => ({
       // video thumbnails use the light preview clip (full video as fallback)
       url: (m.kind === 'video' && m.previewUrl) || m.url, fullUrl: m.url,
@@ -600,9 +624,9 @@ class Component extends DCLogic {
       ...base,
       sku: p.sku,
       title,
-      subtitle: [p.goldPurity && `${p.goldPurity} ${p.goldColor || ''} Gold`.trim(), p.stoneName].filter(Boolean).join(' · '),
+      subtitle: [metalLine.subtitle, p.stoneName].filter(Boolean).join(' · '),
       hasSubcategory: !!(p.subcategory && p.subcategory.name), subcategoryName: p.subcategory ? p.subcategory.name : '',
-      metal: p.metal || '—', goldPurity: p.goldPurity || '—', goldColor: p.goldColor || '—',
+      metal: metalLine.metal, goldPurity: metalLine.purity, goldColor: metalLine.color,
       goldWeight: p.goldWeightGrams ? `${p.goldWeightGrams} g` : '—',
       jewelryCertLabel: [p.certificateAuthority, p.certificateNumber].filter(Boolean).join(' ') || '—',
       certLinkJewelry: (this.certificateLink && this.certificateLink(p.certificateWebsite, p.certificateNumber)) || '#',

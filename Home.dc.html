@@ -95,6 +95,25 @@ a:hover{color:var(--color-accent-700)}
   .hero-copy-wrap{position:relative;inset:auto;flex:1;padding-top:44px;padding-bottom:72px;}
 }
 @media (max-width:639px){.hero-section{min-height:clamp(420px,62vh,520px) !important;}}
+/* Slide counter ("01 / 03") — phones only; desktop has room for the dots alone. */
+.hero-count{display:none;}
+/* Phones/small tablets: make it obvious the hero is a carousel. One control
+   row along the bottom, inside the same gutter as the copy: counter +
+   progress dots on the left, prev/next on the right. Glass buttons and a
+   firmer track so they read on bright photos too. Swipe still works. */
+@media (max-width:767px){
+  .hero-copy-wrap{padding-bottom:84px;}
+  .hero-arrow{display:flex;width:40px;height:40px;bottom:18px;background:rgba(20,18,16,.34);border-color:rgba(248,244,244,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+  .hero-arrow:active{background:rgba(248,244,244,.3);}
+  .hero-arrow.next{right:clamp(20px,6vw,56px);}
+  .hero-arrow.prev{right:calc(clamp(20px,6vw,56px) + 50px);}
+  .hero-dots{left:clamp(20px,6vw,56px);right:auto;bottom:26px;justify-content:flex-start;align-items:center;gap:8px;}
+  .hero-count{display:inline-block;margin-right:6px;color:rgba(248,244,244,.78);font-size:12px;letter-spacing:.12em;font-variant-numeric:tabular-nums;text-shadow:0 1px 3px rgba(0,0,0,.45);}
+  .hero-count b{color:#fff;font-weight:600;}
+  .hero-dot{width:12px;}
+  .hero-dot.is-active{width:34px;}
+  .hero-dot-track{height:3px;background:rgba(248,244,244,.55);box-shadow:0 1px 3px rgba(0,0,0,.25);}
+}
 @media (prefers-reduced-motion:reduce){
   .hero-slide,.hero-slide.is-active,.hero-copy,.hero-slide.is-active .hero-copy{transition:none !important;}
   .hero-scroll-cue{animation:none;}
@@ -469,7 +488,7 @@ a:hover{color:var(--color-accent-700)}
     </div>
   </nav>
 
-  <section class="hero-section" style="position:relative;height:88vh;min-height:560px;overflow:hidden;" aria-roledescription="carousel" aria-label="Highlights" onMouseEnter="{{ heroPause }}" onMouseLeave="{{ heroResume }}" onFocus="{{ heroFocus }}" onBlur="{{ heroBlur }}" onPointerDown="{{ heroPointerDown }}" onPointerUp="{{ heroPointerUp }}">
+  <section class="hero-section" style="position:relative;height:88vh;min-height:560px;overflow:hidden;" aria-roledescription="carousel" aria-label="Highlights" onPointerEnter="{{ heroHoverIn }}" onPointerLeave="{{ heroHoverOut }}" onFocus="{{ heroFocus }}" onBlur="{{ heroBlur }}" onPointerDown="{{ heroPointerDown }}" onPointerUp="{{ heroPointerUp }}">
     <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
       <div class="hero-slide {{ s.activeClass }}" aria-roledescription="slide" aria-label="{{ s.positionLabel }}">
         <sc-if value="{{ s.hasImage }}" hint-placeholder-val="{{ false }}">
@@ -511,6 +530,7 @@ a:hover{color:var(--color-accent-700)}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <div class="hero-dots {{ heroDotsClass }}">
+        <span class="hero-count" aria-hidden="true"><b>{{ heroCountCur }}</b> / {{ heroCountTotal }}</span>
         <sc-for list="{{ heroSlides }}" as="s" hint-placeholder-count="3">
           <button onClick="{{ s.goTo }}" class="hero-dot {{ s.activeClass }}" aria-label="{{ s.dotLabel }}" aria-current="{{ s.ariaCurrent }}">
             <span class="hero-dot-track"><span key="{{ heroCycle }}" class="hero-dot-fill" style="animation-duration:{{ heroIntervalSec }}s;animation-play-state:{{ heroPlayState }};"></span></span>
@@ -1538,12 +1558,16 @@ class Component extends DCLogic {
       heroIntervalSec: Math.max(3, Number(this.heroSettings().intervalSeconds) || 6),
       heroPlayState: this.state.heroPaused ? 'paused' : 'running',
       heroDotsClass: this.heroAutoplay() ? '' : 'is-static',
+      heroCountCur: String(heroIndex + 1).padStart(2, '0'), heroCountTotal: String(slides.length).padStart(2, '0'),
       heroSecondaryShow: heroSecondary.show, heroSecondaryLabel: heroSecondary.label || '', heroSecondaryHref: heroSecondary.href || '',
       heroPrev: () => this.heroGo(heroIndex - 1),
       heroNext: () => this.heroGo(heroIndex + 1),
-      heroPause: () => this.heroPause(),
-      heroResume: () => this.heroResume(),
-      heroFocus: () => this.heroPause(),
+      // Hover-pause is for a real mouse only: a tap on a phone fires
+      // pointerenter/focus but never the matching leave, which used to
+      // freeze autoplay for good after the first tap on an arrow or dot.
+      heroHoverIn: (e) => { if (e.pointerType === 'mouse') this.heroPause(); },
+      heroHoverOut: (e) => { if (e.pointerType === 'mouse') this.heroResume(); },
+      heroFocus: (e) => { let kb = false; try { kb = e.target.matches(':focus-visible'); } catch {} if (kb) this.heroPause(); },
       heroBlur: (e) => { if (!e.currentTarget.contains(e.relatedTarget)) this.heroResume(); },
       heroPointerDown: (e) => { this._swipeX = e.clientX; },
       heroPointerUp: (e) => {

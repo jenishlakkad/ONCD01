@@ -3,7 +3,7 @@ const db = require('../db/postgres');
 const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const { applyPriceVisibility } = require('../lib/priceVisibility');
 const { serializeProduct } = require('../lib/serializeProduct');
-const { getVariants } = require('../lib/productVariants');
+const { getVariants, batchVariants } = require('../lib/productVariants');
 const { loadPriceContext, buildEnrichmentLookup } = require('../lib/publicProducts');
 
 // Public catalog routes. The batching helpers (one query each for
@@ -27,12 +27,17 @@ router.get('/', asyncRoute(async (req, res) => {
   sql += ' ORDER BY p.created_at DESC, p.id DESC';
   const rows = await db.all(sql, params);
 
-  const [{ mode, viewer, pricesEnabled }, lookupFor] = await Promise.all([loadPriceContext(req), buildEnrichmentLookup(rows)]);
+  // Only jewelry has metal variations; other listings skip the query.
+  const jewelryIds = rows.filter((r) => r.type === 'jewelry').map((r) => r.id);
+  const [{ mode, viewer, pricesEnabled }, lookupFor, variantsMap] = await Promise.all([
+    loadPriceContext(req), buildEnrichmentLookup(rows), batchVariants(jewelryIds),
+  ]);
 
   const data = rows.map((row) => {
     const masked = applyPriceVisibility(row, mode, viewer, pricesEnabled);
     const { category: cat, subcategory: sub, media } = lookupFor(row);
-    return serializeProduct({ ...masked, id: Number(row.id) }, { category: cat, subcategory: sub, media });
+    const variants = variantsMap.get(Number(row.id)) || [];
+    return serializeProduct({ ...masked, id: Number(row.id) }, { category: cat, subcategory: sub, media, variants });
   });
   res.json({ data });
 }));
