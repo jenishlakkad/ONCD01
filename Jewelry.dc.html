@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
 <script src="./utils/diamondLoader.js"></script>
+<script src="./utils/offerView.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -204,6 +205,15 @@ button.swatch:focus-visible{outline:2px solid var(--color-accent-700);outline-of
         <button onClick="{{ resetFilters }}" class="btn btn-ghost" style="padding:4px 6px;font-size:12px;">Reset</button>
       </div>
       <div class="filters-aside-body">
+      <sc-if value="{{ showSaleFilter }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Offers</h6>
+        <div class="filter-chip-group">
+          <label class="filter-chip"><input type="checkbox" checked="{{ onSaleOnly }}" onChange="{{ toggleOnSale }}"/>{{ saleFilterLabel }}</label>
+        </div>
+      </div>
+      <div class="hr" style="margin:0;"></div>
+      </sc-if>
       <div>
         <h6 class="filter-group-head"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="15" r="6"/><path d="M9 9 12 3l3 6"/></svg>Piece Type</h6>
         <div class="filter-chip-group">
@@ -246,6 +256,21 @@ button.swatch:focus-visible{outline:2px solid var(--color-accent-700);outline-of
     </aside>
 
     <div>
+      <sc-for list="{{ saleBanners }}" as="sb" hint-placeholder-count="0">
+        <div class="sale-banner">
+          <div class="sale-banner-main">
+            <span class="sale-banner-badge">{{ sb.badge }}</span>
+            <div style="min-width:0;">
+              <div class="sale-banner-title">{{ sb.title }}</div>
+              <sc-if value="{{ sb.hasText }}" hint-placeholder-val="{{ false }}"><div class="sale-banner-text">{{ sb.text }}</div></sc-if>
+            </div>
+          </div>
+          <div class="sale-banner-side">
+            <sc-if value="{{ sb.hasEnds }}" hint-placeholder-val="{{ false }}"><span class="sale-banner-ends">{{ sb.ends }}</span></sc-if>
+            <button type="button" class="btn {{ sb.btnClass }}" onClick="{{ sb.toggle }}">{{ sb.btnLabel }}</button>
+          </div>
+        </div>
+      </sc-for>
       <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
         <div class="active-filters-row">
           <sc-for list="{{ activeFilterChips }}" as="af" hint-placeholder-count="2">
@@ -261,6 +286,7 @@ button.swatch:focus-visible{outline:2px solid var(--color-accent-700);outline-of
             <span>Sort by</span>
             <select class="input sort-select" value="{{ sortBy }}" onChange="{{ handleSort }}">
               <option value="newest">Newest First</option>
+              <sc-if value="{{ showDiscountSort }}" hint-placeholder-val="{{ false }}"><option value="discount">Biggest Discount</option></sc-if>
               <sc-if value="{{ showPriceSort }}" hint-placeholder-val="{{ true }}">
                 <option value="price-asc">Price: Low to High</option>
                 <option value="price-desc">Price: High to Low</option>
@@ -298,6 +324,7 @@ button.swatch:focus-visible{outline:2px solid var(--color-accent-700);outline-of
                 <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
               </a>
               <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+              <sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if>
             </div>
             <div class="product-card-body">
               <div class="card-kicker product-card-kicker">{{ p.sku }}</div>
@@ -320,8 +347,9 @@ button.swatch:focus-visible{outline:2px solid var(--color-accent-700);outline-of
                 </div>
               </sc-if>
               <div class="product-card-price-row">
-                <span class="product-card-price">{{ p.priceLabel }}</span>
+                <span class="price-group"><span class="product-card-price {{ p.priceClass }}">{{ p.priceLabel }}</span><sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><span class="price-was">{{ p.wasLabel }}</span></sc-if></span>
               </div>
+              <sc-if value="{{ p.hasOfferNote }}" hint-placeholder-val="{{ false }}"><div class="offer-note {{ p.offerNoteClass }}">{{ p.offerNote }}</div></sc-if>
               <div class="product-card-btns">
                 <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
                 <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
@@ -497,11 +525,23 @@ function footerTaglineFor(d, j, g) {
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
   return `${list.charAt(0).toUpperCase()}${list.slice(1)} for trade and private collectors.`;
 }
+// A card's price fields, offer-aware (utils/offerView.js): the price to
+// show (sale price when on offer), the struck-through original, the ribbon
+// badge, the note under the price, and the label the cart/inquiry stores.
+function offerFields(p) {
+  const o = window.oncdOffer(p);
+  return {
+    priceLabel: o.nowLabel, cartLabel: o.cartLabel, wasLabel: o.wasLabel, onSale: o.onSale, priceClass: o.priceClass,
+    hasOffer: o.hasOffer, offerBadge: o.badge, hasOfferNote: !!o.note, offerNote: o.note, offerNoteClass: o.endingSoon ? 'soon' : '',
+  };
+}
+
 class Component extends DCLogic {
   state = {
     cartItems: [], subcat: 'All Pieces', metal: 'Any',
     activeCategory: 'All', goldPurity: 'Any', goldColor: 'Any', search: '', categories: [], subcategories: [],
     products: [], loading: true, errorMessage: '', ...readTypeVisibility(),
+    onSaleOnly: new URLSearchParams(window.location.search).get('sale') === '1', banners: [],
     customer: (() => { try { return localStorage.getItem('aurum_session_hint') === '1' ? {} : null; } catch { return null; } })(),
     accountMenuOpen: false, savedSkus: new Set(), filtersOpen: false,
     cardMetal: {}, hoverMetal: null,
@@ -553,7 +593,7 @@ class Component extends DCLogic {
       this.cart.removeFromCart(p.sku);
       this.refreshCart();
     } else {
-      this.cart.addToCart({ sku: p.sku, name: p.title, priceLabel: p.priceLabel, qty: 1, product: p.raw });
+      this.cart.addToCart({ sku: p.sku, name: p.title, priceLabel: p.cartLabel || p.priceLabel, qty: 1, product: p.raw });
       this.refreshCart();
       this.cart.openCartDrawer();
     }
@@ -563,7 +603,7 @@ class Component extends DCLogic {
     import('./utils/savedItems.js').then(async (m) => {
       const saved = new Set(this.state.savedSkus);
       if (saved.has(p.sku)) { await m.unsaveItem(p.sku); saved.delete(p.sku); }
-      else { await m.saveItem({ sku: p.sku, name: p.title, priceLabel: p.priceLabel, productType: 'jewelry' }); saved.add(p.sku); }
+      else { await m.saveItem({ sku: p.sku, name: p.title, priceLabel: p.cartLabel || p.priceLabel, productType: 'jewelry' }); saved.add(p.sku); }
       this.setState({ savedSkus: saved });
     });
   }
@@ -598,10 +638,29 @@ class Component extends DCLogic {
       const res = await fetch('/api/products?type=jewelry', { credentials: 'same-origin' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load jewelry.');
-      this.setState({ products: json.data, loading: false });
+      this.setState({ products: json.data, banners: json.banners || [], loading: false });
     } catch (err) {
       this.setState({ loading: false, errorMessage: err.message });
     }
+  }
+
+  // Offers: the On-sale filter, the discount sort and the sale banner(s)
+  // the catalog API sends for running sales flagged "show banner".
+  saleVals() {
+    const onSaleCount = this.state.products.filter((p) => p.offer).length;
+    const on = this.state.onSaleOnly;
+    const toggle = () => this.setState({ onSaleOnly: !on, currentPage: 1 });
+    const saleBanners = (this.state.banners || []).slice(0, 2).map((b) => {
+      const ends = window.oncdOfferEndsText ? window.oncdOfferEndsText(b.endsAt) : '';
+      return {
+        badge: b.badge, title: b.label, text: b.text, hasText: !!b.text, ends, hasEnds: !!ends,
+        btnLabel: on ? 'Show everything' : 'Shop the sale', btnClass: on ? 'on' : '', toggle,
+      };
+    });
+    return {
+      saleBanners, showSaleFilter: onSaleCount > 0 || on, onSaleOnly: on,
+      saleFilterLabel: `On sale (${onSaleCount})`, toggleOnSale: toggle, showDiscountSort: onSaleCount > 0,
+    };
   }
 
   renderVals() {
@@ -628,6 +687,7 @@ class Component extends DCLogic {
     const goldColors = ['Any', ...colorOptions].map((name) => ({ name, bg: METAL_SWATCH[name] || '', hasDot: !!METAL_SWATCH[name], checked: this.state.goldColor === name, select: () => this.setState({ goldColor: name, currentPage: 1 }) }));
 
     const filtered = this.state.products.filter((p) => {
+      if (this.state.onSaleOnly && !p.offer) return false;
       if (this.state.activeCategory !== 'All' && (!p.category || p.category.name !== this.state.activeCategory)) return false;
       if (this.state.subcat !== 'All Pieces' && (!p.subcategory || p.subcategory.name !== this.state.subcat)) return false;
       // Stored as "18K Gold", "Gold"+"18k", "925 Silver"… — compared loosely.
@@ -649,11 +709,13 @@ class Component extends DCLogic {
     // weight) — populated on most but not all pieces, so items without
     // one just collapse to 0 and sort to the low end, which is fine.
     const sorted = filtered.slice();
+    if (this.state.sortBy === 'discount') sorted.sort((a, b) => window.oncdOffer(b).discountRank - window.oncdOffer(a).discountRank);
     if (this.state.sortBy === 'price-asc' || this.state.sortBy === 'price-desc') {
       const dir = this.state.sortBy === 'price-asc' ? 1 : -1;
       sorted.sort((a, b) => {
-        const av = a.priceVisible ? Number(a.totalPrice) : Infinity;
-        const bv = b.priceVisible ? Number(b.totalPrice) : Infinity;
+        // The price the customer actually pays (sale price when on offer).
+        const av = window.oncdOffer(a).sortPrice;
+        const bv = window.oncdOffer(b).sortPrice;
         if (av === Infinity || bv === Infinity) return av - bv;
         return (av - bv) * dir;
       });
@@ -669,7 +731,7 @@ class Component extends DCLogic {
       media: JSON.stringify(p.media || []),
       placeholder: `${p.metal || 'Jewelry'} product shot`,
       href: `JewelryProduct.dc.html?sku=${encodeURIComponent(p.sku)}`,
-      priceLabel: p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : p.priceLabel,
+      ...offerFields(p),
       raw: p,
     })).map((p) => {
       const cartItem = this.state.cartItems.find((i) => i.sku === p.sku);
@@ -726,6 +788,7 @@ class Component extends DCLogic {
     });
 
     const activeFilterChips = [];
+    if (this.state.onSaleOnly) activeFilterChips.push({ label: 'On sale', remove: () => this.setState({ onSaleOnly: false, currentPage: 1 }) });
     if (this.state.subcat !== 'All Pieces') activeFilterChips.push({ label: `Type: ${this.state.subcat}`, remove: () => this.setState({ subcat: 'All Pieces', currentPage: 1 }) });
     if (this.state.metal !== 'Any') activeFilterChips.push({ label: `Metal: ${this.state.metal}`, remove: () => this.setState({ metal: 'Any', currentPage: 1 }) });
     if (this.state.goldPurity !== 'Any') activeFilterChips.push({ label: `Purity: ${this.state.goldPurity}`, remove: () => this.setState({ goldPurity: 'Any', currentPage: 1 }) });
@@ -742,6 +805,7 @@ class Component extends DCLogic {
       search: this.state.search,
       handleSearch: (e) => this.setState({ search: e.target.value, currentPage: 1 }),
       sortBy: this.state.sortBy, showPriceSort,
+      ...this.saleVals(),
       handleSort: (e) => this.setState({ sortBy: e.target.value, currentPage: 1 }),
       jewelry: jewelryData, pageJewelry, resultCount: jewelryData.length, showResultsLabel: `Show ${jewelryData.length} ${jewelryData.length === 1 ? 'Result' : 'Results'}`,
       isEmpty: !this.state.loading && !this.state.errorMessage && jewelryData.length === 0,
@@ -770,12 +834,12 @@ class Component extends DCLogic {
       closeAccountMenu: () => this.setState({ accountMenuOpen: false }),
       accountName: (this.state.customer && this.state.customer.full_name) || '',
       accountEmail: (this.state.customer && this.state.customer.email) || '',
-      resetFilters: () => this.setState({ activeCategory: 'All', subcat: 'All Pieces', metal: 'Any', goldPurity: 'Any', goldColor: 'Any', search: '', currentPage: 1 }),
+      resetFilters: () => this.setState({ onSaleOnly: false, activeCategory: 'All', subcat: 'All Pieces', metal: 'Any', goldPurity: 'Any', goldColor: 'Any', search: '', currentPage: 1 }),
       openFilters: () => this.setState({ filtersOpen: true }),
       closeFilters: () => this.setState({ filtersOpen: false }),
       filtersOpenClass: this.state.filtersOpen ? 'open' : '',
-      activeFilterCount: [this.state.subcat !== 'All Pieces', this.state.metal !== 'Any', this.state.goldPurity !== 'Any', this.state.goldColor !== 'Any'].filter(Boolean).length,
-      hasActiveFilters: [this.state.subcat !== 'All Pieces', this.state.metal !== 'Any', this.state.goldPurity !== 'Any', this.state.goldColor !== 'Any'].some(Boolean),
+      activeFilterCount: [this.state.onSaleOnly, this.state.subcat !== 'All Pieces', this.state.metal !== 'Any', this.state.goldPurity !== 'Any', this.state.goldColor !== 'Any'].filter(Boolean).length,
+      hasActiveFilters: [this.state.onSaleOnly, this.state.subcat !== 'All Pieces', this.state.metal !== 'Any', this.state.goldPurity !== 'Any', this.state.goldColor !== 'Any'].some(Boolean),
       cartItems: items,
       hasCartItems: items.length > 0,
       cartCount: items.reduce((n, i) => n + i.qty, 0),

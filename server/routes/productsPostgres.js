@@ -4,7 +4,8 @@ const { asyncRoute, ApiError } = require('../middleware/errorHandler');
 const { applyPriceVisibility } = require('../lib/priceVisibility');
 const { serializeProduct } = require('../lib/serializeProduct');
 const { getVariants, batchVariants } = require('../lib/productVariants');
-const { loadPriceContext, buildEnrichmentLookup } = require('../lib/publicProducts');
+const { loadPriceContext, buildEnrichmentLookup, publicOfferFor } = require('../lib/publicProducts');
+const { resolveOffer, variantSalePrice, bannersFor } = require('../lib/offers');
 
 // Public catalog routes. The batching helpers (one query each for
 // categories/subcategories/media across a whole result set instead of one
@@ -29,17 +30,23 @@ router.get('/', asyncRoute(async (req, res) => {
 
   // Only jewelry has metal variations; other listings skip the query.
   const jewelryIds = rows.filter((r) => r.type === 'jewelry').map((r) => r.id);
-  const [{ mode, viewer, pricesEnabled }, lookupFor, variantsMap] = await Promise.all([
+  const [ctx, lookupFor, variantsMap] = await Promise.all([
     loadPriceContext(req), buildEnrichmentLookup(rows), batchVariants(jewelryIds),
   ]);
+  const { mode, viewer, pricesEnabled } = ctx;
 
   const data = rows.map((row) => {
     const masked = applyPriceVisibility(row, mode, viewer, pricesEnabled);
     const { category: cat, subcategory: sub, media } = lookupFor(row);
     const variants = variantsMap.get(Number(row.id)) || [];
-    return serializeProduct({ ...masked, id: Number(row.id) }, { category: cat, subcategory: sub, media, variants });
+    const offer = publicOfferFor(row, masked, ctx);
+    return serializeProduct({ ...masked, id: Number(row.id) }, { category: cat, subcategory: sub, media, variants, offer });
   });
-  res.json({ data });
+  // Live sales flagged to show a banner, when they discount something here.
+  const countsBySale = new Map();
+  for (const p of data) if (p.offer && p.offer.saleId) countsBySale.set(p.offer.saleId, (countsBySale.get(p.offer.saleId) || 0) + 1);
+  const banners = bannersFor(ctx.promotions, countsBySale, ctx.now);
+  res.json({ data, banners });
 }));
 
 router.get('/:sku', asyncRoute(async (req, res) => {
@@ -50,19 +57,24 @@ router.get('/:sku', asyncRoute(async (req, res) => {
   );
   if (!row) throw new ApiError(404, 'Product not found.');
 
-  const [{ mode, viewer, pricesEnabled }, rawVariants] = await Promise.all([loadPriceContext(req), getVariants(row.id)]);
+  const [ctx, rawVariants] = await Promise.all([loadPriceContext(req), getVariants(row.id)]);
+  const { mode, viewer, pricesEnabled } = ctx;
   const mainLookup = await buildEnrichmentLookup([row]);
   const masked = applyPriceVisibility(row, mode, viewer, pricesEnabled);
   const { category, subcategory, media } = mainLookup(row);
+  const offer = publicOfferFor(row, masked, ctx);
+  const rawOffer = offer ? resolveOffer(row, ctx.promotions, ctx.now) : null;
   // Same visibility decision as the base product's own totalPrice (price
   // visibility is a per-PRODUCT setting, not per-variant) — a variant's
-  // price is only ever included when masked.priceVisible is true.
+  // price (and its sale price under the product's offer) is only ever
+  // included when masked.priceVisible is true.
   const variants = rawVariants.map((v) => ({
     id: Number(v.id), metal: v.metal,
     price: masked.priceVisible ? Number(v.price) : null,
+    salePrice: masked.priceVisible ? variantSalePrice(v.price, rawOffer) : null,
     coverMediaId: v.cover_media_id ? Number(v.cover_media_id) : null,
   }));
-  const product = serializeProduct({ ...masked, id: Number(row.id) }, { category, subcategory, media, variants });
+  const product = serializeProduct({ ...masked, id: Number(row.id) }, { category, subcategory, media, variants, offer });
 
   const relatedRows = await db.all(
     `SELECT p.* FROM products p JOIN product_types pt ON pt.key = p.type
@@ -76,7 +88,7 @@ router.get('/:sku', asyncRoute(async (req, res) => {
   const related = relatedRows.map((r) => {
     const m = applyPriceVisibility(r, mode, viewer, pricesEnabled);
     const { category: rCategory, media: rMedia } = relatedLookup(r);
-    return serializeProduct({ ...m, id: Number(r.id) }, { category: rCategory, media: rMedia });
+    return serializeProduct({ ...m, id: Number(r.id) }, { category: rCategory, media: rMedia, offer: publicOfferFor(r, m, ctx) });
   });
 
   res.json({ data: { ...product, related } });

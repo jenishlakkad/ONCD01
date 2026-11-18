@@ -2,6 +2,7 @@ const db = require('../db/postgres');
 const { applyPriceVisibility } = require('./priceVisibility');
 const { serializeProduct } = require('./serializeProduct');
 const { toPublicMediaUrl, toPublicPreviewUrl } = require('./mediaUrl');
+const { loadLivePromotions, resolveOffer, buildPublicOffer } = require('./offers');
 
 // Shared building blocks for every PUBLIC (storefront-facing) product
 // response — the catalog routes (routes/productsPostgres.js) and the
@@ -91,7 +92,7 @@ async function buildEnrichmentLookup(rows) {
 // EXISTS flags: a missing row and a NULL column must stay distinguishable).
 async function loadPriceContext(req) {
   const customerId = (req.session && req.session.customerId) || null;
-  const row = await db.get(
+  const [row, promotions] = await Promise.all([db.get(
     `SELECT EXISTS (SELECT 1 FROM site_settings WHERE id = 1) AS has_settings,
             (SELECT price_mode FROM site_settings WHERE id = 1) AS price_mode,
             EXISTS (SELECT 1 FROM feature_flags WHERE key = 'prices') AS has_prices_flag,
@@ -99,12 +100,23 @@ async function loadPriceContext(req) {
             EXISTS (SELECT 1 FROM customers WHERE id = $1) AS customer_exists,
             (SELECT status FROM customers WHERE id = $1) AS customer_status`,
     [customerId]
-  );
+  ), loadLivePromotions()]);
   return {
     mode: row.has_settings ? row.price_mode : 'approved',
     viewer: customerId && row.customer_exists ? { type: 'customer', status: row.customer_status } : null,
     pricesEnabled: !row.has_prices_flag || !!row.prices_enabled,
+    // Live sales + one "now" per request, so every product in a response
+    // is judged against the same instant (lib/offers.js).
+    promotions,
+    now: new Date(),
   };
+}
+
+// The public offer for a RAW products row, given the masked copy's
+// visibility. No offers at all while the prices kill-switch is off.
+function publicOfferFor(row, masked, ctx) {
+  if (!ctx || !ctx.pricesEnabled) return null;
+  return buildPublicOffer(resolveOffer(row, ctx.promotions || [], ctx.now || new Date()), row, !!masked.priceVisible);
 }
 
 // Price-masks, enriches and serializes raw product rows for a public
@@ -117,7 +129,7 @@ async function serializePublicRows(req, rows, priceContext) {
   return rows.map((row) => {
     const masked = applyPriceVisibility(row, ctx.mode, ctx.viewer, ctx.pricesEnabled);
     const { category, subcategory, media } = lookupFor(row);
-    return serializeProduct({ ...masked, id: Number(row.id) }, { category, subcategory, media });
+    return serializeProduct({ ...masked, id: Number(row.id) }, { category, subcategory, media, offer: publicOfferFor(row, masked, ctx) });
   });
 }
 
@@ -131,5 +143,6 @@ module.exports = {
   batchMedia,
   buildEnrichmentLookup,
   loadPriceContext,
+  publicOfferFor,
   serializePublicRows,
 };

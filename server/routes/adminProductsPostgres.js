@@ -18,8 +18,12 @@ const os = require('os');
 const crypto = require('crypto');
 const { METAL_OPTIONS, getVariants } = require('../lib/productVariants');
 const { writeAudit } = require('../lib/auditPostgres');
-const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, productColumns } = require('../lib/excelImportPostgres');
+const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, applyImport } = require('../lib/excelImportPostgres');
 const env = require('../config/env');
+const {
+  PRODUCT_OFFER_COLUMNS, getOffersSchema, loadLivePromotions, resolveOffer, buildPublicOffer,
+  normalizeOwnDiscount, parseOfferDate,
+} = require('../lib/offers');
 
 // PostgreSQL counterpart to server/routes/adminProducts.js (SQLite).
 // Parallel/isolated test route file only — NOT mounted in app.js. Media
@@ -39,6 +43,7 @@ const FIELDS = [
   'metal', 'gold_purity', 'gold_color', 'gold_weight_grams',
   'stone_name', 'origin',
   'price_per_carat', 'total_price', 'price_visibility',
+  ...PRODUCT_OFFER_COLUMNS,
 ];
 
 function pickBody(body) {
@@ -46,7 +51,38 @@ function pickBody(body) {
   for (const f of FIELDS) {
     if (body[f] !== undefined) out[f] = body[f] === '' ? null : body[f];
   }
+  for (const f of ['discount_starts_at', 'discount_ends_at']) {
+    if (out[f] === undefined || out[f] === null) continue;
+    const d = parseOfferDate(out[f], { endOfDay: f === 'discount_ends_at' });
+    if (!d) throw new ApiError(400, `The offer ${f === 'discount_starts_at' ? 'start' : 'end'} date isn't a valid date.`);
+    out[f] = d;
+  }
   return out;
+}
+
+// The product's own discount (Offer section of the form). Checked whenever
+// a save touches it OR changes the price a $-off discount depends on.
+// Before the offers SQL has been run the fields are dropped (an empty
+// discount) or refused (a real one) instead of breaking the whole save.
+async function applyOwnDiscount(b, existing) {
+  const touches = PRODUCT_OFFER_COLUMNS.some((c) => b[c] !== undefined);
+  const schema = await getOffersSchema();
+  if (!schema.productColumns) {
+    const wantsDiscount = b.discount_type && b.discount_type !== '';
+    for (const c of PRODUCT_OFFER_COLUMNS) delete b[c];
+    if (wantsDiscount) {
+      throw new ApiError(409, 'Discounts need a one-time database update first. Open Admin > Sales & Discounts for the SQL to run.');
+    }
+    return;
+  }
+  const priceChanges = existing && b.total_price !== undefined && existing.discount_type === 'amount';
+  if (!touches && !priceChanges) return;
+  const merged = {};
+  for (const c of PRODUCT_OFFER_COLUMNS) merged[c] = b[c] !== undefined ? b[c] : (existing ? existing[c] : null);
+  const basePrice = b.total_price !== undefined ? (b.total_price === null ? null : Number(b.total_price)) : (existing ? Number(existing.total_price) || null : null);
+  const errors = normalizeOwnDiscount(merged, basePrice);
+  if (errors.length) throw new ApiError(400, errors.join(' '));
+  for (const c of PRODUCT_OFFER_COLUMNS) b[c] = merged[c];
 }
 
 async function categoryRow(id) {
@@ -69,12 +105,13 @@ async function mediaFor(productId) {
   );
   return rows.map((r) => ({ ...r, id: Number(r.id), url: toPublicMediaUrl(r.url), crop: r.crop ? JSON.parse(r.crop) : null }));
 }
-async function fullProduct(row) {
-  const [category, subcategory, media, rawVariants] = await Promise.all([
+async function fullProduct(row, promotions) {
+  const [category, subcategory, media, rawVariants, promos] = await Promise.all([
     categoryRow(row.category_id),
     subcategoryRow(row.subcategory_id),
     mediaFor(row.id),
     getVariants(row.id),
+    promotions || loadLivePromotions(),
   ]);
   // Admin always sees the real price on every variant (no masking) — only
   // the public route masks variant prices, same as it already does for the
@@ -83,7 +120,10 @@ async function fullProduct(row) {
     id: Number(v.id), metal: v.metal, price: Number(v.price),
     coverMediaId: v.cover_media_id ? Number(v.cover_media_id) : null,
   }));
-  return serializeProduct({ ...row, id: Number(row.id) }, { category, subcategory, media, variants });
+  // The offer customers get right now (own discount or a running sale),
+  // unmasked — so the list can show the effective price at a glance.
+  const offer = buildPublicOffer(resolveOffer(row, promos), row, true);
+  return serializeProduct({ ...row, id: Number(row.id) }, { category, subcategory, media, variants, offer, admin: true });
 }
 
 router.get('/', asyncRoute(async (req, res) => {
@@ -93,7 +133,8 @@ router.get('/', asyncRoute(async (req, res) => {
   if (type) { params.push(type); sql += ` WHERE type = $${params.length}`; }
   sql += ' ORDER BY created_at DESC, id DESC';
   const rows = await db.all(sql, params);
-  const data = await Promise.all(rows.map(fullProduct));
+  const promotions = await loadLivePromotions();
+  const data = await Promise.all(rows.map((r) => fullProduct(r, promotions)));
   res.json({ data });
 }));
 
@@ -103,6 +144,7 @@ router.post('/', asyncRoute(async (req, res) => {
   if (!['diamond', 'jewelry', 'gemstone'].includes(b.type)) throw new ApiError(400, 'A valid product type is required.');
   const dup = await db.get('SELECT id FROM products WHERE sku = $1', [b.sku]);
   if (dup) throw new ApiError(409, `A product with SKU ${b.sku} already exists.`);
+  await applyOwnDiscount(b, null);
 
   const cols = Object.keys(b);
   const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
@@ -122,6 +164,7 @@ router.put('/:id', asyncRoute(async (req, res) => {
     const dup = await db.get('SELECT id FROM products WHERE sku = $1 AND id != $2', [b.sku, existing.id]);
     if (dup) throw new ApiError(409, `A product with SKU ${b.sku} already exists.`);
   }
+  await applyOwnDiscount(b, existing);
   const cols = Object.keys(b);
   if (cols.length) {
     const setClause = cols.map((c, i) => `${c} = $${i + 1}`).join(', ');
@@ -502,37 +545,44 @@ router.post('/import/:type', (req, res, next) => {
     throw new ApiError(400, 'Please upload an Excel file (.xlsx or .xls).');
   }
 
-  const { topLevelError, results } = await importWorkbook(type, req.file.buffer);
+  // ?dryRun=1 only validates and reports what WOULD happen (the preview the
+  // admin confirms); without it the same file is re-validated and the valid
+  // rows are written in ONE transaction — all of them or none.
+  const dryRun = req.query.dryRun === '1' || req.query.dryRun === 'true';
+  const { topLevelError, results, unknownHeaders, columns } = await importWorkbook(type, req.file.buffer);
   if (topLevelError) throw new ApiError(400, topLevelError);
 
-  const validRows = results.filter((r) => r.ok);
+  const pick = (action) => results.filter((r) => r.ok && r.action === action);
+  const creates = pick('create');
+  const updates = pick('update');
   const errorRows = results.filter((r) => !r.ok);
+  if (!dryRun && (creates.length || updates.length)) {
+    await db.transaction((client) => applyImport(type, results, client));
+    const rejected = errorRows.length ? `, ${errorRows.length} row(s) rejected` : '';
+    await writeAudit({
+      actor: req.adminUser.full_name,
+      action: `Excel import: ${creates.length} new, ${updates.length} updated ${type} product(s)${rejected}`,
+      target: req.file.originalname || 'import.xlsx',
+      module: 'Products',
+    });
+  }
 
-  const cols = productColumns(type);
-  // Same single-client transaction requirement as media reorder above — a
-  // partially-committed bulk import (some rows in, some silently dropped by
-  // a later failure) is exactly the corrupted state the original SQLite
-  // db.transaction() already guarded against.
-  await db.transaction(async (client) => {
-    for (const r of validRows) {
-      const values = cols.map((c) => (r.product[c] === undefined ? null : r.product[c]));
-      const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
-      await client.query(`INSERT INTO products (${cols.join(', ')}) VALUES (${placeholders})`, values);
-    }
-  });
-
-  await writeAudit({
-    actor: req.adminUser.full_name,
-    action: `Imported ${validRows.length} of ${results.length} ${type} products via Excel`,
-    target: req.file.originalname || 'import.xlsx',
-    module: 'Products',
-  });
-
+  const brief = (r) => ({ row: r.row, sku: r.sku || '' });
   res.json({
     data: {
-      imported: validRows.length,
+      dryRun,
       totalRows: results.length,
-      errors: errorRows.map((r) => ({ row: r.row, sku: r.sku || '', messages: r.errors, messageText: r.errors.join('; ') })),
+      columns,
+      unknownHeaders,
+      created: creates.length,
+      updated: updates.length,
+      unchanged: pick('unchanged').length,
+      skipped: pick('skip').length,
+      rejected: errorRows.length,
+      creates: creates.map(brief),
+      updates: updates.map((r) => ({ ...brief(r), changed: r.changed, changedText: r.changed.join(', ') })),
+      errors: errorRows.map((r) => ({ ...brief(r), messages: r.errors, messageText: r.errors.join(' ') })),
+      warnings: results.filter((r) => r.ok && r.warnings && r.warnings.length).map((r) => ({ ...brief(r), messageText: r.warnings.join(' ') })),
     },
   });
 }));

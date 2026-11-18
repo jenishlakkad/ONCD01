@@ -46,6 +46,7 @@ app.use('/api/saved-items', require('./routes/savedItemsPostgres'));
 app.use('/api/account', require('./routes/accountPostgres'));
 app.use('/api/contact', require('./routes/contactPostgres'));
 app.use('/api/admin/products', require('./routes/adminProductsPostgres'));
+app.use('/api/admin/offers', require('./routes/adminOffersPostgres'));
 app.use('/api/admin/categories', require('./routes/adminCategoriesPostgres'));
 app.use('/api/admin/attributes', require('./routes/adminAttributesPostgres'));
 app.use('/api/admin', require('./routes/adminProductTypesPostgres'));

@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
 <script src="./utils/diamondLoader.js"></script>
+<script src="./utils/offerView.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -261,6 +262,9 @@ a:hover{color:var(--color-accent-700)}
 .rv-type{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700);font-weight:600;}
 .rv-title{font-family:var(--font-heading);font-size:13.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .rv-price{font-size:12px;opacity:.7;}
+.rv-price.is-sale,.rank-price.is-sale{color:var(--color-offer);opacity:1;}
+.bento-offer{display:inline-block;margin-left:8px;background:var(--color-offer);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.08em;padding:3px 7px;border-radius:999px;vertical-align:1px;}
+.bento-was{margin-left:7px;opacity:.65;font-size:.92em;}
 .link-btn{background:none;border:none;padding:0;font:inherit;font-size:13px;color:var(--color-accent-700);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
 
 /* ── Most requested (ranked carousel) ────────────────────────────────── */
@@ -697,9 +701,9 @@ a:hover{color:var(--color-accent-700)}
               <sc-if value="{{ p.isLead }}" hint-placeholder-val="{{ false }}"><span class="bento-badge">★ Featured</span></sc-if>
               <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
               <div class="bento-info">
-                <span class="bento-type">{{ p.typeLabel }}</span>
+                <span class="bento-type">{{ p.typeLabel }}<sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><b class="bento-offer">{{ p.offerBadge }}</b></sc-if></span>
                 <a href="{{ p.href }}" class="bento-title">{{ p.title }}</a>
-                <sc-if value="{{ p.priceLabel }}" hint-placeholder-val="{{ true }}"><span class="bento-price">{{ p.priceLabel }}</span></sc-if>
+                <sc-if value="{{ p.priceLabel }}" hint-placeholder-val="{{ true }}"><span class="bento-price">{{ p.priceLabel }}<sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><s class="bento-was">{{ p.wasLabel }}</s></sc-if></span></sc-if>
                 <div class="bento-actions">
                   <button onClick="{{ p.addToCart }}" class="btn {{ p.bentoCartClass }}">{{ p.cartBtnLabel }}</button>
                   <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
@@ -741,14 +745,14 @@ a:hover{color:var(--color-accent-700)}
                 <a href="{{ p.href }}" aria-label="{{ p.title }}" style="display:block;width:100%;height:100%;">
                   <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
                 </a>
-                <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if>
+                <sc-if value="{{ p.showNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if><sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if>
                 <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
               </div>
               <div class="product-card-body">
                 <div class="card-kicker product-card-kicker">{{ p.sku }}</div>
                 <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
                 <p class="card-body product-card-spec">{{ p.spec }}</p>
-                <div class="product-card-price-row"><span class="product-card-price">{{ p.priceLabel }}</span></div>
+                <div class="product-card-price-row"><span class="price-group"><span class="product-card-price {{ p.priceClass }}">{{ p.priceLabel }}</span><sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><span class="price-was">{{ p.wasLabel }}</span></sc-if></span></div><sc-if value="{{ p.hasOfferNote }}" hint-placeholder-val="{{ false }}"><div class="offer-note {{ p.offerNoteClass }}">{{ p.offerNote }}</div></sc-if>
                 <div class="product-card-btns">
                   <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
                   <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
@@ -776,7 +780,7 @@ a:hover{color:var(--color-accent-700)}
               <div class="rv-meta">
                 <span class="rv-type">{{ p.typeLabel }}</span>
                 <span class="rv-title">{{ p.title }}</span>
-                <span class="rv-price">{{ p.priceLabel }}</span>
+                <span class="rv-price {{ p.priceClass }}">{{ p.priceLabel }}</span>
               </div>
             </a>
           </sc-for>
@@ -825,13 +829,14 @@ a:hover{color:var(--color-accent-700)}
               <div class="rank-img">
                 <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
                 <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
+                <sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if>
               </div>
               <div class="rank-body">
                 <span class="rank-num {{ p.rankClass }}" aria-label="{{ p.rankAria }}">{{ p.rankLabel }}</span>
                 <div class="rank-info">
                   <span class="rank-kicker">{{ p.typeLabel }}</span>
                   <a href="{{ p.href }}" class="rank-title">{{ p.title }}</a>
-                  <sc-if value="{{ p.priceLabel }}" hint-placeholder-val="{{ true }}"><span class="rank-price">{{ p.priceLabel }}</span></sc-if>
+                  <sc-if value="{{ p.priceLabel }}" hint-placeholder-val="{{ true }}"><span class="rank-price {{ p.priceClass }}">{{ p.priceLabel }}<sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><s class="price-was" style="margin-left:6px;">{{ p.wasLabel }}</s></sc-if></span></sc-if>
                   <div class="product-card-btns">
                     <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
                     <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
@@ -861,14 +866,14 @@ a:hover{color:var(--color-accent-700)}
                   <a href="{{ p.href }}" aria-label="{{ p.title }}" style="display:block;width:100%;height:100%;">
                     <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
                   </a>
-                  <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if>
+                  <sc-if value="{{ p.showNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if><sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if>
                   <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
                 </div>
                 <div class="product-card-body">
                   <span class="rec-reason" title="{{ p.reasonLabel }}">✦ {{ p.reasonLabel }}</span>
                   <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
                   <p class="card-body product-card-spec">{{ p.spec }}</p>
-                  <div class="product-card-price-row"><span class="product-card-price">{{ p.priceLabel }}</span></div>
+                  <div class="product-card-price-row"><span class="price-group"><span class="product-card-price {{ p.priceClass }}">{{ p.priceLabel }}</span><sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><span class="price-was">{{ p.wasLabel }}</span></sc-if></span></div><sc-if value="{{ p.hasOfferNote }}" hint-placeholder-val="{{ false }}"><div class="offer-note {{ p.offerNoteClass }}">{{ p.offerNote }}</div></sc-if>
                   <div class="product-card-btns">
                     <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
                     <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
@@ -899,14 +904,14 @@ a:hover{color:var(--color-accent-700)}
                 <a href="{{ p.href }}" aria-label="{{ p.title }}" style="display:block;width:100%;height:100%;">
                   <product-media media="{{ p.media }}" shape="rect" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media>
                 </a>
-                <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if>
+                <sc-if value="{{ p.showNew }}" hint-placeholder-val="{{ false }}"><span class="new-badge">New</span></sc-if><sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if>
                 <button onClick="{{ p.toggleSave }}" class="product-card-save {{ p.savedClass }}" aria-label="Save item" title="Save for later">{{ p.heartGlyph }}</button>
               </div>
               <div class="product-card-body">
                 <div class="card-kicker product-card-kicker">{{ p.sku }}</div>
                 <a href="{{ p.href }}" style="text-decoration:none;color:inherit;"><div class="card-title product-card-title">{{ p.title }}</div></a>
                 <p class="card-body product-card-spec">{{ p.spec }}</p>
-                <div class="product-card-price-row"><span class="product-card-price">{{ p.priceLabel }}</span></div>
+                <div class="product-card-price-row"><span class="price-group"><span class="product-card-price {{ p.priceClass }}">{{ p.priceLabel }}</span><sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><span class="price-was">{{ p.wasLabel }}</span></sc-if></span></div><sc-if value="{{ p.hasOfferNote }}" hint-placeholder-val="{{ false }}"><div class="offer-note {{ p.offerNoteClass }}">{{ p.offerNote }}</div></sc-if>
                 <div class="product-card-btns">
                   <button onClick="{{ p.addToCart }}" class="btn {{ p.cartBtnClass }}">{{ p.cartBtnLabel }}</button>
                   <button onClick="{{ p.openInquire }}" class="btn btn-primary">Inquire</button>
@@ -1354,9 +1359,9 @@ class Component extends DCLogic {
     if (p.type === 'jewelry') return p.stoneName ? `${p.stoneName} Piece` : (p.category ? p.category.name : p.sku);
     return `${p.stoneName || 'Gemstone'}${p.weightCarat ? ', ' + p.weightCarat + 'ct' : ''}`;
   }
+  // Offer-aware (utils/offerView.js): the sale price when on offer.
   priceLabelFor(p) {
-    if (p.priceVisible && p.totalPrice != null) return '$' + Number(p.totalPrice).toLocaleString();
-    if (p.priceVisible && p.pricePerCarat != null) return '$' + Number(p.pricePerCarat).toLocaleString() + '/ct';
+    if (p.priceVisible && (p.totalPrice != null || p.pricePerCarat != null)) return window.oncdOffer(p).nowLabel;
     return p.priceLabel || '';
   }
   specFor(p) {
@@ -1366,18 +1371,23 @@ class Component extends DCLogic {
   }
   decorate(p, newBadgeDays) {
     const title = this.cardTitle(p);
-    const priceLabel = this.priceLabelFor(p);
+    const o = window.oncdOffer(p);
+    const priceLabel = o.cartLabel; // what the cart / saved list stores
     const href = `${DETAIL_PAGE[p.type] || 'Home.dc.html'}?sku=${encodeURIComponent(p.sku)}`;
     const inCart = this.state.cartItems.some((i) => i.sku === p.sku);
     const isSaved = this.state.savedSkus.has(p.sku);
     const created = p.createdAt ? new Date(p.createdAt).getTime() : 0;
     return {
-      sku: p.sku, title, priceLabel, href,
+      sku: p.sku, title, href,
+      priceLabel: this.priceLabelFor(p),
+      hasOffer: o.hasOffer, offerBadge: o.badge, onSale: o.onSale, wasLabel: o.wasLabel, priceClass: o.priceClass,
+      hasOfferNote: !!o.note, offerNote: o.note, offerNoteClass: o.endingSoon ? 'soon' : '',
       typeLabel: TYPE_LABEL[p.type] || '',
       spec: this.specFor(p),
       media: JSON.stringify(p.media || []),
       placeholder: `${p.shape || p.stoneName || ''} ${TYPE_LABEL[p.type] || ''}`.trim(),
       isNew: !!created && Date.now() - created < (newBadgeDays || 14) * 86400000,
+      showNew: !o.hasOffer && !!created && Date.now() - created < (newBadgeDays || 14) * 86400000,
       savedClass: isSaved ? 'saved' : '',
       heartGlyph: isSaved ? '♥' : '♡',
       toggleSave: (e) => { e.preventDefault(); e.stopPropagation(); this.toggleSaveSku(p.sku, title, priceLabel, p.type); },

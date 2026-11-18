@@ -53,9 +53,16 @@ export function inquirySpecRows(p) {
   return [];
 }
 
+// With a running offer this quotes the sale price, the offer and the
+// original ("$3,674 (15% OFF · Diwali Sale, was $4,322)"), so the inquiry
+// the admin receives shows exactly what the customer was offered.
 export function inquiryPriceLabel(p) {
   if (!p) return '';
-  return p.priceVisible ? '$' + Number(p.totalPrice).toLocaleString() : (p.priceLabel || 'Price on request');
+  if (typeof window !== 'undefined' && window.oncdOffer) return window.oncdOffer(p).cartLabel;
+  if (!p.priceVisible) return p.priceLabel || 'Price on request';
+  if (p.totalPrice != null) return '$' + Number(p.totalPrice).toLocaleString();
+  if (p.pricePerCarat != null) return '$' + Number(p.pricePerCarat).toLocaleString() + '/ct';
+  return 'Price on request';
 }
 
 // *word* is the shared bold convention on WhatsApp and Skype (their compose

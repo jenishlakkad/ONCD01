@@ -17,6 +17,17 @@
 <link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
 <script src="./video-frame.js"></script>
 <style>
+.metal-dots{display:flex;align-items:center;gap:4px;margin-top:5px;padding-left:22px;}
+.metal-dot{flex:none;width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(30,24,18,.18),0 1px 2px rgba(30,24,18,.12);}
+.metal-dots-note{margin-left:4px;font-size:11px;opacity:.6;white-space:nowrap;}
+.offer-box{margin-top:18px;border:1px solid var(--color-divider);border-radius:10px;padding:14px 16px;background:var(--color-surface);}
+.offer-box-link{font-size:12px;}
+.offer-box-warn{font-size:12.5px;margin:8px 0 0;padding:8px 10px;border-radius:8px;background:#fff7e6;border:1px solid #f0d9a8;}
+.offer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:10px;}
+.offer-preview{margin-top:12px;font-size:12.5px;line-height:1.5;padding:9px 12px;border-radius:8px;background:var(--color-bg);border:1px dashed var(--color-divider);}
+.offer-preview.is-sale{border-style:solid;border-color:var(--color-offer-line);background:var(--color-offer-soft);color:var(--color-offer);font-weight:600;}
+.offer-preview.is-warn{border-style:solid;border-color:#f0c2c2;background:#fdf1f1;color:#9b2c2c;}
+.offer-tag{background:var(--color-offer-soft);color:var(--color-offer);border:1px solid var(--color-offer-line);font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle;}
 body{margin:0}
 a{color:var(--color-accent);text-decoration:none}
 a:hover{color:var(--color-accent-700)}
@@ -30,6 +41,23 @@ a:hover{color:var(--color-accent-700)}
 .star-btn{background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;margin-right:4px;color:var(--color-divider);vertical-align:-1px;transition:color .15s,transform .15s;}
 .star-btn:hover{color:var(--color-accent);transform:scale(1.15);}
 .star-btn.on{color:var(--color-accent);}
+/* ── Excel import preview ─────────────────────────────────────────── */
+.imp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin:14px 0 4px;}
+.imp-stat{border:1px solid var(--color-divider);border-radius:10px;padding:10px 12px;}
+.imp-stat .n{display:block;font-size:24px;font-weight:600;line-height:1.15;font-variant-numeric:lining-nums tabular-nums;margin-bottom:2px;}
+.imp-stat .l{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.65;}
+.imp-stat.new .n{color:#25653a;} .imp-stat.upd .n{color:var(--color-accent-700);} .imp-stat.bad .n{color:#a3321f;}
+.imp-stat.zero .n{opacity:.35;}
+.imp-sec{margin-top:16px;}
+.imp-sec h6{margin:0 0 8px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.7;}
+.imp-list{display:flex;flex-direction:column;gap:6px;}
+.imp-item{border:1px solid var(--color-divider);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;overflow-wrap:anywhere;}
+.imp-item strong{font-weight:600;}
+.imp-item.bad{border-color:color-mix(in srgb, #a3321f 35%, transparent);background:color-mix(in srgb, #a3321f 5%, var(--color-bg));}
+.imp-item.warn{border-color:color-mix(in srgb, #c89430 40%, transparent);background:color-mix(in srgb, #c89430 7%, var(--color-bg));}
+.imp-more{font-size:12px;opacity:.6;padding:2px 2px 0;}
+.imp-note{font-size:12.5px;padding:10px 12px;border-radius:8px;background:var(--color-surface);margin-top:12px;line-height:1.5;}
+.imp-err{font-size:13px;padding:12px 14px;border-radius:8px;background:#fbe9e5;color:#8d2c1a;line-height:1.5;}
 </style>
 </helmet>
 
@@ -49,6 +77,7 @@ a:hover{color:var(--color-accent-700)}
       </sc-if>
     </a>
     <a href="AdminProducts.dc.html" class="side-item active">Products</a>
+    <a href="AdminSales.dc.html" class="side-item">Sales &amp; Discounts</a>
     <a href="AdminCategories.dc.html" class="side-item">Categories</a>
     <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
     <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
@@ -83,9 +112,9 @@ a:hover{color:var(--color-accent-700)}
         <label class="seg-opt"><input type="radio" name="type" checked="{{ isGemstoneTab }}" onChange="{{ selectGemstoneTab }}"/><span>{{ gemstoneTabLabel }}</span></label>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <a href="{{ templateUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download Template</a>
+        <button type="button" onClick="{{ downloadTemplate }}" class="btn btn-ghost" style="font-size:12px;padding:6px 10px;" disabled="{{ downloadBusy }}">{{ templateLabel }}</button>
         <sc-if value="{{ hasProductsInTab }}" hint-placeholder-val="{{ true }}">
-          <a href="{{ exportAllUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:6px 10px;">Download All Stock</a>
+          <button type="button" onClick="{{ downloadAll }}" class="btn btn-ghost" style="font-size:12px;padding:6px 10px;" disabled="{{ downloadBusy }}">{{ exportAllLabel }}</button>
         </sc-if>
         <label class="btn btn-ghost" style="font-size:12px;padding:6px 10px;cursor:pointer;">
           <sc-if value="{{ importBusy }}" hint-placeholder-val="{{ false }}"><oncd-loader size="14" layout="inline" style="margin-right:6px;"></oncd-loader></sc-if>{{ importButtonLabel }}
@@ -105,6 +134,9 @@ a:hover{color:var(--color-accent-700)}
         <option value="active">Active only</option>
         <option value="hidden">Hidden only</option>
         <option value="featured">★ Featured on homepage</option>
+        <option value="onsale">On sale now</option>
+        <option value="owndiscount">Has its own discount</option>
+        <option value="nodiscount">Excluded from sales</option>
       </select>
       <select class="input" value="{{ categoryFilter }}" onChange="{{ handleCategoryFilter }}" style="width:auto;">
         <option value="All">All categories</option>
@@ -117,6 +149,17 @@ a:hover{color:var(--color-accent-700)}
         <option value="has">Has photo/video</option>
         <option value="none">Missing photo/video</option>
       </select>
+      <sc-if value="{{ isJewelryTab }}" hint-placeholder-val="{{ false }}">
+        <select class="input" value="{{ metalFilter }}" onChange="{{ handleMetalFilter }}" style="width:auto;" aria-label="Filter by metal">
+          <option value="all">All metals</option>
+          <option value="Yellow Gold">Yellow Gold</option>
+          <option value="Rose Gold">Rose Gold</option>
+          <option value="White Gold">White Gold</option>
+          <option value="Silver">Silver</option>
+          <option value="multi">Offered in 2+ metals</option>
+          <option value="unset">No metal colour set</option>
+        </select>
+      </sc-if>
       <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
         <button onClick="{{ clearFilters }}" class="btn btn-ghost" style="font-size:12px;">Clear</button>
       </sc-if>
@@ -152,7 +195,8 @@ a:hover{color:var(--color-accent-700)}
           <option value="approved">Approved Customers Only</option>
         </select>
         <button onClick="{{ bulkApplyPriceVisibility }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Apply</button>
-        <a href="{{ exportSelectedUrl }}" download class="btn btn-ghost" style="font-size:12px;padding:5px 10px;">Download Selected</a>
+        <button type="button" onClick="{{ openBulkDiscount }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ bulkBusy }}">Discount…</button>
+        <button type="button" onClick="{{ downloadSelected }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" disabled="{{ downloadBusy }}">{{ exportSelectedLabel }}</button>
         <button onClick="{{ clearSelection }}" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;margin-left:auto;">Clear</button>
       </div>
     </sc-if>
@@ -185,10 +229,19 @@ a:hover{color:var(--color-accent-700)}
                 <div title="No photo or video yet" style="width:34px;height:34px;border-radius:6px;border:1px dashed var(--color-divider);display:flex;align-items:center;justify-content:center;opacity:.4;font-size:14px;">—</div>
               </sc-if>
             </td>
-            <td class="adm-td" style="white-space:nowrap;"><button onClick="{{ p.toggleFeatured }}" class="star-btn {{ p.starClass }}" aria-pressed="{{ p.starPressed }}" aria-label="{{ p.starAria }}" title="{{ p.starAria }}">★</button>{{ p.sku }}</td>
+            <td class="adm-td" style="white-space:nowrap;"><button onClick="{{ p.toggleFeatured }}" class="star-btn {{ p.starClass }}" aria-pressed="{{ p.starPressed }}" aria-label="{{ p.starAria }}" title="{{ p.starAria }}">★</button>{{ p.sku }}<sc-if value="{{ p.hasMetalDots }}" hint-placeholder-val="{{ false }}"><div class="metal-dots" role="img" aria-label="{{ p.metalTitle }}" title="{{ p.metalTitle }}"><sc-for list="{{ p.metalDots }}" as="md" hint-placeholder-count="2"><span class="metal-dot" style="background:{{ md.bg }};"></span></sc-for><span class="metal-dots-note">{{ p.metalNote }}</span></div></sc-if></td>
             <td class="adm-td" data-pri="2">{{ p.category }}</td>
             <td class="adm-td" style="opacity:.75;" data-pri="2">{{ p.specs }}</td>
-            <td class="adm-td">{{ p.price }}</td>
+            <td class="adm-td">
+              <sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}">
+                <div style="white-space:nowrap;"><strong style="color:var(--color-offer);">{{ p.salePrice }}</strong> <s style="opacity:.5;font-size:12px;">{{ p.price }}</s></div>
+                <div style="margin-top:3px;"><span class="tag offer-tag" title="{{ p.offerTitle }}">{{ p.offerTag }}</span></div>
+              </sc-if>
+              <sc-if value="{{ p.notOnSale }}" hint-placeholder-val="{{ true }}">
+                <div style="white-space:nowrap;">{{ p.price }}</div>
+                <sc-if value="{{ p.hasDiscountNote }}" hint-placeholder-val="{{ false }}"><div style="margin-top:3px;"><span class="tag tag-outline" style="font-size:10px;">{{ p.discountNote }}</span></div></sc-if>
+              </sc-if>
+            </td>
             <td class="adm-td">
               <span class="tag {{ p.tagClass }}">{{ p.status }}</span>
               <sc-if value="{{ p.hasPriceOverride }}" hint-placeholder-val="{{ false }}">
@@ -461,6 +514,34 @@ a:hover{color:var(--color-accent-700)}
             </div>
           </sc-if>
 
+          <div class="offer-box">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+              <h5 style="margin:0;color:var(--color-accent-700);">Offer / Discount</h5>
+              <a href="AdminSales.dc.html" class="offer-box-link">Store-wide sales →</a>
+            </div>
+            <sc-if value="{{ offersNotReady }}" hint-placeholder-val="{{ false }}">
+              <p class="offer-box-warn">Discounts need a one-time database update first. Open <a href="AdminSales.dc.html">Sales &amp; Discounts</a> for the SQL to run.</p>
+            </sc-if>
+            <div class="offer-grid">
+              <div class="field">
+                <label>Discount</label>
+                <select class="input" value="{{ form.discount_type }}" onChange="{{ fh.discount_type }}" disabled="{{ offersNotReady }}">
+                  <option value="">No own discount (joins running sales)</option>
+                  <option value="percent">% off</option>
+                  <option value="amount">$ off</option>
+                  <option value="none">Never discount (exclude from sales)</option>
+                </select>
+              </div>
+              <sc-if value="{{ offerNeedsValue }}" hint-placeholder-val="{{ false }}">
+                <div class="field"><label>{{ offerValueLabel }}</label><input class="input" inputmode="decimal" value="{{ form.discount_value }}" onChange="{{ fh.discount_value }}" placeholder="{{ offerValuePlaceholder }}"/></div>
+                <div class="field"><label>Label shown to customers <span style="opacity:.55;font-weight:400;">(optional)</span></label><input class="input" maxlength="40" value="{{ form.discount_label }}" onChange="{{ fh.discount_label }}" placeholder="e.g. Clearance, Festive Offer"/></div>
+                <div class="field"><label>Starts <span style="opacity:.55;font-weight:400;">(optional)</span></label><input type="datetime-local" class="input" value="{{ form.discount_starts_at }}" onChange="{{ fh.discount_starts_at }}"/></div>
+                <div class="field"><label>Ends <span style="opacity:.55;font-weight:400;">(optional)</span></label><input type="datetime-local" class="input" value="{{ form.discount_ends_at }}" onChange="{{ fh.discount_ends_at }}"/></div>
+              </sc-if>
+            </div>
+            <div class="offer-preview {{ offerPreviewClass }}">{{ offerPreviewText }}</div>
+          </div>
+
           <sc-if value="{{ dialogError }}" hint-placeholder-val="{{ false }}">
             <p style="font-size:13px;color:var(--color-accent-700);margin-top:14px;">{{ dialogError }}</p>
           </sc-if>
@@ -473,24 +554,109 @@ a:hover{color:var(--color-accent-700)}
       </div>
     </sc-if>
 
+    <sc-if value="{{ bulkDiscountOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeBulkDiscount }}">
+        <div class="dialog" role="dialog" aria-modal="true" aria-label="Discount selected products" style="max-width:520px;" onClick="{{ stop }}">
+          <div class="dialog-title">Discount {{ selectedCount }} selected</div>
+          <p style="font-size:12.5px;opacity:.65;margin:4px 0 12px;">Sets each product's own discount (it beats any running sale). To discount a whole category or the whole store, use <a href="AdminSales.dc.html">Sales &amp; Discounts</a>.</p>
+          <div class="offer-grid">
+            <div class="field">
+              <label>Discount</label>
+              <select class="input" value="{{ bulkDiscount.type }}" onChange="{{ bulkDiscountHandlers.type }}">
+                <option value="percent">% off</option>
+                <option value="amount">$ off</option>
+                <option value="">Remove own discount (join running sales)</option>
+                <option value="none">Never discount (exclude from sales)</option>
+              </select>
+            </div>
+            <sc-if value="{{ bulkNeedsValue }}" hint-placeholder-val="{{ true }}">
+              <div class="field"><label>{{ bulkValueLabel }}</label><input class="input" inputmode="decimal" value="{{ bulkDiscount.value }}" onChange="{{ bulkDiscountHandlers.value }}"/></div>
+              <div class="field"><label>Label <span style="opacity:.55;font-weight:400;">(optional)</span></label><input class="input" maxlength="40" value="{{ bulkDiscount.label }}" onChange="{{ bulkDiscountHandlers.label }}" placeholder="e.g. Clearance"/></div>
+              <div class="field"><label>Starts <span style="opacity:.55;font-weight:400;">(optional)</span></label><input type="datetime-local" class="input" value="{{ bulkDiscount.startsAt }}" onChange="{{ bulkDiscountHandlers.startsAt }}"/></div>
+              <div class="field"><label>Ends <span style="opacity:.55;font-weight:400;">(optional)</span></label><input type="datetime-local" class="input" value="{{ bulkDiscount.endsAt }}" onChange="{{ bulkDiscountHandlers.endsAt }}"/></div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ bulkDiscountError }}" hint-placeholder-val="{{ false }}"><div class="imp-err" style="margin-top:12px;">{{ bulkDiscountError }}</div></sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closeBulkDiscount }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ applyBulkDiscount }}" class="btn btn-primary" disabled="{{ bulkBusy }}">{{ bulkDiscountCta }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
       <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeImportDialog }}">
-        <div class="dialog" style="max-width:560px;max-height:82vh;overflow:auto;" onClick="{{ stop }}">
-          <div class="dialog-title">Excel Import Results</div>
-          <p style="font-size:13.5px;">{{ importSummary }}</p>
-          <sc-if value="{{ importHasErrors }}" hint-placeholder-val="{{ false }}">
-            <p style="font-size:12px;opacity:.65;margin-top:14px;">{{ importErrors.length }} row(s) were skipped:</p>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-              <sc-for list="{{ importErrors }}" as="e" hint-placeholder-count="3">
-                <div style="border:1px solid var(--color-divider);border-radius:8px;padding:8px 10px;font-size:12.5px;">
-                  <strong>Row {{ e.row }}<sc-if value="{{ e.sku }}" hint-placeholder-val="{{ false }}"> (SKU: {{ e.sku }})</sc-if>:</strong>
-                  <div style="opacity:.75;margin-top:2px;">{{ e.messageText }}</div>
-                </div>
-              </sc-for>
-            </div>
+        <div class="dialog" role="dialog" aria-modal="true" aria-label="{{ importTitle }}" style="max-width:620px;max-height:86vh;overflow:auto;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ importTitle }}</div>
+          <p style="font-size:12.5px;opacity:.65;margin:2px 0 0;overflow-wrap:anywhere;">{{ importFileName }}</p>
+
+          <sc-if value="{{ importTopError }}" hint-placeholder-val="{{ false }}">
+            <div class="imp-err" style="margin-top:14px;">{{ importTopError }}</div>
           </sc-if>
+
+          <sc-if value="{{ importHasResult }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:13.5px;margin:12px 0 0;">{{ importSummary }}</p>
+            <div class="imp-stats">
+              <div class="imp-stat new {{ importZero.created }}"><span class="n">{{ importCounts.created }}</span><span class="l">New</span></div>
+              <div class="imp-stat upd {{ importZero.updated }}"><span class="n">{{ importCounts.updated }}</span><span class="l">Updated</span></div>
+              <div class="imp-stat {{ importZero.unchanged }}"><span class="n">{{ importCounts.unchanged }}</span><span class="l">Unchanged</span></div>
+              <div class="imp-stat bad {{ importZero.rejected }}"><span class="n">{{ importCounts.rejected }}</span><span class="l">Rejected</span></div>
+            </div>
+            <sc-if value="{{ importUnknownNote }}" hint-placeholder-val="{{ false }}"><div class="imp-note">{{ importUnknownNote }}</div></sc-if>
+
+            <sc-if value="{{ importErrors.length }}" hint-placeholder-val="{{ false }}">
+              <div class="imp-sec">
+                <h6>{{ importErrorsHead }}</h6>
+                <div class="imp-list">
+                  <sc-for list="{{ importErrors }}" as="e" hint-placeholder-count="2">
+                    <div class="imp-item bad"><strong>{{ e.where }}</strong> — {{ e.messageText }}</div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ importErrorsMore }}" hint-placeholder-val="{{ false }}"><div class="imp-more">{{ importErrorsMore }}</div></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ importWarnings.length }}" hint-placeholder-val="{{ false }}">
+              <div class="imp-sec">
+                <h6>Check these values</h6>
+                <div class="imp-list">
+                  <sc-for list="{{ importWarnings }}" as="w" hint-placeholder-count="1">
+                    <div class="imp-item warn"><strong>{{ w.where }}</strong> — {{ w.messageText }}</div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ importWarningsMore }}" hint-placeholder-val="{{ false }}"><div class="imp-more">{{ importWarningsMore }}</div></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ importUpdates.length }}" hint-placeholder-val="{{ false }}">
+              <div class="imp-sec">
+                <h6>{{ importUpdatesHead }}</h6>
+                <div class="imp-list">
+                  <sc-for list="{{ importUpdates }}" as="u" hint-placeholder-count="2">
+                    <div class="imp-item"><strong>{{ u.sku }}</strong> — {{ u.changedText }}</div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ importUpdatesMore }}" hint-placeholder-val="{{ false }}"><div class="imp-more">{{ importUpdatesMore }}</div></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ importCreatesText }}" hint-placeholder-val="{{ false }}">
+              <div class="imp-sec">
+                <h6>{{ importCreatesHead }}</h6>
+                <div class="imp-item">{{ importCreatesText }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ importIsPreview }}" hint-placeholder-val="{{ false }}">
+              <div class="imp-note">{{ importPreviewNote }}</div>
+            </sc-if>
+          </sc-if>
+
           <div class="dialog-actions">
-            <button onClick="{{ closeImportDialog }}" class="btn btn-primary">Close</button>
+            <sc-if value="{{ importCanConfirm }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ closeImportDialog }}" class="btn btn-secondary" disabled="{{ importBusy }}">Cancel</button>
+              <button onClick="{{ confirmImport }}" class="btn btn-primary" disabled="{{ importConfirmDisabled }}"><sc-if value="{{ importBusy }}" hint-placeholder-val="{{ false }}"><oncd-loader size="15" layout="inline" tone="light" style="margin-right:7px;"></oncd-loader></sc-if>{{ importConfirmLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ !importCanConfirm }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ closeImportDialog }}" class="btn btn-primary">Close</button>
+            </sc-if>
           </div>
         </div>
       </div>
@@ -500,6 +666,69 @@ a:hover{color:var(--color-accent-700)}
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+// datetime-local <-> ISO (the admin's own clock).
+function toLocalInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+const money = (n) => '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+const shortDate = (v) => new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+// The list's Price cell: what customers pay right now (p.offer is the
+// server's resolved offer — own discount or a running sale).
+function offerCell(p) {
+  const o = p.offer;
+  const onSale = !!(o && o.salePrice != null);
+  const scheduledOwn = (p.discountType === 'percent' || p.discountType === 'amount') && !(o && o.source === 'product');
+  let discountNote = '';
+  if (p.discountType === 'none') discountNote = 'Excluded from sales';
+  else if (scheduledOwn) discountNote = p.discountStartsAt && new Date(p.discountStartsAt) > new Date() ? 'Discount scheduled' : 'Discount ended';
+  return {
+    onSale, notOnSale: !onSale,
+    salePrice: onSale ? money(o.salePrice) : '',
+    offerTag: o ? `${o.badge}${o.source === 'sale' ? ' · ' + (o.label || 'Sale') : (o.label ? ' · ' + o.label : '')}` : '',
+    offerTitle: o ? (o.source === 'sale' ? `From the sale "${o.label}"` : "This product's own discount") + (o.endsAt ? ` — ends ${shortDate(o.endsAt)}` : '') : '',
+    hasDiscountNote: !!discountNote, discountNote,
+    ownDiscount: p.discountType === 'percent' || p.discountType === 'amount',
+    discountType: p.discountType || '',
+  };
+}
+
+// Metal colours a jewelry piece comes in — same rules and swatch colours
+// as the storefront Jewelry page: its metal variations, or (with none) its
+// single Gold Color text mapped onto the same four names.
+const METAL_ORDER = ['Yellow Gold', 'Rose Gold', 'White Gold', 'Silver'];
+const METAL_SWATCH = {
+  'Yellow Gold': 'linear-gradient(135deg,#f8e58e 0%,#d4af37 50%,#a8841f 100%)',
+  'Rose Gold': 'linear-gradient(135deg,#f7d0c1 0%,#d99a86 50%,#ad6860 100%)',
+  'White Gold': 'linear-gradient(135deg,#ffffff 0%,#ece9e1 50%,#c3bfb3 100%)',
+  'Silver': 'linear-gradient(135deg,#fbfbfb 0%,#cfd2d6 50%,#979ba2 100%)',
+};
+function colorFromText(goldColor, metal) {
+  const c = String(goldColor || '').trim();
+  if (/rose|pink/i.test(c)) return 'Rose Gold';
+  if (/white/i.test(c)) return 'White Gold';
+  if (/yellow/i.test(c)) return 'Yellow Gold';
+  if (/silver|925|platinum/i.test(c) || (!c && /silver|925/i.test(String(metal || '')))) return 'Silver';
+  return null;
+}
+function metalCell(p) {
+  if (p.type !== 'jewelry') return { metals: [], hasMetalDots: false, metalDots: [], metalTitle: '', metalNote: '' };
+  const fromVariants = (p.variants || []).map((v) => v.metal).filter((m) => METAL_SWATCH[m]);
+  const list = [...new Set(fromVariants.length ? fromVariants : [colorFromText(p.goldColor, p.metal)].filter(Boolean))]
+    .sort((a, b) => METAL_ORDER.indexOf(a) - METAL_ORDER.indexOf(b));
+  return {
+    metals: list,
+    hasMetalDots: list.length > 0,
+    metalDots: list.map((name) => ({ name, bg: METAL_SWATCH[name] })),
+    metalTitle: (fromVariants.length ? 'Offered in ' : 'Metal: ') + list.join(', '),
+    metalNote: list.length === 1 ? list[0] : `${list.length} metals`,
+  };
+}
+
 class Component extends DCLogic {
   get emptyForm() {
     return {
@@ -509,6 +738,7 @@ class Component extends DCLogic {
       metal: '', gold_purity: '', gold_color: '', gold_weight_grams: '',
       stone_name: '', origin: 'Natural',
       price_per_carat: '', total_price: '', price_visibility: '',
+      discount_type: '', discount_value: '', discount_label: '', discount_starts_at: '', discount_ends_at: '',
     };
   }
   get fieldKeys() { return Object.keys(this.emptyForm); }
@@ -522,9 +752,11 @@ class Component extends DCLogic {
     // ?featured=1 (linked from the Homepage Builder) opens straight onto
     // the starred products.
     search: '', statusFilter: (() => { try { return new URLSearchParams(window.location.search).get('featured') === '1' ? 'featured' : 'all'; } catch { return 'all'; } })(),
-    categoryFilter: 'All', mediaFilter: 'all',
+    categoryFilter: 'All', mediaFilter: 'all', metalFilter: 'all',
     pageSize: 50, currentPage: 1,
     selectedIds: new Set(), bulkBusy: false, bulkPriceVisibility: '__unset',
+    offersNotReady: false, bulkDiscountOpen: false, bulkDiscountError: '',
+    bulkDiscount: { type: 'percent', value: '', label: '', startsAt: '', endsAt: '' },
     dialogOpen: false, editingId: null,
     form: this.emptyForm, dialogError: '', saving: false, saveStatus: '',
     formDirty: false, mediaDirty: false,
@@ -532,7 +764,7 @@ class Component extends DCLogic {
     shapeOptions: [], colorOptions: [], certOptions: [],
     variantRows: [],
     mediaItems: [], draggingMediaId: null, mediaError: '', mediaBusy: false,
-    importBusy: false, importOpen: false, importResult: null,
+    importBusy: false, importOpen: false, importResult: null, importPhase: null, importType: null, importFileName: '', downloadBusy: false,
     newContactCount: 0, globalPriceModeLabel: 'Site Default',
   };
 
@@ -544,6 +776,8 @@ class Component extends DCLogic {
     this.setState({ admin: me });
     import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newContactCount: c.contact, newInquiryCount: c.inquiries })));
     this.loadGlobalPriceMode();
+    fetch('/api/admin/offers/status', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j && j.data) this.setState({ offersNotReady: !j.data.productColumns }); }).catch(() => {});
     this.filters = await import('./utils/filters.js');
     this.loadProducts();
     this.loadSubcategories();
@@ -563,6 +797,58 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     window.removeEventListener('beforeunload', this._beforeUnload);
+  }
+
+  importVals() {
+    const r = this.state.importResult || {};
+    const preview = this.state.importPhase === 'preview';
+    const typeName = { diamond: 'diamond', jewelry: 'jewelry', gemstone: 'gemstone' }[this.state.importType] || 'product';
+    const hasResult = typeof r.totalRows === 'number';
+    const CAP = 50;
+    const capped = (list) => (list || []).slice(0, CAP);
+    const more = (list, what) => ((list || []).length > CAP ? `…and ${list.length - CAP} more ${what}.` : '');
+    const where = (x) => (x.sku ? `Row ${x.row} · ${x.sku}` : `Row ${x.row}`);
+    const writes = (r.created || 0) + (r.updated || 0);
+    const n = (k) => r[k] || 0;
+    let summary = '';
+    if (hasResult) {
+      if (preview) summary = writes ? `Checked ${r.totalRows} row(s). Review the changes below, then confirm.` : `Checked ${r.totalRows} row(s) — there is nothing new to import.`;
+      else summary = writes ? `Import complete: ${n('created')} new and ${n('updated')} updated ${typeName} product(s) saved.` : 'Nothing was changed.';
+      if (n('skipped')) summary += ' The example row was skipped.';
+    }
+    const creates = r.creates || [];
+    return {
+      importOpen: this.state.importOpen,
+      importIsPreview: preview && !r.topLevelError,
+      importTitle: preview && !r.topLevelError ? 'Review Excel import' : (r.topLevelError ? 'Excel import problem' : 'Excel import results'),
+      importFileName: this.state.importFileName || '',
+      importTopError: r.topLevelError || '',
+      importHasResult: hasResult,
+      importSummary: summary,
+      importCounts: { created: n('created'), updated: n('updated'), unchanged: n('unchanged'), rejected: n('rejected') },
+      importZero: { created: n('created') ? '' : 'zero', updated: n('updated') ? '' : 'zero', unchanged: n('unchanged') ? '' : 'zero', rejected: n('rejected') ? '' : 'zero' },
+      importCanConfirm: preview && !r.topLevelError && writes > 0,
+      importUnknownNote: (r.unknownHeaders || []).length ? `These columns aren't part of the ${typeName} template and were ignored: ${r.unknownHeaders.join(', ')}.` : '',
+      importErrors: capped(r.errors).map((x) => ({ ...x, where: where(x) })),
+      importErrorsMore: more(r.errors, 'rejected rows'),
+      importErrorsHead: preview ? `Will be skipped — fix and re-import (${n('rejected')})` : `Skipped rows (${n('rejected')})`,
+      importWarnings: capped(r.warnings).map((x) => ({ ...x, where: where(x) })),
+      importWarningsMore: more(r.warnings, 'rows with notes'),
+      importUpdates: capped(r.updates),
+      importUpdatesMore: more(r.updates, 'updated products'),
+      importUpdatesHead: `${preview ? 'Will update' : 'Updated'} (${n('updated')}) — changed fields`,
+      importCreatesHead: `${preview ? 'Will create' : 'Created'} (${n('created')})`,
+      importCreatesText: creates.length ? creates.slice(0, 120).map((x) => x.sku).join(', ') + (creates.length > 120 ? ` …and ${creates.length - 120} more` : '') : '',
+      importPreviewNote: !writes
+        ? (n('rejected') ? 'Fix the rows above in your file and import it again.' : 'Every row already matches your current stock — nothing needs saving.')
+        : n('rejected')
+        ? 'Rows listed under "Will be skipped" are not imported; everything else is saved together when you confirm.'
+        : 'Nothing is saved until you confirm. Photos and videos are managed in each product\'s form.',
+      importConfirmLabel: this.state.importBusy ? 'Importing…' : (writes ? `Import ${writes} product${writes === 1 ? '' : 's'}` : 'Nothing to import'),
+      importConfirmDisabled: this.state.importBusy || !writes,
+      confirmImport: () => this.confirmImport(),
+      closeImportDialog: () => this.closeImportDialog(),
+    };
   }
 
   async loadAttributes() {
@@ -651,6 +937,11 @@ class Component extends DCLogic {
       price_per_carat: p.pricePerCarat === null || p.pricePerCarat === undefined ? '' : String(p.pricePerCarat),
       total_price: p.totalPrice === null || p.totalPrice === undefined ? '' : String(p.totalPrice),
       price_visibility: p.priceVisibilityOverride || '',
+      discount_type: p.discountType || '',
+      discount_value: p.discountValue === null || p.discountValue === undefined ? '' : String(p.discountValue),
+      discount_label: p.discountLabel || '',
+      discount_starts_at: toLocalInput(p.discountStartsAt),
+      discount_ends_at: toLocalInput(p.discountEndsAt),
     };
     const mediaItems = this.mediaFromServer(p.media);
     const variantByMetal = new Map((p.variants || []).map((v) => [v.metal, v]));
@@ -726,6 +1017,16 @@ class Component extends DCLogic {
     const body = { ...form };
     if (!this.state.editingId) body.type = activeType;
     for (const k of Object.keys(body)) if (body[k] === '') body[k] = null;
+    // datetime-local is the admin's wall-clock time -> an exact instant.
+    for (const k of ['discount_starts_at', 'discount_ends_at']) if (body[k]) body[k] = new Date(body[k]).toISOString();
+    if (!body.discount_type || body.discount_type === 'none') {
+      body.discount_value = null; body.discount_label = null; body.discount_starts_at = null; body.discount_ends_at = null;
+    }
+    // Before the offers SQL has run, an untouched (empty) discount is simply
+    // not sent, so saving every other field keeps working.
+    if (this.state.offersNotReady && !body.discount_type) {
+      for (const k of ['discount_type', 'discount_value', 'discount_label', 'discount_starts_at', 'discount_ends_at']) delete body[k];
+    }
 
     this.setState({ saving: true, saveStatus: '', dialogError: '', mediaError: '' });
     let productId = this.state.editingId;
@@ -964,6 +1265,31 @@ class Component extends DCLogic {
     if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to delete.` });
   }
 
+  openBulkDiscount() {
+    this.setState({ bulkDiscountOpen: true, bulkDiscountError: '', bulkDiscount: { type: 'percent', value: '', label: '', startsAt: '', endsAt: '' } });
+  }
+  async applyBulkDiscount() {
+    const ids = this.state.selectedIds;
+    const skus = this.state.products.filter((p) => ids.has(p.id)).map((p) => p.sku);
+    const d = this.state.bulkDiscount;
+    if (!skus.length) return;
+    if ((d.type === 'percent' || d.type === 'amount') && !(Number(d.value) > 0)) { this.setState({ bulkDiscountError: 'Enter the discount (a number above 0).' }); return; }
+    const toIso = (v) => (v ? new Date(v).toISOString() : null);
+    this.setState({ bulkBusy: true, bulkDiscountError: '' });
+    try {
+      const res = await fetch('/api/admin/offers/products', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ skus, discount: { type: d.type, value: d.value, label: d.label, startsAt: toIso(d.startsAt), endsAt: toIso(d.endsAt) } }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Could not update the discounts.');
+      this.setState({ bulkBusy: false, bulkDiscountOpen: false, selectedIds: new Set() });
+      await this.loadProducts();
+    } catch (err) {
+      this.setState({ bulkBusy: false, bulkDiscountError: err.message });
+    }
+  }
+
   async bulkApplyPriceVisibility() {
     const ids = [...this.state.selectedIds];
     const value = this.state.bulkPriceVisibility;
@@ -1132,26 +1458,81 @@ class Component extends DCLogic {
     }
   }
 
+  // Excel import is two-step: the file is first checked (dry run) and the
+  // admin sees exactly what would be created / updated / rejected; nothing
+  // is written until they confirm, when the same file is sent again.
+  async postImport(file, type, dryRun) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`/api/admin/products/import/${type}${dryRun ? '?dryRun=1' : ''}`, { method: 'POST', credentials: 'same-origin', body: fd });
+    let json = {};
+    try { json = await res.json(); } catch {}
+    if (res.status === 401) throw new Error('Your admin session has expired. Please log in again, then retry the import.');
+    if (!res.ok) throw new Error(json.error || 'The import could not be completed. Please try again.');
+    return json.data;
+  }
+
   async handleImportFile(e) {
     const file = (e.target.files || [])[0];
-    e.target.value = '';
+    e.target.value = ''; // picking the same file again still triggers a new check
     if (!file) return;
-    this.setState({ importBusy: true, errorMessage: '' });
+    const type = this.state.activeType;
+    this._importFile = file;
+    this.setState({ importBusy: true, errorMessage: '', importType: type, importFileName: file.name });
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch(`/api/admin/products/import/${this.state.activeType}`, { method: 'POST', credentials: 'same-origin', body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Import failed.');
-      this.setState({ importBusy: false, importOpen: true, importResult: json.data });
+      const data = await this.postImport(file, type, true);
+      this.setState({ importBusy: false, importOpen: true, importResult: data, importPhase: 'preview' });
+    } catch (err) {
+      this.setState({ importBusy: false, importOpen: true, importResult: { topLevelError: err.message }, importPhase: 'done' });
+    }
+  }
+
+  async confirmImport() {
+    if (!this._importFile || this.state.importBusy) return;
+    this.setState({ importBusy: true });
+    try {
+      const data = await this.postImport(this._importFile, this.state.importType, false);
+      this.setState({ importBusy: false, importResult: data, importPhase: 'done' });
+      this._importFile = null;
       this.loadProducts();
     } catch (err) {
-      this.setState({ importBusy: false, importOpen: true, importResult: { imported: 0, totalRows: 0, errors: [], topLevelError: err.message } });
+      this.setState({ importBusy: false, importResult: { ...(this.state.importResult || {}), topLevelError: err.message }, importPhase: 'done' });
     }
   }
 
   closeImportDialog() {
-    this.setState({ importOpen: false, importResult: null });
+    if (this.state.importBusy) return; // never close mid-write
+    this._importFile = null;
+    this.setState({ importOpen: false, importResult: null, importPhase: null });
+  }
+
+  // Template / stock downloads go through fetch so a failure (expired
+  // session, nothing to export) shows a message instead of saving the
+  // server's error text as a broken .xlsx.
+  async downloadFile(url, fallbackName) {
+    if (this.state.downloadBusy) return;
+    this.setState({ downloadBusy: true, errorMessage: '' });
+    try {
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if (!res.ok) {
+        let msg = '';
+        try { msg = (await res.json()).error || ''; } catch {}
+        throw new Error(res.status === 401 ? 'Your admin session has expired. Please log in again.' : (msg || 'The download failed. Please try again.'));
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const m = /filename="?([^";]+)"?/i.exec(cd);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (m && m[1]) || fallbackName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      this.setState({ downloadBusy: false });
+    } catch (err) {
+      this.setState({ downloadBusy: false, errorMessage: err.message });
+    }
   }
 
   // A never-uploaded item just disappears (nothing to undo server-side); an
@@ -1227,6 +1608,55 @@ class Component extends DCLogic {
     this.setState({ mediaItems: items, mediaDirty: true });
   }
 
+  // Offer / Discount section of the form: labels + a live preview of what
+  // customers will see, computed from the form's own prices.
+  offerFormVals() {
+    const f = this.state.form;
+    const type = f.discount_type || '';
+    const needsValue = type === 'percent' || type === 'amount';
+    const editing = this.state.products.find((x) => x.id === this.state.editingId) || null;
+    const enabledVariants = (this.state.variantRows || []).filter((v) => v.enabled && Number(v.price) > 0);
+    const base = Number(f.total_price) > 0 ? Number(f.total_price) : (enabledVariants.length ? Number(enabledVariants[0].price) : null);
+    let text = '';
+    let cls = '';
+    if (type === '') {
+      const sale = editing && editing.offer && editing.offer.source === 'sale' ? editing.offer : null;
+      text = sale
+        ? `In the running sale "${sale.label}" right now: ${sale.badge}${sale.salePrice != null ? ` — customers pay ${money(sale.salePrice)}` : ''}.`
+        : 'No discount of its own. It joins any sale you run in Sales & Discounts.';
+      if (sale) cls = 'is-sale';
+    } else if (type === 'none') {
+      text = 'Never discounted — this product stays at full price even during sales.';
+    } else {
+      const v = Number(f.discount_value);
+      if (!(v > 0)) { text = type === 'percent' ? 'Enter the percentage, e.g. 15.' : 'Enter the dollars off, e.g. 500.'; }
+      else if (type === 'percent' && v > 95) { text = 'A percentage discount can be at most 95%.'; cls = 'is-warn'; }
+      else if (type === 'amount' && !(base > 0)) { text = 'A $ discount needs a Total Price to take it off.'; cls = 'is-warn'; }
+      else if (type === 'amount' && v >= base) { text = `$${v} off is more than the price (${money(base)}).`; cls = 'is-warn'; }
+      else {
+        const badge = type === 'percent' ? `${v}% OFF` : `${money(v)} OFF`;
+        const sale = base > 0 ? (type === 'percent' ? Math.round(base * (1 - v / 100)) : Math.round((base - v) * 100) / 100) : null;
+        const parts = [`Customers see ${badge}${f.discount_label ? ' · ' + f.discount_label : ''}`];
+        if (sale != null) parts.push(`${money(sale)} instead of ${money(base)}${enabledVariants.length > 1 ? ' (each metal gets the same discount)' : ''}`);
+        const s = f.discount_starts_at ? new Date(f.discount_starts_at) : null;
+        const e = f.discount_ends_at ? new Date(f.discount_ends_at) : null;
+        if (s && e && e <= s) { text = 'The end must be after the start.'; cls = 'is-warn'; }
+        else {
+          if (s && s > new Date()) parts.push(`starts ${shortDate(s)}`);
+          if (e) parts.push(e < new Date() ? `ENDED ${shortDate(e)} — customers won't see it` : `ends ${shortDate(e)}`);
+          text = parts.join(' — ') + '.';
+          cls = e && e < new Date() ? 'is-warn' : 'is-sale';
+        }
+      }
+    }
+    return {
+      offerNeedsValue: needsValue,
+      offerValueLabel: type === 'amount' ? 'Amount off ($)' : 'Percent off (%)',
+      offerValuePlaceholder: type === 'amount' ? 'e.g. 500' : 'e.g. 15',
+      offerPreviewText: text, offerPreviewClass: cls,
+    };
+  }
+
   renderVals() {
     const activeType = this.state.activeType;
     const fmtPrice = (p) => {
@@ -1246,6 +1676,7 @@ class Component extends DCLogic {
         sku: p.sku, type: p.type, id: p.id, status: p.status,
         category: p.category ? p.category.name : '—',
         specs: specsFor(p),
+        ...metalCell(p),
         price: fmtPrice(p),
         tagClass: p.status === 'active' ? 'tag-accent' : 'tag-neutral',
         toggleLabel: p.status === 'active' ? 'Hide' : 'Show',
@@ -1266,6 +1697,7 @@ class Component extends DCLogic {
         toggleSelect: () => this.toggleSelect(p.id),
         hasPriceOverride: !!p.priceVisibilityOverride,
         priceOverrideLabel: PRICE_OVERRIDE_LABELS[p.priceVisibilityOverride] || '',
+        ...offerCell(p),
       };
     });
     const typeProducts = allProducts.filter((p) => p.type === activeType);
@@ -1274,10 +1706,17 @@ class Component extends DCLogic {
       : [];
     const visibleProducts = typeProducts.filter((p) => {
       if (this.state.statusFilter === 'featured') { if (!p.featured) return false; }
+      else if (this.state.statusFilter === 'onsale') { if (!p.onSale) return false; }
+      else if (this.state.statusFilter === 'owndiscount') { if (!p.ownDiscount) return false; }
+      else if (this.state.statusFilter === 'nodiscount') { if (p.discountType !== 'none') return false; }
       else if (this.state.statusFilter !== 'all' && p.status !== this.state.statusFilter) return false;
       if (this.state.categoryFilter !== 'All' && p.category !== this.state.categoryFilter) return false;
       if (this.state.mediaFilter === 'has' && !p.hasMedia) return false;
       if (this.state.mediaFilter === 'none' && p.hasMedia) return false;
+      if (p.type === 'jewelry' && this.state.metalFilter !== 'all') {
+        const f = this.state.metalFilter;
+        if (f === 'multi' ? p.metals.length < 2 : f === 'unset' ? p.metals.length > 0 : !p.metals.includes(f)) return false;
+      }
       if (this.filters && !this.filters.searchMatch(p, this.state.search, [
         (x) => x.sku, (x) => x.category, (x) => x.specs,
       ])) return false;
@@ -1295,6 +1734,9 @@ class Component extends DCLogic {
     const allMatchingSelected = visibleProducts.length > 0 && visibleProducts.every((p) => p.selected);
     const showSelectAllBanner = allPageSelected && !allMatchingSelected && visibleProducts.length > pagedProducts.length;
 
+    const offerForm = this.offerFormVals();
+    const bd = this.state.bulkDiscount;
+    const setBd = (k) => (e) => this.setState({ bulkDiscount: { ...this.state.bulkDiscount, [k]: e.target.value } });
     const fh = {};
     this.fieldKeys.forEach((k) => { fh[k] = (e) => this.setFormField(k, e.target.value); });
 
@@ -1370,8 +1812,11 @@ class Component extends DCLogic {
       handleCategoryFilter: (e) => this.setState({ categoryFilter: e.target.value }),
       mediaFilter: this.state.mediaFilter,
       handleMediaFilter: (e) => this.setState({ mediaFilter: e.target.value }),
-      hasActiveFilters: !!this.state.search || this.state.statusFilter !== 'all' || this.state.categoryFilter !== 'All' || this.state.mediaFilter !== 'all',
-      clearFilters: () => this.setState({ search: '', statusFilter: 'all', categoryFilter: 'All', mediaFilter: 'all' }),
+      isJewelryTab: activeType === 'jewelry',
+      metalFilter: this.state.metalFilter,
+      handleMetalFilter: (e) => this.setState({ metalFilter: e.target.value, currentPage: 1 }),
+      hasActiveFilters: !!this.state.search || this.state.statusFilter !== 'all' || this.state.categoryFilter !== 'All' || this.state.mediaFilter !== 'all' || (activeType === 'jewelry' && this.state.metalFilter !== 'all'),
+      clearFilters: () => this.setState({ search: '', statusFilter: 'all', categoryFilter: 'All', mediaFilter: 'all', metalFilter: 'all' }),
       allVisibleSelected: allPageSelected,
       toggleSelectAll: () => this.toggleSelectAll(pagedProducts),
       showSelectAllBanner,
@@ -1402,6 +1847,17 @@ class Component extends DCLogic {
       globalPriceModeLabel: this.state.globalPriceModeLabel,
       isDiamondForm: activeType === 'diamond', isJewelryForm: activeType === 'jewelry', isGemstoneForm: activeType === 'gemstone',
       saveForm: () => this.saveForm(),
+      ...offerForm,
+      offersNotReady: this.state.offersNotReady,
+      openBulkDiscount: () => this.openBulkDiscount(),
+      closeBulkDiscount: () => this.setState({ bulkDiscountOpen: false }),
+      applyBulkDiscount: () => this.applyBulkDiscount(),
+      bulkDiscountOpen: this.state.bulkDiscountOpen, bulkDiscountError: this.state.bulkDiscountError,
+      bulkDiscount: bd,
+      bulkDiscountHandlers: { type: setBd('type'), value: setBd('value'), label: setBd('label'), startsAt: setBd('startsAt'), endsAt: setBd('endsAt') },
+      bulkNeedsValue: bd.type === 'percent' || bd.type === 'amount',
+      bulkValueLabel: bd.type === 'amount' ? 'Amount off ($)' : 'Percent off (%)',
+      bulkDiscountCta: this.state.bulkBusy ? 'Saving…' : (bd.type === '' ? `Remove discount from ${this.state.selectedIds.size}` : bd.type === 'none' ? `Exclude ${this.state.selectedIds.size} from sales` : `Discount ${this.state.selectedIds.size} ${this.state.selectedIds.size === 1 ? 'product' : 'products'}`),
       saving: this.state.saving,
       saveLabel: this.state.saving ? (this.state.saveStatus || 'Saving…') : this.state.mediaBusy ? 'Preparing…' : 'Save Product',
       saveDisabled: this.state.saving || this.state.mediaBusy,
@@ -1416,20 +1872,18 @@ class Component extends DCLogic {
       mediaItems,
       variantRows,
       handleMediaSelect: (e) => this.handleMediaSelect(e),
-      templateUrl: `/api/admin/products/import/${activeType}/template`,
       hasProductsInTab: typeProducts.length > 0,
-      exportAllUrl: `/api/admin/products/export/${activeType}`,
-      exportSelectedUrl: `/api/admin/products/export/${activeType}?ids=${[...this.state.selectedIds].join(',')}`,
+      downloadBusy: !!this.state.downloadBusy,
+      templateLabel: 'Download Template',
+      exportAllLabel: 'Download All Stock',
+      exportSelectedLabel: `Download Selected (${this.state.selectedIds.size})`,
+      downloadTemplate: () => this.downloadFile(`/api/admin/products/import/${activeType}/template`, `oncd-${activeType}-stock-template.xlsx`),
+      downloadAll: () => this.downloadFile(`/api/admin/products/export/${activeType}`, `oncd-${activeType}-stock.xlsx`),
+      downloadSelected: () => this.downloadFile(`/api/admin/products/export/${activeType}?ids=${[...this.state.selectedIds].join(',')}`, `oncd-${activeType}-stock-selected.xlsx`),
       importBusy: this.state.importBusy,
-      importButtonLabel: this.state.importBusy ? 'Importing…' : 'Import Excel',
+      importButtonLabel: this.state.importBusy && !this.state.importOpen ? 'Checking file…' : 'Import Excel',
       handleImportFile: (e) => this.handleImportFile(e),
-      importOpen: this.state.importOpen,
-      closeImportDialog: () => this.closeImportDialog(),
-      importSummary: this.state.importResult
-        ? (this.state.importResult.topLevelError || `Imported ${this.state.importResult.imported} of ${this.state.importResult.totalRows} ${typeLabel.toLowerCase()} product(s).`)
-        : '',
-      importErrors: this.state.importResult ? (this.state.importResult.errors || []) : [],
-      importHasErrors: !!(this.state.importResult && this.state.importResult.errors && this.state.importResult.errors.length),
+      ...this.importVals(),
       adminName: this.state.admin ? this.state.admin.fullName : '',
       handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
       newContactCount: this.state.newContactCount,

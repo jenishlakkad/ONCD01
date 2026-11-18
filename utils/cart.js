@@ -160,7 +160,9 @@ export function buildMessage(items, opts) {
     groupItems.forEach((it, idx) => {
       const p = it.product;
       const title = p ? inquiryTitle(p) : it.name;
-      const priceLabel = p ? inquiryPriceLabel(p) : (it.priceLabel || 'Price on request');
+      // The label stored when the item was added: it carries the chosen
+      // metal's price and any offer quoted at that moment.
+      const priceLabel = it.priceLabel || (p ? inquiryPriceLabel(p) : 'Price on request');
       lines.push('', `${idx + 1}. SKU: ${it.sku}`, `   Item: ${bold(title)}`);
       if (p) {
         for (const row of inquirySpecRows(p)) lines.push(`   ${row.label}: ${row.value}`);

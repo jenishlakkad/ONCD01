@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#201d18">
 <script src="./utils/diamondLoader.js"></script>
+<script src="./utils/offerView.js"></script>
 <script src="./support.js"></script>
 <script src="./product-media.js"></script>
 </head>
@@ -116,6 +117,7 @@ a:hover{color:var(--color-accent-700)}
 .pcard-title{font-size:14px;font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pcard-spec{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pcard-price{font-size:13.5px;font-weight:600;margin-top:4px;}
+.pcard-price.is-sale{color:var(--color-offer);}
 .pcard-reason{font-size:11.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pcard-flag{position:absolute;left:10px;top:10px;z-index:2;max-width:calc(100% - 62px);overflow:hidden;text-overflow:ellipsis;}
 .pcard-x{position:absolute;right:8px;top:8px;z-index:3;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.92);box-shadow:var(--shadow-sm);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text);}
@@ -593,8 +595,8 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
           <div class="rail" onScroll="{{ railSync }}">
             <sc-for list="{{ savedPreview }}" as="p" hint-placeholder-count="4">
               <a href="{{ p.href }}" class="pcard {{ p.goneClass }}">
-                <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media></div>
-                <div class="pcard-body"><div class="pcard-kicker">{{ p.typeLabel }}</div><div class="pcard-title">{{ p.title }}</div><div class="pcard-price">{{ p.priceLabel }}</div></div>
+                <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media><sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if></div>
+                <div class="pcard-body"><div class="pcard-kicker">{{ p.typeLabel }}</div><div class="pcard-title">{{ p.title }}</div><div class="pcard-price {{ p.priceClass }}">{{ p.priceLabel }}<sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><s class="price-was" style="margin-left:6px;">{{ p.wasLabel }}</s></sc-if></div></div>
               </a>
             </sc-for>
           </div>
@@ -607,8 +609,8 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
           <div class="rail" onScroll="{{ railSync }}">
             <sc-for list="{{ recentlyViewed }}" as="p" hint-placeholder-count="4">
               <a href="{{ p.href }}" class="pcard">
-                <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media></div>
-                <div class="pcard-body"><div class="pcard-kicker">{{ p.typeLabel }}</div><div class="pcard-title">{{ p.title }}</div><div class="pcard-price">{{ p.priceLabel }}</div></div>
+                <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media><sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if></div>
+                <div class="pcard-body"><div class="pcard-kicker">{{ p.typeLabel }}</div><div class="pcard-title">{{ p.title }}</div><div class="pcard-price {{ p.priceClass }}">{{ p.priceLabel }}<sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><s class="price-was" style="margin-left:6px;">{{ p.wasLabel }}</s></sc-if></div></div>
               </a>
             </sc-for>
           </div>
@@ -621,8 +623,8 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
           <div class="rail" onScroll="{{ railSync }}">
             <sc-for list="{{ recommended }}" as="p" hint-placeholder-count="4">
               <a href="{{ p.href }}" class="pcard">
-                <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media></div>
-                <div class="pcard-body"><div class="pcard-kicker">{{ p.typeLabel }}</div><div class="pcard-title">{{ p.title }}</div><div class="pcard-price">{{ p.priceLabel }}</div><div class="pcard-reason muted">{{ p.reason }}</div></div>
+                <div class="pcard-media"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media><sc-if value="{{ p.hasOffer }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if></div>
+                <div class="pcard-body"><div class="pcard-kicker">{{ p.typeLabel }}</div><div class="pcard-title">{{ p.title }}</div><div class="pcard-price {{ p.priceClass }}">{{ p.priceLabel }}<sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><s class="price-was" style="margin-left:6px;">{{ p.wasLabel }}</s></sc-if></div><div class="pcard-reason muted">{{ p.reason }}</div></div>
               </a>
             </sc-for>
           </div>
@@ -846,13 +848,13 @@ a.inq-item-title:hover{color:var(--color-accent-700);}
             <sc-for list="{{ savedCards }}" as="p" hint-placeholder-count="6">
               <div class="pcard {{ p.goneClass }}">
                 <button class="pcard-x" onClick="{{ p.remove }}" aria-label="Remove from saved items" title="Remove"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-                <sc-if value="{{ p.priceChanged }}" hint-placeholder-val="{{ false }}"><span class="pill pill-new pcard-flag">Price updated</span></sc-if>
-                <a href="{{ p.href }}" class="pcard-media" style="display:block;"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media></a>
+                <sc-if value="{{ p.priceChanged }}" hint-placeholder-val="{{ false }}"><span class="pill pill-new pcard-flag">{{ p.priceFlag }}</span></sc-if>
+                <a href="{{ p.href }}" class="pcard-media" style="display:block;"><product-media media="{{ p.media }}" shape="rect" fit="cover" hover-video placeholder="{{ p.placeholder }}" style="width:100%;height:100%;"></product-media><sc-if value="{{ p.showRibbon }}" hint-placeholder-val="{{ false }}"><span class="offer-ribbon">{{ p.offerBadge }}</span></sc-if></a>
                 <div class="pcard-body">
                   <div class="pcard-kicker">{{ p.typeLabel }}</div>
                   <a href="{{ p.href }}" class="pcard-title" style="color:var(--color-text);">{{ p.title }}</a>
                   <div class="pcard-spec muted">{{ p.spec }}</div>
-                  <div class="pcard-price">{{ p.priceLabel }}</div>
+                  <div class="pcard-price {{ p.priceClass }}">{{ p.priceLabel }}<sc-if value="{{ p.onSale }}" hint-placeholder-val="{{ false }}"><s class="price-was" style="margin-left:6px;">{{ p.wasLabel }}</s></sc-if></div>
                   <div class="muted" style="font-size:11.5px;">Saved {{ p.savedAgo }}</div>
                   <div class="pcard-actions">
                     <sc-if value="{{ p.available }}" hint-placeholder-val="{{ true }}">
@@ -1192,7 +1194,7 @@ function timeAgo(d, now) {
 // "$12,345" -> 12345, "$1,200/ct" -> {perCarat: 1200}; anything else (masked
 // labels like "Price on Request") -> null.
 function parseMoney(label) {
-  const m = /^\$\s?([\d,]+(?:\.\d+)?)(\/ct)?$/.exec(String(label || '').trim());
+  const m = /^\$\s?([\d,]+(?:\.\d+)?)(\/ct)?(?:\s*\(.*\))?$/.exec(String(label || '').trim());
   if (!m) return null;
   const n = Number(m[1].replace(/,/g, ''));
   return Number.isFinite(n) ? { value: n, perCarat: !!m[2] } : null;
@@ -1594,7 +1596,7 @@ class Component extends DCLogic {
     let added = 0;
     for (const it of items) {
       if (this.cart.getCart().some((c) => c.sku === it.sku)) continue;
-      this.cart.addToCart({ sku: it.sku, name: it.title, priceLabel: it.priceLabel, qty: it.qty || 1, product: it.product });
+      this.cart.addToCart({ sku: it.sku, name: it.title, priceLabel: it.cartLabel || it.priceLabel, qty: it.qty || 1, product: it.product });
       added += 1;
     }
     this.refreshCart();
@@ -1765,9 +1767,9 @@ class Component extends DCLogic {
     if (p.type === 'jewelry') return p.stoneName ? `${p.stoneName} Piece` : (p.category ? p.category.name : p.sku);
     return `${p.stoneName || 'Gemstone'}${p.weightCarat ? ', ' + p.weightCarat + 'ct' : ''}`;
   }
+  // Offer-aware (utils/offerView.js): the sale price when on offer.
   priceLabelFor(p) {
-    if (p.priceVisible && p.totalPrice != null) return '$' + Number(p.totalPrice).toLocaleString();
-    if (p.priceVisible && p.pricePerCarat != null) return '$' + Number(p.pricePerCarat).toLocaleString() + '/ct';
+    if (p.priceVisible && (p.totalPrice != null || p.pricePerCarat != null)) return window.oncdOffer(p).nowLabel;
     return p.priceLabel || '';
   }
   specFor(p) {
@@ -1776,9 +1778,11 @@ class Component extends DCLogic {
     return [p.origin, p.shape, p.certificateAuthority].filter(Boolean).join(' · ');
   }
   productCard(p, extra) {
+    const o = window.oncdOffer(p);
     return {
       sku: p.sku, product: p,
       title: this.cardTitle(p), priceLabel: this.priceLabelFor(p), spec: this.specFor(p),
+      cartLabel: o.cartLabel, hasOffer: o.hasOffer, offerBadge: o.badge, onSale: o.onSale, wasLabel: o.wasLabel, priceClass: o.priceClass,
       typeLabel: TYPE_LABEL[p.type] || '',
       href: `${DETAIL_PAGE[p.type] || 'Home.dc.html'}?sku=${encodeURIComponent(p.sku)}`,
       media: JSON.stringify(p.media || []),
@@ -1845,7 +1849,7 @@ class Component extends DCLogic {
           priceLabel: it.priceLabel || '',
           available: !!p, href: card ? card.href : '#',
           media: card ? card.media : '[]',
-          product: p || null, cartPrice: card ? card.priceLabel : (it.priceLabel || ''),
+          product: p || null, cartPrice: card ? card.cartLabel : (it.priceLabel || ''),
         };
       });
       const n = items.length;
@@ -1960,12 +1964,19 @@ class Component extends DCLogic {
       if (p) {
         const card = this.productCard(p);
         const snap = parseMoney(s.priceLabel);
-        const liveValue = snap && p.priceVisible ? (snap.perCarat ? p.pricePerCarat : p.totalPrice) : null;
+        // What they'd pay now (the sale price while on offer).
+        const liveValue = snap && p.priceVisible
+          ? (snap.perCarat
+            ? (p.offer && p.offer.salePricePerCarat != null ? p.offer.salePricePerCarat : p.pricePerCarat)
+            : (p.offer && p.offer.salePrice != null ? p.offer.salePrice : p.totalPrice))
+          : null;
         const inCart = cartSkus.has(s.sku);
         return {
           ...card, type, available: true, savedAt: s.createdAt, savedAgo: timeAgo(s.createdAt, now),
           priceValue: p.priceVisible && p.totalPrice != null ? Number(p.totalPrice) : null,
           priceChanged: !!(snap && liveValue != null && Math.abs(Number(liveValue) - snap.value) >= 1),
+          showRibbon: card.hasOffer && !(snap && liveValue != null && Math.abs(Number(liveValue) - snap.value) >= 1),
+          priceFlag: snap && liveValue != null && Number(liveValue) < snap.value && card.onSale ? `Now ${card.offerBadge.toLowerCase()}` : 'Price updated',
           cartBtnClass: inCart ? 'btn-added' : 'btn-primary', cartBtnLabel: inCart ? '✓ In inquiry cart' : 'Add to inquiry cart', cartBtnShort: inCart ? '✓ In cart' : 'Add to cart',
           toggleCart: () => this.toggleCartFor(card),
           remove: () => this.removeSaved(s.sku),

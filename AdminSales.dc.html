@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales &amp; Discounts — ONCD Admin</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#201d18">
+<script src="./utils/diamondLoader.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
+<style>
+body{margin:0}
+a{color:var(--color-accent);text-decoration:none}
+a:hover{color:var(--color-accent-700)}
+.side-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:var(--radius-md);font-size:13.5px;color:var(--color-neutral-300);transition:background .2s,color .2s;}
+.side-item:hover{background:rgba(248,244,244,.06);color:#f8f4f4;}
+.side-item.active{background:var(--color-accent-900);color:var(--color-accent-300);}
+.adm-th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);padding:10px 14px;border-bottom:1px solid var(--color-divider);}
+.adm-td{padding:12px 14px;border-bottom:1px solid var(--color-divider);font-size:13.5px;vertical-align:top;}
+.muted{opacity:.62;}
+
+.setup{border:1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);background:var(--color-accent-100);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:18px;}
+.setup h4{margin:0 0 4px;font-size:15px;}
+.setup p{margin:0 0 10px;font-size:13px;}
+.setup pre{max-height:200px;overflow:auto;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-sm);padding:10px;font-size:11.5px;margin:0 0 10px;white-space:pre;}
+.notice{font-size:12.5px;padding:9px 12px;border-radius:var(--radius-md);margin:0 0 14px;}
+.notice-ok{background:#e3f1e6;color:#25653a;}
+.notice-err{background:#fbe9e5;color:#8d2c1a;}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px;}
+.stat{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 16px;background:var(--color-bg);}
+.stat .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;}
+.stat .v{font-family:var(--font-heading);font-size:26px;font-weight:600;margin-top:4px;line-height:1.1;}
+.stat .s{font-size:12px;opacity:.6;margin-top:2px;}
+.stat.hot .v{color:var(--color-offer);}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;border:1px solid var(--color-divider);background:var(--color-bg);font:inherit;font-size:13px;cursor:pointer;color:var(--color-text);}
+.chip:hover{border-color:color-mix(in srgb, var(--color-accent) 45%, transparent);}
+.chip.active{background:var(--color-text);border-color:var(--color-text);color:var(--color-bg);}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0;}
+
+.sale-list{display:grid;gap:12px;}
+.sale-card{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:16px 18px;background:var(--color-bg);display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:start;}
+.sale-card.is-off{opacity:.72;}
+.sale-badge{background:var(--color-offer);color:#fff;font-weight:800;font-size:13px;letter-spacing:.05em;border-radius:12px;padding:12px 10px;min-width:86px;text-align:center;line-height:1.15;}
+.sale-name{font-family:var(--font-heading);font-size:18px;font-weight:600;line-height:1.25;overflow-wrap:anywhere;}
+.sale-meta{font-size:12.5px;opacity:.75;margin-top:4px;line-height:1.5;overflow-wrap:anywhere;}
+.sale-reach{font-size:12.5px;margin-top:8px;}
+.sale-reach strong{color:var(--color-offer);}
+.sale-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.sale-actions .btn{font-size:12px;padding:6px 10px;}
+.st{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 9px;vertical-align:2px;margin-left:6px;}
+.st-live{background:#e3f1e6;color:#25653a;}
+.st-scheduled{background:#e8eef9;color:#2b4c8c;}
+.st-paused{background:#f3efe6;color:#7a6a45;}
+.st-ended{background:#eee;color:#666;}
+.st-excluded{background:#f4ecec;color:#7c3a3a;}
+@media (max-width:720px){
+  .sale-card{grid-template-columns:auto 1fr;}
+  .sale-actions{grid-column:1 / -1;justify-content:flex-start;}
+}
+
+.empty{border:1px dashed var(--color-divider);border-radius:var(--radius-md);padding:28px 20px;text-align:center;font-size:13.5px;}
+.empty h4{margin:0 0 6px;font-size:16px;}
+
+.help{border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 18px;background:var(--color-surface);font-size:13px;line-height:1.6;margin-top:26px;}
+.help h5{margin:0 0 6px;color:var(--color-accent-700);}
+.help ul{margin:0;padding-left:18px;}
+
+/* Sale editor */
+.sale-dialog{max-width:860px !important;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.form-sec{border-top:1px solid var(--color-divider);padding-top:14px;margin-top:16px;}
+.form-sec h5{margin:0 0 8px;font-size:14px;color:var(--color-accent-700);}
+.hint{font-size:11.5px;opacity:.6;margin:4px 0 0;line-height:1.45;}
+.check-row{display:flex;flex-wrap:wrap;gap:8px;}
+.check{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--color-divider);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;background:var(--color-bg);}
+.check:has(input:checked){background:var(--color-accent-100);border-color:var(--color-accent-300);color:var(--color-accent-800);font-weight:600;}
+.check input{margin:0;accent-color:var(--color-accent);}
+.cat-group{margin-top:10px;}
+.cat-group-title{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;margin-bottom:6px;}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.quick button{font-size:11.5px;padding:4px 9px;border-radius:999px;border:1px solid var(--color-divider);background:var(--color-bg);cursor:pointer;color:var(--color-text);}
+.quick button:hover{border-color:var(--color-accent-300);}
+textarea.input{min-height:74px;resize:vertical;font-family:inherit;}
+.preview{margin-top:16px;border:1px solid var(--color-offer-line);background:var(--color-offer-soft);border-radius:var(--radius-md);padding:14px 16px;}
+.preview-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.preview-badge{background:var(--color-offer);color:#fff;font-weight:800;font-size:12px;letter-spacing:.05em;border-radius:999px;padding:5px 11px;}
+.preview-count{font-size:14px;font-weight:600;color:var(--color-offer);}
+.preview-notes{font-size:12px;opacity:.8;margin-top:6px;line-height:1.5;}
+.preview table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12.5px;background:var(--color-bg);border-radius:8px;overflow:hidden;}
+.preview td{padding:7px 10px;border-bottom:1px solid var(--color-divider);}
+.preview td.r{text-align:right;white-space:nowrap;}
+.preview s{opacity:.5;margin-right:6px;}
+.preview .sp{color:var(--color-offer);font-weight:700;}
+.err-box{font-size:12.5px;padding:9px 12px;border-radius:8px;background:#fbe9e5;color:#8d2c1a;margin-top:12px;}
+.badge-preview{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:12px;}
+.pd-badge{display:inline-block;background:var(--color-offer-soft);color:var(--color-offer);border:1px solid var(--color-offer-line);border-radius:999px;font-size:11px;font-weight:700;padding:3px 9px;white-space:nowrap;}
+.sku-cell{font-weight:600;white-space:nowrap;}
+@media (max-width:640px){
+  .dialog-backdrop{padding:10px !important;}
+}
+</style>
+</helmet>
+
+<div class="adm-shell" style="background:var(--color-bg);color:var(--color-text);">
+  <aside style="background:var(--color-neutral-900);color:var(--color-neutral-300);padding:24px 16px;display:flex;flex-direction:column;gap:4px;">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:#f8f4f4;letter-spacing:.08em;padding:0 8px 20px;"><a href="AdminDashboard.dc.html" class="brand-link" aria-label="Admin dashboard">ONCD ADMIN</a></div>
+    <a href="AdminDashboard.dc.html" class="side-item">Dashboard</a>
+    <a href="AdminUsers.dc.html" class="side-item">User Approval</a>
+    <a href="AdminContact.dc.html" class="side-item">Contact Messages
+      <sc-if value="{{ hasNewContact }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newContactCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminInquiries.dc.html" class="side-item">Inquiries
+      <sc-if value="{{ hasNewInquiry }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;background:var(--color-accent-700);color:#fff;font-size:10px;font-weight:700;line-height:1;padding:3px 7px;border-radius:999px;">{{ newInquiryCount }}</span>
+      </sc-if>
+    </a>
+    <a href="AdminProducts.dc.html" class="side-item">Products</a>
+    <a href="AdminSales.dc.html" class="side-item active">Sales &amp; Discounts</a>
+    <a href="AdminCategories.dc.html" class="side-item">Categories</a>
+    <a href="AdminAttributes.dc.html" class="side-item">Attributes</a>
+    <a href="AdminProductTypes.dc.html" class="side-item">Product Types</a>
+    <a href="AdminHomepage.dc.html" class="side-item">Homepage</a>
+    <a href="AdminAbout.dc.html" class="side-item">About Page</a>
+    <a href="AdminSeo.dc.html" class="side-item">SEO</a>
+    <a href="AdminRoles.dc.html" class="side-item">Roles</a>
+    <a href="AdminAudit.dc.html" class="side-item">Audit Reports</a>
+    <a href="AdminSettings.dc.html" class="side-item">Settings</a>
+    <div class="adm-back" style="margin-top:auto;padding-top:20px;border-top:1px solid rgba(248,244,244,.1);">
+      <a href="Home.dc.html" class="side-item" style="color:var(--color-neutral-300);">← Back to Website</a>
+    </div>
+  </aside>
+
+  <main style="padding:32px 40px 80px;max-width:1180px;min-width:0;">
+    <div class="adm-page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div><h6 style="color:var(--color-accent-700);">Catalog</h6><h1 style="font-size:28px;margin-top:6px;">Sales &amp; Discounts</h1></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="tag tag-outline">Admin: {{ adminName }}</div>
+        <button onClick="{{ handleLogout }}" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">Log Out</button>
+      </div>
+    </div>
+    <p class="muted" style="font-size:13px;margin:-16px 0 20px;max-width:820px;">Run a <strong>sale</strong> to discount many products at once (the whole store, chosen categories, a price range or a list of SKUs), or give single products <strong>their own discount</strong>. Customers see the badge, the sale price and the original price crossed out on every card and product page.</p>
+
+    <sc-if value="{{ showSetup }}" hint-placeholder-val="{{ false }}">
+      <div class="setup">
+        <h4>One-time setup: turn on discounts</h4>
+        <p>Run this once in the Supabase SQL Editor (it only adds new columns and a table — nothing existing is changed). The storefront keeps working exactly as now until it's run.</p>
+        <pre>{{ migrationSql }}</pre>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" style="font-size:12.5px;padding:7px 14px;" onClick="{{ copySql }}">{{ copyLabel }}</button>
+          <button class="btn btn-secondary" style="font-size:12.5px;padding:7px 14px;" onClick="{{ recheck }}">I've run it — check again</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
+      <div class="notice notice-err" role="alert">{{ errorMessage }}</div>
+    </sc-if>
+    <sc-if value="{{ flash }}" hint-placeholder-val="{{ false }}">
+      <div class="notice notice-ok" role="status">{{ flash }}</div>
+    </sc-if>
+
+    <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+      <oncd-loader label="Loading sales" style="min-height:30vh;"></oncd-loader>
+    </sc-if>
+
+    <sc-if value="{{ loaded }}" hint-placeholder-val="{{ true }}">
+      <div class="stats">
+        <div class="stat hot"><div class="k">On sale now</div><div class="v">{{ statOnSale }}</div><div class="s">{{ statOnSaleSub }}</div></div>
+        <div class="stat"><div class="k">Live sales</div><div class="v">{{ statLive }}</div><div class="s">{{ statScheduledSub }}</div></div>
+        <div class="stat"><div class="k">Own discounts</div><div class="v">{{ statOwn }}</div><div class="s">running on single products</div></div>
+        <div class="stat"><div class="k">Ending soon</div><div class="v">{{ statEnding }}</div><div class="s">offers ending within 3 days</div></div>
+      </div>
+
+      <div class="seg" role="tablist" aria-label="Sales or product discounts">
+        <label class="seg-opt"><input type="radio" name="tab" checked="{{ isSalesTab }}" onChange="{{ showSalesTab }}"/>{{ salesTabLabel }}</label>
+        <label class="seg-opt"><input type="radio" name="tab" checked="{{ isProductsTab }}" onChange="{{ showProductsTab }}"/>{{ productsTabLabel }}</label>
+      </div>
+
+      <!-- ───────────── Sales ───────────── -->
+      <sc-if value="{{ isSalesTab }}" hint-placeholder-val="{{ true }}">
+        <div class="toolbar">
+          <div class="chips" role="group" aria-label="Filter sales">
+            <sc-for list="{{ saleFilters }}" as="f" hint-placeholder-count="5">
+              <button type="button" class="chip {{ f.activeClass }}" onClick="{{ f.select }}">{{ f.label }}</button>
+            </sc-for>
+          </div>
+          <button class="btn btn-primary" onClick="{{ openNewSale }}" disabled="{{ salesLocked }}">+ New sale</button>
+        </div>
+
+        <sc-if value="{{ noSales }}" hint-placeholder-val="{{ false }}">
+          <div class="empty">
+            <h4>{{ emptySalesTitle }}</h4>
+            <p class="muted" style="margin:0 0 12px;">{{ emptySalesText }}</p>
+            <sc-if value="{{ canCreateFirst }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary" onClick="{{ openNewSale }}">Create a sale</button></sc-if>
+          </div>
+        </sc-if>
+
+        <div class="sale-list">
+          <sc-for list="{{ saleCards }}" as="s" hint-placeholder-count="2">
+            <div class="sale-card {{ s.offClass }}">
+              <div class="sale-badge">{{ s.badge }}</div>
+              <div style="min-width:0;">
+                <div class="sale-name">{{ s.name }}<span class="st {{ s.statusClass }}">{{ s.statusLabel }}</span></div>
+                <div class="sale-meta">{{ s.scopeText }}</div>
+                <div class="sale-meta">{{ s.whenText }}</div>
+                <sc-if value="{{ s.hasBannerText }}" hint-placeholder-val="{{ false }}"><div class="sale-meta">{{ s.bannerLine }}</div></sc-if>
+                <div class="sale-reach"><strong>{{ s.reachMain }}</strong></div>
+                <sc-if value="{{ s.hasReachNotes }}" hint-placeholder-val="{{ false }}"><div class="sale-meta">{{ s.reachNotes }}</div></sc-if>
+              </div>
+              <div class="sale-actions">
+                <button class="btn btn-secondary" onClick="{{ s.edit }}">Edit</button>
+                <sc-if value="{{ s.canToggle }}" hint-placeholder-val="{{ true }}"><button class="btn btn-ghost" onClick="{{ s.toggle }}" disabled="{{ busy }}">{{ s.toggleLabel }}</button></sc-if>
+                <button class="btn btn-ghost" onClick="{{ s.duplicate }}">Duplicate</button>
+                <button class="btn btn-ghost" style="color:var(--color-offer);" onClick="{{ s.remove }}" disabled="{{ busy }}">Delete</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ───────────── Product discounts ───────────── -->
+      <sc-if value="{{ isProductsTab }}" hint-placeholder-val="{{ false }}">
+        <div class="toolbar">
+          <div class="chips" role="group" aria-label="Filter product discounts">
+            <sc-for list="{{ pdFilters }}" as="f" hint-placeholder-count="5">
+              <button type="button" class="chip {{ f.activeClass }}" onClick="{{ f.select }}">{{ f.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <sc-if value="{{ hasEndedOwn }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost" style="font-size:12.5px;" onClick="{{ clearEnded }}" disabled="{{ busy }}">{{ clearEndedLabel }}</button></sc-if>
+            <button class="btn btn-primary" onClick="{{ openNewPd }}" disabled="{{ productsLocked }}">+ Discount products</button>
+          </div>
+        </div>
+        <input class="input" value="{{ pdSearch }}" onChange="{{ handlePdSearch }}" placeholder="Search SKU or product…" style="max-width:340px;margin-bottom:12px;"/>
+
+        <sc-if value="{{ noPd }}" hint-placeholder-val="{{ false }}">
+          <div class="empty">
+            <h4>{{ emptyPdTitle }}</h4>
+            <p class="muted" style="margin:0;">{{ emptyPdText }}</p>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasPd }}" hint-placeholder-val="{{ true }}">
+          <div class="tbl-wrap"><table class="table" style="width:100%;border-collapse:collapse;">
+            <thead><tr>
+              <th class="adm-th">SKU</th><th class="adm-th" data-pri="2">Product</th><th class="adm-th">Discount</th><th class="adm-th">Price</th><th class="adm-th" data-pri="2">When</th><th class="adm-th">Actions</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ pdRows }}" as="r" hint-placeholder-count="4">
+                <tr>
+                  <td class="adm-td"><div class="sku-cell">{{ r.sku }}</div><div class="muted" style="font-size:11.5px;">{{ r.typeLabel }}</div></td>
+                  <td class="adm-td" data-pri="2">{{ r.title }}<sc-if value="{{ r.notPublic }}" hint-placeholder-val="{{ false }}"><div class="muted" style="font-size:11.5px;">Not on the storefront (hidden / draft)</div></sc-if></td>
+                  <td class="adm-td"><span class="pd-badge">{{ r.badge }}</span><span class="st {{ r.stateClass }}">{{ r.stateLabel }}</span><sc-if value="{{ r.label }}" hint-placeholder-val="{{ false }}"><div class="muted" style="font-size:11.5px;margin-top:4px;">{{ r.label }}</div></sc-if></td>
+                  <td class="adm-td" style="white-space:nowrap;"><sc-if value="{{ r.hasSale }}" hint-placeholder-val="{{ true }}"><strong style="color:var(--color-offer);">{{ r.salePrice }}</strong> <s class="muted" style="font-size:12px;">{{ r.price }}</s></sc-if><sc-if value="{{ r.noSale }}" hint-placeholder-val="{{ false }}">{{ r.price }}</sc-if></td>
+                  <td class="adm-td" data-pri="2" style="font-size:12.5px;">{{ r.whenText }}</td>
+                  <td class="adm-td" style="white-space:nowrap;">
+                    <button class="btn btn-ghost" style="font-size:12px;padding:5px 9px;" onClick="{{ r.edit }}">Edit</button>
+                    <button class="btn btn-ghost" style="font-size:12px;padding:5px 9px;color:var(--color-offer);" onClick="{{ r.remove }}" disabled="{{ busy }}">Remove</button>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table></div>
+        </sc-if>
+      </sc-if>
+
+      <div class="help">
+        <h5>How discounts work</h5>
+        <ul>
+          <li>A product's <strong>own discount</strong> (set here, in the product form, or with the Discount columns in Excel) always wins while it is running.</li>
+          <li>Otherwise, if several sales cover the same product, the customer gets the <strong>biggest saving</strong>. Discounts never stack.</li>
+          <li>"Never discount" on a product keeps it at full price during every sale.</li>
+          <li>Where a visitor can't see prices (login / contact for price), they still see the badge — never the numbers. Inquiries and the cart record the discounted price the customer was shown.</li>
+          <li>Dates use your computer's clock ({{ tzNote }}). A sale with no end date runs until you pause or delete it.</li>
+        </ul>
+      </div>
+    </sc-if>
+
+    <!-- ───────────── Sale editor ───────────── -->
+    <sc-if value="{{ saleOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closeSale }}">
+        <div class="dialog sale-dialog" role="dialog" aria-modal="true" aria-label="{{ saleDialogTitle }}" onClick="{{ stop }}">
+          <div class="dialog-title">{{ saleDialogTitle }}</div>
+
+          <div class="form-grid">
+            <div class="field"><label>Sale name</label><input class="input" maxlength="80" value="{{ sf.name }}" onChange="{{ sh.name }}" placeholder="e.g. Diwali Sale"/></div>
+            <div class="field"><label>Label customers see <span class="muted">(optional)</span></label><input class="input" maxlength="40" value="{{ sf.badgeLabel }}" onChange="{{ sh.badgeLabel }}" placeholder="Defaults to the sale name"/></div>
+          </div>
+
+          <div class="form-sec">
+            <h5>Discount</h5>
+            <div class="form-grid">
+              <div class="field">
+                <label>Type</label>
+                <select class="input" value="{{ sf.type }}" onChange="{{ sh.type }}">
+                  <option value="percent">% off</option>
+                  <option value="amount">$ off each product</option>
+                </select>
+              </div>
+              <div class="field"><label>{{ valueLabel }}</label><input class="input" inputmode="decimal" value="{{ sf.value }}" onChange="{{ sh.value }}" placeholder="{{ valuePlaceholder }}"/></div>
+            </div>
+          </div>
+
+          <div class="form-sec">
+            <h5>Applies to</h5>
+            <div class="check-row" role="radiogroup" aria-label="Applies to">
+              <label class="check"><input type="radio" name="scopeMode" checked="{{ isScopeAll }}" onChange="{{ scopeAll }}"/>Whole store</label>
+              <label class="check"><input type="radio" name="scopeMode" checked="{{ isScopeFilter }}" onChange="{{ scopeFilter }}"/>Types, categories &amp; price range</label>
+              <label class="check"><input type="radio" name="scopeMode" checked="{{ isScopeSkus }}" onChange="{{ scopeSkus }}"/>Specific SKUs</label>
+            </div>
+
+            <sc-if value="{{ isScopeFilter }}" hint-placeholder-val="{{ false }}">
+              <div class="cat-group">
+                <div class="cat-group-title">Product types (none ticked = all)</div>
+                <div class="check-row">
+                  <sc-for list="{{ typeChecks }}" as="t" hint-placeholder-count="3">
+                    <label class="check"><input type="checkbox" checked="{{ t.checked }}" onChange="{{ t.toggle }}"/>{{ t.label }}</label>
+                  </sc-for>
+                </div>
+              </div>
+              <sc-for list="{{ categoryGroups }}" as="g" hint-placeholder-count="2">
+                <div class="cat-group">
+                  <div class="cat-group-title">{{ g.title }}</div>
+                  <div class="check-row">
+                    <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="4">
+                      <label class="check"><input type="checkbox" checked="{{ c.checked }}" onChange="{{ c.toggle }}"/>{{ c.name }}</label>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ showSubcats }}" hint-placeholder-val="{{ false }}">
+                <div class="cat-group">
+                  <div class="cat-group-title">Jewelry subcategories (none ticked = all)</div>
+                  <div class="check-row">
+                    <sc-for list="{{ subcatChecks }}" as="c" hint-placeholder-count="4">
+                      <label class="check"><input type="checkbox" checked="{{ c.checked }}" onChange="{{ c.toggle }}"/>{{ c.name }}</label>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <div class="form-grid" style="margin-top:12px;">
+                <div class="field"><label>Minimum price <span class="muted">(optional)</span></label><input class="input" inputmode="decimal" value="{{ sf.minPrice }}" onChange="{{ sh.minPrice }}" placeholder="e.g. 1000"/></div>
+                <div class="field"><label>Maximum price <span class="muted">(optional)</span></label><input class="input" inputmode="decimal" value="{{ sf.maxPrice }}" onChange="{{ sh.maxPrice }}" placeholder="e.g. 10000"/></div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isScopeSkus }}" hint-placeholder-val="{{ false }}">
+              <div class="field" style="margin-top:10px;">
+                <label>SKUs</label>
+                <textarea class="input" value="{{ sf.skus }}" onChange="{{ sh.skus }}" placeholder="One per line, or separated by commas"></textarea>
+                <p class="hint">{{ skuHint }}</p>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showExclude }}" hint-placeholder-val="{{ true }}">
+              <div class="field" style="margin-top:10px;">
+                <label>Leave out these SKUs <span class="muted">(optional)</span></label>
+                <textarea class="input" style="min-height:52px;" value="{{ sf.excludeSkus }}" onChange="{{ sh.excludeSkus }}" placeholder="One per line, or separated by commas"></textarea>
+              </div>
+            </sc-if>
+          </div>
+
+          <div class="form-sec">
+            <h5>Schedule</h5>
+            <div class="form-grid">
+              <div class="field">
+                <label>Starts <span class="muted">(blank = now)</span></label>
+                <input type="datetime-local" class="input" value="{{ sf.startsAt }}" onChange="{{ sh.startsAt }}"/>
+              </div>
+              <div class="field">
+                <label>Ends <span class="muted">(blank = no end date)</span></label>
+                <input type="datetime-local" class="input" value="{{ sf.endsAt }}" onChange="{{ sh.endsAt }}"/>
+                <div class="quick">
+                  <button type="button" onClick="{{ endIn3 }}">+3 days</button>
+                  <button type="button" onClick="{{ endIn7 }}">+1 week</button>
+                  <button type="button" onClick="{{ endIn30 }}">+30 days</button>
+                  <button type="button" onClick="{{ clearEnd }}">No end</button>
+                </div>
+              </div>
+            </div>
+            <label class="check" style="margin-top:12px;"><input type="checkbox" checked="{{ sf.active }}" onChange="{{ toggleActive }}"/>Active (untick to save it paused)</label>
+          </div>
+
+          <div class="form-sec">
+            <h5>Catalog banner</h5>
+            <label class="check"><input type="checkbox" checked="{{ sf.showBanner }}" onChange="{{ toggleBanner }}"/>Show a banner at the top of the catalog pages it applies to</label>
+            <sc-if value="{{ sf.showBanner }}" hint-placeholder-val="{{ false }}">
+              <div class="field" style="margin-top:10px;">
+                <label>Banner text <span class="muted">(optional)</span></label>
+                <input class="input" maxlength="160" value="{{ sf.bannerText }}" onChange="{{ sh.bannerText }}" placeholder="e.g. Celebrate the festival of lights — selected pieces up to 20% off"/>
+                <p class="hint">The banner shows the badge, the label, this text, a countdown to the end date and a "Shop the sale" button.</p>
+              </div>
+            </sc-if>
+          </div>
+
+          <div class="preview" aria-live="polite">
+            <div class="preview-head">
+              <span class="preview-badge">{{ previewBadge }}</span>
+              <span class="preview-count">{{ previewCount }}</span>
+            </div>
+            <sc-if value="{{ previewNotes }}" hint-placeholder-val="{{ false }}"><div class="preview-notes">{{ previewNotes }}</div></sc-if>
+            <sc-if value="{{ hasPreviewSample }}" hint-placeholder-val="{{ false }}">
+              <table>
+                <sc-for list="{{ previewSample }}" as="x" hint-placeholder-count="3">
+                  <tr><td><strong>{{ x.sku }}</strong> <span class="muted">{{ x.title }}</span></td><td class="r"><s>{{ x.price }}</s><span class="sp">{{ x.salePrice }}</span></td></tr>
+                </sc-for>
+              </table>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ saleError }}" hint-placeholder-val="{{ false }}"><div class="err-box" role="alert">{{ saleError }}</div></sc-if>
+
+          <div class="dialog-actions">
+            <button onClick="{{ closeSale }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ saveSale }}" class="btn btn-primary" disabled="{{ busy }}">{{ saveSaleLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ───────────── Product discount editor ───────────── -->
+    <sc-if value="{{ pdOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="dialog-backdrop" style="z-index:100;" onClick="{{ closePd }}">
+        <div class="dialog" role="dialog" aria-modal="true" aria-label="{{ pdDialogTitle }}" style="max-width:560px;" onClick="{{ stop }}">
+          <div class="dialog-title">{{ pdDialogTitle }}</div>
+          <div class="field">
+            <label>SKUs</label>
+            <textarea class="input" value="{{ pf.skus }}" onChange="{{ ph.skus }}" placeholder="One per line, or separated by commas"></textarea>
+            <p class="hint">{{ pdSkuHint }}</p>
+          </div>
+          <div class="form-grid" style="margin-top:12px;">
+            <div class="field">
+              <label>Discount</label>
+              <select class="input" value="{{ pf.type }}" onChange="{{ ph.type }}">
+                <option value="percent">% off</option>
+                <option value="amount">$ off</option>
+                <option value="none">Never discount (exclude from sales)</option>
+              </select>
+            </div>
+            <sc-if value="{{ pdNeedsValue }}" hint-placeholder-val="{{ true }}">
+              <div class="field"><label>{{ pdValueLabel }}</label><input class="input" inputmode="decimal" value="{{ pf.value }}" onChange="{{ ph.value }}"/></div>
+              <div class="field"><label>Label <span class="muted">(optional)</span></label><input class="input" maxlength="40" value="{{ pf.label }}" onChange="{{ ph.label }}" placeholder="e.g. Clearance"/></div>
+              <div class="field"><label>Starts <span class="muted">(optional)</span></label><input type="datetime-local" class="input" value="{{ pf.startsAt }}" onChange="{{ ph.startsAt }}"/></div>
+              <div class="field"><label>Ends <span class="muted">(optional)</span></label><input type="datetime-local" class="input" value="{{ pf.endsAt }}" onChange="{{ ph.endsAt }}"/></div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ pdError }}" hint-placeholder-val="{{ false }}"><div class="err-box" role="alert">{{ pdError }}</div></sc-if>
+          <div class="dialog-actions">
+            <button onClick="{{ closePd }}" class="btn btn-secondary">Cancel</button>
+            <button onClick="{{ savePd }}" class="btn btn-primary" disabled="{{ busy }}">{{ savePdLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TYPE_LABEL = { diamond: 'Diamonds', jewelry: 'Jewelry', gemstone: 'Gemstones' };
+const TYPE_ONE = { diamond: 'Diamond', jewelry: 'Jewelry', gemstone: 'Gemstone' };
+const STATUS_LABEL = { live: 'Live', scheduled: 'Scheduled', paused: 'Paused', ended: 'Ended', excluded: 'Excluded' };
+const money = (n) => '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+const fmtWhen = (v) => new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+function toLocalInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+const toIso = (local) => (local ? new Date(local).toISOString() : null);
+const splitSkus = (text) => [...new Set(String(text || '').split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean))];
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+function whenText(startsAt, endsAt) {
+  const now = Date.now();
+  const s = startsAt ? new Date(startsAt) : null;
+  const e = endsAt ? new Date(endsAt) : null;
+  if (s && e) return `${fmtWhen(s)} → ${fmtWhen(e)}`;
+  if (s) return `${s.getTime() > now ? 'Starts' : 'Started'} ${fmtWhen(s)} · no end date`;
+  if (e) return `${e.getTime() > now ? 'Ends' : 'Ended'} ${fmtWhen(e)}`;
+  return 'Always on · no end date';
+}
+const EMPTY_SALE = () => ({
+  id: null, name: '', badgeLabel: '', type: 'percent', value: '',
+  mode: 'all', types: [], categoryIds: [], subcategoryIds: [], minPrice: '', maxPrice: '', skus: '', excludeSkus: '',
+  startsAt: '', endsAt: '', active: true, showBanner: false, bannerText: '',
+});
+
+class Component extends DCLogic {
+  state = {
+    admin: null, newContactCount: 0, newInquiryCount: 0,
+    loading: true, loaded: false, errorMessage: '', flash: '', busy: false, copied: false,
+    data: null, tab: new URLSearchParams(window.location.search).get('tab') === 'products' ? 'products' : 'sales',
+    saleFilter: 'all', pdFilter: 'all', pdSearch: '',
+    saleOpen: false, sf: EMPTY_SALE(), saleError: '', preview: null, previewError: '',
+    pdOpen: false, pdEditing: false, pf: { skus: '', type: 'percent', value: '', label: '', startsAt: '', endsAt: '' }, pdError: '',
+  };
+
+  async componentDidMount() {
+    const { fetchAdminSession, logoutAdmin } = await import('./utils/adminAuth.js');
+    this.logoutAdmin = logoutAdmin;
+    const me = await fetchAdminSession();
+    if (!me) { window.location.href = 'AdminLogin.dc.html'; return; }
+    this.setState({ admin: me });
+    import('./utils/contactBadge.js').then((m) => m.fetchInboxCounts().then((c) => this.setState({ newContactCount: c.contact, newInquiryCount: c.inquiries })));
+    this.load();
+    this._onKey = (e) => { if (e.key === 'Escape') this.setState({ saleOpen: false, pdOpen: false }); };
+    document.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this._onKey);
+    clearTimeout(this._previewTimer); clearTimeout(this._flashTimer);
+  }
+
+  async api(method, url, body) {
+    const res = await fetch(url, {
+      method, credentials: 'same-origin',
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (res.status === 401) { window.location.href = 'AdminLogin.dc.html'; throw new Error('Please log in again.'); }
+    if (!res.ok) throw new Error(json.error || 'Something went wrong. Please try again.');
+    return json.data;
+  }
+
+  async load() {
+    try {
+      const data = await this.api('GET', '/api/admin/offers');
+      this.setState({ data, loading: false, loaded: true, errorMessage: '' });
+    } catch (err) {
+      this.setState({ loading: false, errorMessage: err.message });
+    }
+  }
+
+  showFlash(msg) {
+    clearTimeout(this._flashTimer);
+    this.setState({ flash: msg });
+    this._flashTimer = setTimeout(() => this.setState({ flash: '' }), 5000);
+  }
+
+  // ── Sales ──
+  openSale(sale, duplicate) {
+    let sf = EMPTY_SALE();
+    if (sale) {
+      sf = {
+        id: duplicate ? null : sale.id,
+        name: duplicate ? `${sale.name} (copy)` : sale.name,
+        badgeLabel: sale.badgeLabel || '', type: sale.type, value: String(sale.value),
+        mode: sale.scope.mode, types: sale.scope.types.slice(), categoryIds: sale.scope.categoryIds.slice(),
+        subcategoryIds: sale.scope.subcategoryIds.slice(),
+        minPrice: sale.scope.minPrice == null ? '' : String(sale.scope.minPrice),
+        maxPrice: sale.scope.maxPrice == null ? '' : String(sale.scope.maxPrice),
+        skus: sale.scope.skus.join('\n'), excludeSkus: sale.scope.excludeSkus.join('\n'),
+        startsAt: duplicate ? '' : toLocalInput(sale.startsAt), endsAt: duplicate ? '' : toLocalInput(sale.endsAt),
+        active: duplicate ? true : sale.active, showBanner: sale.showBanner, bannerText: sale.bannerText || '',
+      };
+    }
+    this.setState({ saleOpen: true, sf, saleError: '', preview: null, previewError: '' });
+    this.queuePreview();
+  }
+  setSf(patch) {
+    this.setState({ sf: { ...this.state.sf, ...patch }, saleError: '' });
+    this.queuePreview(); // reads state when the debounce fires
+  }
+  saleBody() {
+    const f = this.state.sf;
+    return {
+      id: f.id, name: f.name, badgeLabel: f.badgeLabel, type: f.type, value: f.value,
+      scope: {
+        mode: f.mode, types: f.types, categoryIds: f.categoryIds, subcategoryIds: f.subcategoryIds,
+        minPrice: f.minPrice || null, maxPrice: f.maxPrice || null,
+        skus: f.mode === 'skus' ? splitSkus(f.skus) : [], excludeSkus: splitSkus(f.excludeSkus),
+      },
+      startsAt: toIso(f.startsAt), endsAt: toIso(f.endsAt),
+      active: f.active, showBanner: f.showBanner, bannerText: f.bannerText,
+    };
+  }
+  // Live "what will this do" preview, debounced while typing.
+  queuePreview() {
+    clearTimeout(this._previewTimer);
+    this._previewTimer = setTimeout(async () => {
+      const f = this.state.sf;
+      if (!(Number(f.value) > 0)) { this.setState({ preview: null, previewError: '' }); return; }
+      const seq = (this._previewSeq = (this._previewSeq || 0) + 1);
+      try {
+        const data = await this.api('POST', '/api/admin/offers/sales/preview', this.saleBody());
+        if (seq === this._previewSeq) this.setState({ preview: data, previewError: '' });
+      } catch (err) {
+        if (seq === this._previewSeq) this.setState({ preview: null, previewError: err.message });
+      }
+    }, 350);
+  }
+  async saveSale() {
+    const f = this.state.sf;
+    if (!f.name.trim()) { this.setState({ saleError: 'Give the sale a name, e.g. "Diwali Sale".' }); return; }
+    if (!(Number(f.value) > 0)) { this.setState({ saleError: 'Enter the discount (a number above 0).' }); return; }
+    this.setState({ busy: true, saleError: '' });
+    try {
+      const body = this.saleBody();
+      if (f.id) await this.api('PUT', `/api/admin/offers/sales/${f.id}`, body);
+      else await this.api('POST', '/api/admin/offers/sales', body);
+      this.setState({ busy: false, saleOpen: false });
+      this.showFlash(f.id ? `Saved "${f.name.trim()}".` : `Created "${f.name.trim()}".`);
+      await this.load();
+    } catch (err) {
+      this.setState({ busy: false, saleError: err.message });
+    }
+  }
+  async toggleSale(s) {
+    this.setState({ busy: true });
+    try {
+      await this.api('PUT', `/api/admin/offers/sales/${s.id}/active`, { active: !s.active });
+      this.showFlash(s.active ? `Paused "${s.name}" — customers no longer see it.` : `Resumed "${s.name}".`);
+      await this.load();
+    } catch (err) { this.setState({ errorMessage: err.message }); }
+    this.setState({ busy: false });
+  }
+  async deleteSale(s) {
+    if (!window.confirm(`Delete the sale "${s.name}"? Products go back to their normal price (unless they have their own discount). This can't be undone.`)) return;
+    this.setState({ busy: true });
+    try {
+      await this.api('DELETE', `/api/admin/offers/sales/${s.id}`);
+      this.showFlash(`Deleted "${s.name}".`);
+      await this.load();
+    } catch (err) { this.setState({ errorMessage: err.message }); }
+    this.setState({ busy: false });
+  }
+
+  // ── Product discounts ──
+  openPd(row) {
+    const pf = row
+      ? { skus: row.sku, type: row.discountType === 'none' ? 'none' : row.discountType, value: row.discountValue == null ? '' : String(row.discountValue), label: row.discountLabel || '', startsAt: toLocalInput(row.startsAt), endsAt: toLocalInput(row.endsAt) }
+      : { skus: '', type: 'percent', value: '', label: '', startsAt: '', endsAt: '' };
+    this.setState({ pdOpen: true, pdEditing: !!row, pf, pdError: '' });
+  }
+  async savePd() {
+    const f = this.state.pf;
+    const skus = splitSkus(f.skus);
+    if (!skus.length) { this.setState({ pdError: 'Enter at least one SKU.' }); return; }
+    if (f.type !== 'none' && !(Number(f.value) > 0)) { this.setState({ pdError: 'Enter the discount (a number above 0).' }); return; }
+    this.setState({ busy: true, pdError: '' });
+    try {
+      const data = await this.api('PUT', '/api/admin/offers/products', {
+        skus, discount: { type: f.type, value: f.value, label: f.label, startsAt: toIso(f.startsAt), endsAt: toIso(f.endsAt) },
+      });
+      this.setState({ busy: false, pdOpen: false });
+      this.showFlash(`Updated ${plural(data.updated, 'product', 'products')}.`);
+      await this.load();
+    } catch (err) {
+      this.setState({ busy: false, pdError: err.message });
+    }
+  }
+  async removePd(skus, label) {
+    if (!window.confirm(label)) return;
+    this.setState({ busy: true });
+    try {
+      const data = await this.api('PUT', '/api/admin/offers/products', { skus, discount: { type: '' } });
+      this.showFlash(`Removed the own discount from ${plural(data.updated, 'product', 'products')} — they now follow any running sale.`);
+      await this.load();
+    } catch (err) { this.setState({ errorMessage: err.message }); }
+    this.setState({ busy: false });
+  }
+
+  async copySql() {
+    const sql = (this.state.data && this.state.data.migrationSql) || '';
+    try { await navigator.clipboard.writeText(sql); this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 2500); } catch {}
+  }
+  async recheck() {
+    try {
+      const s = await this.api('POST', '/api/admin/offers/recheck');
+      await this.load();
+      this.showFlash(s.ready ? 'Discounts are switched on. You can create sales now.' : 'Not found yet — make sure the whole SQL ran without errors, then check again.');
+    } catch (err) { this.setState({ errorMessage: err.message }); }
+  }
+
+  scopeText(scope, options) {
+    const excl = scope.excludeSkus && scope.excludeSkus.length ? ` · leaves out ${plural(scope.excludeSkus.length, 'SKU', 'SKUs')}` : '';
+    if (scope.mode === 'all') return `Whole store${excl}`;
+    if (scope.mode === 'skus') {
+      const list = scope.skus.slice(0, 4).join(', ');
+      return `${plural(scope.skus.length, 'specific SKU', 'specific SKUs')}: ${list}${scope.skus.length > 4 ? '…' : ''}`;
+    }
+    const parts = [];
+    parts.push(scope.types.length ? scope.types.map((t) => TYPE_LABEL[t]).join(', ') : 'All types');
+    const catNames = scope.categoryIds.map((id) => (options.categories.find((c) => c.id === id) || {}).name).filter(Boolean);
+    if (catNames.length) parts.push(catNames.join(', '));
+    const subNames = scope.subcategoryIds.map((id) => (options.subcategories.find((c) => c.id === id) || {}).name).filter(Boolean);
+    if (subNames.length) parts.push(subNames.join(', '));
+    if (scope.minPrice != null && scope.maxPrice != null) parts.push(`${money(scope.minPrice)}–${money(scope.maxPrice)}`);
+    else if (scope.minPrice != null) parts.push(`from ${money(scope.minPrice)}`);
+    else if (scope.maxPrice != null) parts.push(`up to ${money(scope.maxPrice)}`);
+    return parts.join(' · ') + excl;
+  }
+
+  reachNotes(r) {
+    const notes = [];
+    if (r.ownWins) notes.push(r.ownWins === 1 ? '1 product keeps its own discount' : `${r.ownWins} products keep their own discount`);
+    if (r.betterElsewhere) notes.push(`${r.betterElsewhere} ${r.betterElsewhere === 1 ? 'gets' : 'get'} a bigger saving from another sale`);
+    if (r.excluded) notes.push(`${r.excluded} ${r.excluded === 1 ? 'is' : 'are'} set to "Never discount"`);
+    if (r.notPublic) notes.push(`${r.notPublic} hidden/draft ${r.notPublic === 1 ? 'product also matches' : 'products also match'} (discounted once published)`);
+    if (r.tooSmallPrice) notes.push(`${r.tooSmallPrice} ${r.tooSmallPrice === 1 ? 'has' : 'have'} no price or a price below the discount`);
+    return notes.join(' · ');
+  }
+
+  renderVals() {
+    const st = this.state;
+    const d = st.data;
+    const options = d ? d.options : { categories: [], subcategories: [], skus: [] };
+    const schemaReady = !!(d && d.schema.ready);
+    const base = {
+      adminName: st.admin ? st.admin.fullName : '',
+      handleLogout: () => this.logoutAdmin && this.logoutAdmin(),
+      newContactCount: st.newContactCount, hasNewContact: st.newContactCount > 0,
+      newInquiryCount: st.newInquiryCount || 0, hasNewInquiry: st.newInquiryCount > 0,
+      errorMessage: st.errorMessage, flash: st.flash, busy: st.busy,
+      loading: st.loading && !d, loaded: !!d,
+      stop: (e) => e.stopPropagation(),
+      showSetup: !!(d && !schemaReady), migrationSql: d ? d.migrationSql : '',
+      copySql: () => this.copySql(), copyLabel: st.copied ? 'Copied ✓' : 'Copy SQL', recheck: () => this.recheck(),
+      tzNote: d ? `the shop runs on ${d.timezone}` : '',
+    };
+    if (!d) return base;
+
+    // ── stats
+    const stats = d.stats;
+    const sales = d.sales;
+    const counts = { all: sales.length, live: 0, scheduled: 0, paused: 0, ended: 0 };
+    sales.forEach((s) => { counts[s.status] = (counts[s.status] || 0) + 1; });
+
+    const saleFilters = [['all', 'All'], ['live', 'Live'], ['scheduled', 'Scheduled'], ['paused', 'Paused'], ['ended', 'Ended']]
+      .filter(([k]) => k === 'all' || counts[k])
+      .map(([k, label]) => ({ label: `${label} (${counts[k] || 0})`, activeClass: st.saleFilter === k ? 'active' : '', select: () => this.setState({ saleFilter: k }) }));
+    const saleFilter = st.saleFilter === 'all' || counts[st.saleFilter] ? st.saleFilter : 'all';
+    const order = { live: 0, scheduled: 1, paused: 2, ended: 3 };
+    const saleCards = sales
+      .filter((s) => saleFilter === 'all' || s.status === saleFilter)
+      .slice().sort((a, b) => (order[a.status] - order[b.status]) || String(b.createdAt).localeCompare(String(a.createdAt)))
+      .map((s) => {
+        const r = s.reach;
+        const live = s.status === 'live';
+        const reachMain = live
+          ? (r.applies ? `Discounting ${plural(r.applies, 'product', 'products')} right now` : 'Not discounting any product right now')
+          : s.status === 'ended' ? `Ended — it covered ${plural(r.eligible, 'product', 'products')}` : `Will discount ${plural(r.applies, 'product', 'products')}`;
+        const notes = this.reachNotes(r);
+        return {
+          badge: s.badge, name: s.name,
+          statusLabel: STATUS_LABEL[s.status], statusClass: `st-${s.status}`, offClass: live ? '' : 'is-off',
+          scopeText: `Applies to: ${this.scopeText(s.scope, options)}`,
+          whenText: whenText(s.startsAt, s.endsAt) + (s.badgeLabel && s.badgeLabel !== s.name ? ` · customers see "${s.badgeLabel}"` : ''),
+          hasBannerText: s.showBanner, bannerLine: `Catalog banner on${s.bannerText ? `: "${s.bannerText}"` : ''}`,
+          reachMain, reachNotes: notes, hasReachNotes: !!notes,
+          canToggle: s.status !== 'ended', toggleLabel: s.active ? 'Pause' : 'Resume',
+          edit: () => this.openSale(s), duplicate: () => this.openSale(s, true),
+          toggle: () => this.toggleSale(s), remove: () => this.deleteSale(s),
+        };
+      });
+
+    // ── product discounts
+    const pds = d.productDiscounts;
+    const pdCounts = { all: pds.length, live: 0, scheduled: 0, ended: 0, excluded: 0 };
+    pds.forEach((p) => { pdCounts[p.state] = (pdCounts[p.state] || 0) + 1; });
+    const pdFilter = st.pdFilter === 'all' || pdCounts[st.pdFilter] ? st.pdFilter : 'all';
+    const pdFilters = [['all', 'All'], ['live', 'Live'], ['scheduled', 'Scheduled'], ['ended', 'Ended'], ['excluded', 'Never discount']]
+      .filter(([k]) => k === 'all' || pdCounts[k])
+      .map(([k, label]) => ({ label: `${label} (${pdCounts[k] || 0})`, activeClass: pdFilter === k ? 'active' : '', select: () => this.setState({ pdFilter: k }) }));
+    const q = st.pdSearch.trim().toLowerCase();
+    const pdRows = pds
+      .filter((p) => pdFilter === 'all' || p.state === pdFilter)
+      .filter((p) => !q || p.sku.toLowerCase().includes(q) || p.title.toLowerCase().includes(q))
+      .map((p) => ({
+        sku: p.sku, typeLabel: TYPE_ONE[p.productType] || '', title: p.title, notPublic: !p.isPublic,
+        badge: p.badge, label: p.discountLabel, stateLabel: STATUS_LABEL[p.state], stateClass: `st-${p.state}`,
+        hasSale: p.salePrice != null && p.state !== 'excluded', noSale: !(p.salePrice != null && p.state !== 'excluded'),
+        salePrice: p.salePrice != null ? money(p.salePrice) : '', price: p.totalPrice != null ? money(p.totalPrice) : '—',
+        whenText: p.state === 'excluded' ? 'Full price during every sale' : whenText(p.startsAt, p.endsAt),
+        edit: () => this.openPd(p),
+        remove: () => this.removePd([p.sku], `Remove ${p.sku}'s own discount? It will follow any running sale again.`),
+      }));
+    const ended = pds.filter((p) => p.state === 'ended');
+
+    // ── sale editor
+    const f = st.sf;
+    const setF = (k) => (e) => this.setSf({ [k]: e.target.value });
+    const toggleIn = (key, val) => {
+      const list = f[key].includes(val) ? f[key].filter((x) => x !== val) : [...f[key], val];
+      this.setSf({ [key]: list });
+    };
+    const typeChecks = ['diamond', 'jewelry', 'gemstone'].map((t) => ({ label: TYPE_LABEL[t], checked: f.types.includes(t), toggle: () => toggleIn('types', t) }));
+    const shownTypes = f.types.length ? f.types : ['diamond', 'jewelry', 'gemstone'];
+    const categoryGroups = shownTypes.map((t) => ({
+      title: `${TYPE_ONE[t]} categories (none ticked = all)`,
+      items: options.categories.filter((c) => c.type === t).map((c) => ({ name: c.name, checked: f.categoryIds.includes(c.id), toggle: () => toggleIn('categoryIds', c.id) })),
+    })).filter((g) => g.items.length);
+    const subcatChecks = options.subcategories.map((c) => ({ name: c.name, checked: f.subcategoryIds.includes(c.id), toggle: () => toggleIn('subcategoryIds', c.id) }));
+    const known = new Set(options.skus.map((x) => x.sku.toUpperCase()));
+    const enteredSkus = splitSkus(f.skus);
+    const unknownSkus = enteredSkus.filter((x) => !known.has(x.toUpperCase()));
+    const skuHint = enteredSkus.length
+      ? `${plural(enteredSkus.length - unknownSkus.length, 'SKU', 'SKUs')} found${unknownSkus.length ? ` · not found: ${unknownSkus.slice(0, 6).join(', ')}${unknownSkus.length > 6 ? '…' : ''}` : ''}`
+      : 'Paste SKUs straight from Excel — one per line works.';
+    const endIn = (days) => () => {
+      const dt = new Date(); dt.setDate(dt.getDate() + days); dt.setHours(23, 59, 0, 0);
+      this.setSf({ endsAt: toLocalInput(dt.toISOString()) });
+    };
+    const pv = st.preview;
+    let previewCount = 'Enter a discount to see which products it covers.';
+    let previewNotes = st.previewError;
+    let previewSample = [];
+    if (pv) {
+      previewCount = pv.applies ? `Will discount ${plural(pv.applies, 'product', 'products')}` : 'No product would get this discount';
+      const notes = this.reachNotes(pv);
+      previewNotes = [pv.eligible ? `${plural(pv.eligible, 'product matches', 'products match')} "Applies to"` : 'No product matches "Applies to"', notes].filter(Boolean).join(' · ');
+      previewSample = pv.sample.map((x) => ({
+        sku: x.sku, title: x.title,
+        price: x.price != null ? money(x.price) : '', salePrice: x.salePrice != null ? money(x.salePrice) : '—',
+      }));
+    }
+    const valueBadge = Number(f.value) > 0 ? (f.type === 'percent' ? `${Number(f.value)}% OFF` : `${money(f.value)} OFF`) : (f.type === 'percent' ? '–% OFF' : '$– OFF');
+
+    // ── product discount editor
+    const pf = st.pf;
+    const setP = (k) => (e) => this.setState({ pf: { ...this.state.pf, [k]: e.target.value }, pdError: '' });
+    const pfSkus = splitSkus(pf.skus);
+    const pfUnknown = pfSkus.filter((x) => !known.has(x.toUpperCase()));
+
+    return {
+      ...base,
+      statOnSale: String(stats.onSaleNow), statOnSaleSub: `of ${stats.totalPublic} products on the storefront`,
+      statLive: String(stats.liveSales), statScheduledSub: stats.scheduledSales ? `${stats.scheduledSales} scheduled` : 'none scheduled',
+      statOwn: String(stats.productDiscounts), statEnding: String(stats.endingSoon),
+
+      isSalesTab: st.tab === 'sales', isProductsTab: st.tab === 'products',
+      showSalesTab: () => this.setState({ tab: 'sales' }), showProductsTab: () => this.setState({ tab: 'products' }),
+      salesTabLabel: `Sales (${sales.length})`, productsTabLabel: `Product discounts (${pds.length})`,
+
+      saleFilters, saleCards, noSales: saleCards.length === 0,
+      emptySalesTitle: sales.length ? 'No sales in this view' : 'No sales yet',
+      emptySalesText: sales.length ? 'Choose another filter above.' : 'Create a sale to put the whole store, chosen categories or a list of SKUs on offer — with an optional end date and catalog banner.',
+      canCreateFirst: !sales.length && schemaReady,
+      salesLocked: !d.schema.promotions, productsLocked: !d.schema.productColumns,
+      openNewSale: () => this.openSale(null),
+
+      pdFilters, pdRows, hasPd: pdRows.length > 0, noPd: pdRows.length === 0,
+      emptyPdTitle: pds.length ? 'Nothing matches' : 'No product has its own discount',
+      emptyPdText: pds.length ? 'Try another filter or search.' : 'Use "+ Discount products" here, the Discount section of the product form, or the Discount columns in the Excel stock sheet.',
+      pdSearch: st.pdSearch, handlePdSearch: (e) => this.setState({ pdSearch: e.target.value }),
+      openNewPd: () => this.openPd(null),
+      hasEndedOwn: ended.length > 0, clearEndedLabel: `Clear ${plural(ended.length, 'ended discount', 'ended discounts')}`,
+      clearEnded: () => this.removePd(ended.map((p) => p.sku), `Remove ${plural(ended.length, 'ended discount', 'ended discounts')}? Those products will follow any running sale again.`),
+
+      // sale editor
+      saleOpen: st.saleOpen, closeSale: () => this.setState({ saleOpen: false }),
+      saleDialogTitle: f.id ? 'Edit sale' : 'New sale', saveSaleLabel: st.busy ? 'Saving…' : (f.id ? 'Save changes' : 'Create sale'),
+      sf: f, sh: { name: setF('name'), badgeLabel: setF('badgeLabel'), type: setF('type'), value: setF('value'), minPrice: setF('minPrice'), maxPrice: setF('maxPrice'), skus: setF('skus'), excludeSkus: setF('excludeSkus'), startsAt: setF('startsAt'), endsAt: setF('endsAt'), bannerText: setF('bannerText') },
+      valueLabel: f.type === 'amount' ? 'Dollars off ($)' : 'Percent off (%)', valuePlaceholder: f.type === 'amount' ? 'e.g. 250' : 'e.g. 15',
+      isScopeAll: f.mode === 'all', isScopeFilter: f.mode === 'filter', isScopeSkus: f.mode === 'skus',
+      scopeAll: () => this.setSf({ mode: 'all' }), scopeFilter: () => this.setSf({ mode: 'filter' }), scopeSkus: () => this.setSf({ mode: 'skus' }),
+      typeChecks, categoryGroups, subcatChecks, showSubcats: subcatChecks.length > 0 && (!f.types.length || f.types.includes('jewelry')),
+      skuHint, showExclude: f.mode !== 'skus',
+      endIn3: endIn(3), endIn7: endIn(7), endIn30: endIn(30), clearEnd: () => this.setSf({ endsAt: '' }),
+      toggleActive: () => this.setSf({ active: !f.active }), toggleBanner: () => this.setSf({ showBanner: !f.showBanner }),
+      previewBadge: valueBadge, previewCount, previewNotes, previewSample, hasPreviewSample: previewSample.length > 0,
+      saleError: st.saleError, saveSale: () => this.saveSale(),
+
+      // product discount editor
+      pdOpen: st.pdOpen, closePd: () => this.setState({ pdOpen: false }),
+      pdDialogTitle: st.pdEditing ? 'Edit product discount' : 'Discount products',
+      pf, ph: { skus: setP('skus'), type: setP('type'), value: setP('value'), label: setP('label'), startsAt: setP('startsAt'), endsAt: setP('endsAt') },
+      pdNeedsValue: pf.type !== 'none', pdValueLabel: pf.type === 'amount' ? 'Dollars off ($)' : 'Percent off (%)',
+      pdSkuHint: pfSkus.length ? `${plural(pfSkus.length - pfUnknown.length, 'SKU', 'SKUs')} found${pfUnknown.length ? ` · not found: ${pfUnknown.slice(0, 6).join(', ')}` : ''}` : 'Each product gets this as its own discount (it beats any sale).',
+      pdError: st.pdError, savePd: () => this.savePd(), savePdLabel: st.busy ? 'Saving…' : 'Save',
+    };
+  }
+}
+</script>
+</body>
+</html>

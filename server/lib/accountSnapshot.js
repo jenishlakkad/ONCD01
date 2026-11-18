@@ -1,8 +1,9 @@
 const db = require('../db/postgres');
 const { applyPriceVisibility } = require('./priceVisibility');
+const { loadLivePromotions } = require('./offers');
 const { serializeProduct } = require('./serializeProduct');
 const { toPublicMediaUrl, toPublicPreviewUrl } = require('./mediaUrl');
-const { PUBLIC_FROM, PUBLIC_WHERE } = require('./publicProducts');
+const { PUBLIC_FROM, PUBLIC_WHERE, publicOfferFor } = require('./publicProducts');
 const { getMessagingSchema, NEWSLETTER_SUBJECT } = require('./messaging');
 const { customerCode } = require('./customerCode');
 
@@ -125,6 +126,7 @@ function serializeProducts(rows, priceContext) {
       category: row.category_id ? { id: Number(row.category_id), name: row.category_name } : null,
       subcategory: row.subcategory_id ? { id: Number(row.subcategory_id), name: row.subcategory_name } : null,
       media: trimMedia(row.media),
+      offer: publicOfferFor(row, masked, priceContext),
     });
   }
   return out;
@@ -142,6 +144,8 @@ async function loadAccountSnapshot(customerId) {
     mode: row.has_settings ? row.price_mode : 'approved',
     viewer: { type: 'customer', status: me.status },
     pricesEnabled: !row.has_prices_flag || !!row.prices_enabled,
+    promotions: await loadLivePromotions(),
+    now: new Date(),
   };
   return {
     me,

@@ -1,8 +1,13 @@
 // Maps a DB products row (snake_case) to the camelCase shape the frontend/API consumes.
 // Price masking (if any) must already have been applied to `row` before calling this
 // (see lib/priceVisibility.js) — this function only reshapes keys, it never decides visibility.
-function serializeProduct(row, { category, subcategory, media, variants } = {}) {
-  return {
+//
+// `offer` is the already-resolved public offer (lib/offers.js
+// buildPublicOffer) or null. `admin: true` adds the product's own discount
+// settings, which only the admin screens need (a scheduled discount must
+// not leak to the storefront before it starts).
+function serializeProduct(row, { category, subcategory, media, variants, offer, admin } = {}) {
+  const out = {
     id: row.id,
     sku: row.sku,
     type: row.type,
@@ -37,9 +42,18 @@ function serializeProduct(row, { category, subcategory, media, variants } = {}) 
     priceCta: row.priceCta === undefined ? null : row.priceCta,
     priceVisibilityOverride: row.price_visibility || '',
     media: media || [],
+    offer: offer || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+  if (admin) {
+    out.discountType = row.discount_type || '';
+    out.discountValue = row.discount_value === null || row.discount_value === undefined ? null : Number(row.discount_value);
+    out.discountLabel = row.discount_label || '';
+    out.discountStartsAt = row.discount_starts_at ? new Date(row.discount_starts_at).toISOString() : null;
+    out.discountEndsAt = row.discount_ends_at ? new Date(row.discount_ends_at).toISOString() : null;
+  }
+  return out;
 }
 
 module.exports = { serializeProduct };
