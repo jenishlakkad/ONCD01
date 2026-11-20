@@ -26,13 +26,12 @@ router.get('/', asyncRoute(async (req, res) => {
   if (cert) { params.push(cert); sql += ` AND p.certificate_authority = $${params.length}`; }
   if (category) { params.push(category); sql += ` AND p.category_id IN (SELECT id FROM categories WHERE name = $${params.length})`; }
   sql += ' ORDER BY p.created_at DESC, p.id DESC';
-  const rows = await db.all(sql, params);
+  // The price context doesn't depend on the rows: fetch both together.
+  const [rows, ctx] = await Promise.all([db.all(sql, params), loadPriceContext(req)]);
 
   // Only jewelry has metal variations; other listings skip the query.
   const jewelryIds = rows.filter((r) => r.type === 'jewelry').map((r) => r.id);
-  const [ctx, lookupFor, variantsMap] = await Promise.all([
-    loadPriceContext(req), buildEnrichmentLookup(rows), batchVariants(jewelryIds),
-  ]);
+  const [lookupFor, variantsMap] = await Promise.all([buildEnrichmentLookup(rows), batchVariants(jewelryIds)]);
   const { mode, viewer, pricesEnabled } = ctx;
 
   const data = rows.map((row) => {
@@ -50,18 +49,34 @@ router.get('/', asyncRoute(async (req, res) => {
 }));
 
 router.get('/:sku', asyncRoute(async (req, res) => {
-  const row = await db.get(
-    `SELECT p.* FROM products p JOIN product_types pt ON pt.key = p.type
-     WHERE p.sku = $1 AND p.status = 'active' AND p.visibility = 'visible' AND pt.enabled = TRUE`,
-    [req.params.sku]
-  );
+  // Two database round trips in total (was five, one after another):
+  //  1. the product, up to 4 related pieces of the same type (found by the
+  //     SKU itself, so they don't wait for the product) and the price context;
+  //  2. categories / media for all of them together, plus metal variations.
+  const [row, relatedRows, ctx] = await Promise.all([
+    db.get(
+      `SELECT p.* FROM products p JOIN product_types pt ON pt.key = p.type
+       WHERE p.sku = $1 AND p.status = 'active' AND p.visibility = 'visible' AND pt.enabled = TRUE`,
+      [req.params.sku]
+    ),
+    db.all(
+      `SELECT p.* FROM products p JOIN product_types pt ON pt.key = p.type
+       WHERE p.type = (SELECT type FROM products WHERE sku = $1) AND p.sku != $1
+         AND p.status = 'active' AND p.visibility = 'visible' AND pt.enabled = TRUE
+       ORDER BY RANDOM() LIMIT 4`,
+      [req.params.sku]
+    ),
+    loadPriceContext(req),
+  ]);
   if (!row) throw new ApiError(404, 'Product not found.');
-
-  const [ctx, rawVariants] = await Promise.all([loadPriceContext(req), getVariants(row.id)]);
   const { mode, viewer, pricesEnabled } = ctx;
-  const mainLookup = await buildEnrichmentLookup([row]);
+
+  const [lookupFor, rawVariants] = await Promise.all([
+    buildEnrichmentLookup([row, ...relatedRows]),
+    row.type === 'jewelry' ? getVariants(row.id) : Promise.resolve([]),
+  ]);
   const masked = applyPriceVisibility(row, mode, viewer, pricesEnabled);
-  const { category, subcategory, media } = mainLookup(row);
+  const { category, subcategory, media } = lookupFor(row);
   const offer = publicOfferFor(row, masked, ctx);
   const rawOffer = offer ? resolveOffer(row, ctx.promotions, ctx.now) : null;
   // Same visibility decision as the base product's own totalPrice (price
@@ -76,18 +91,10 @@ router.get('/:sku', asyncRoute(async (req, res) => {
   }));
   const product = serializeProduct({ ...masked, id: Number(row.id) }, { category, subcategory, media, variants, offer });
 
-  const relatedRows = await db.all(
-    `SELECT p.* FROM products p JOIN product_types pt ON pt.key = p.type
-     WHERE p.type = $1 AND p.sku != $2 AND p.status = 'active' AND p.visibility = 'visible' AND pt.enabled = TRUE
-     ORDER BY RANDOM() LIMIT 4`,
-    [row.type, row.sku]
-  );
-  // Same batch mechanism for the (small, <=4) related set — no subcategory
-  // in the related shape (only { category, media } is passed).
-  const relatedLookup = await buildEnrichmentLookup(relatedRows);
+  // No subcategory in the related shape (only { category, media }).
   const related = relatedRows.map((r) => {
     const m = applyPriceVisibility(r, mode, viewer, pricesEnabled);
-    const { category: rCategory, media: rMedia } = relatedLookup(r);
+    const { category: rCategory, media: rMedia } = lookupFor(r);
     return serializeProduct({ ...m, id: Number(r.id) }, { category: rCategory, media: rMedia, offer: publicOfferFor(r, m, ctx) });
   });
 

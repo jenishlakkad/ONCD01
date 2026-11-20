@@ -440,6 +440,9 @@ class Component extends DCLogic {
   relScroll(dir) { const el = this.relRef.current; if (el) el.scrollBy({ left: dir * 290, behavior: 'smooth' }); }
 
   async componentDidMount() {
+    // Ask for the data first: it no longer waits for the helper modules
+    // below (cart, filters, inquiry…) to download one after another.
+    this.loadProduct();
     // Arrows / swipe / keys in the main view move the selected thumbnail.
     this._onMediaChange = (e) => { const i = e.detail && e.detail.index; if (Number.isInteger(i) && i !== this.state.activeIndex) this.setState({ activeIndex: i }); };
     document.addEventListener('media-change', this._onMediaChange);
@@ -465,7 +468,6 @@ class Component extends DCLogic {
     });
     this.inquiryHelpers = await import('./utils/inquiryItem.js');
 
-    this.loadProduct();
 
     // Live offer countdown: re-render every second only while one is on
     // screen, and quietly reload the product the moment its offer ends so

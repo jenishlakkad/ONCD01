@@ -552,6 +552,9 @@ class Component extends DCLogic {
   pageSize = 24;
 
   async componentDidMount() {
+    // Ask for the data first: it no longer waits for the helper modules
+    // below (cart, filters, inquiry…) to download one after another.
+    this.loadProducts();
     const cartMod = await import('./utils/cart.js');
     this.cart = cartMod;
     this.refreshCart();
@@ -577,7 +580,6 @@ class Component extends DCLogic {
       });
     });
 
-    this.loadProducts();
   }
   componentWillUnmount() {
     window.removeEventListener('aurum-cart-change', this._onChange);

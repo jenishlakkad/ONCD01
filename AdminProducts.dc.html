@@ -17,6 +17,10 @@
 <link rel="stylesheet" href="_ds/classical-bfa1ee02-3acf-47cd-8e53-2a3b514f5f0a/styles.css">
 <script src="./video-frame.js"></script>
 <style>
+.page-notice{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;font-size:13px;padding:10px 14px;border-radius:8px;margin:-8px 0 16px;}
+.page-notice.is-err{background:#fbe9e5;color:#8d2c1a;}
+.page-notice.is-ok{background:#e3f1e6;color:#25653a;}
+.page-notice-x{background:none;border:none;font-size:18px;line-height:1;cursor:pointer;color:inherit;opacity:.6;padding:0 2px;}
 .metal-dots{display:flex;align-items:center;gap:4px;margin-top:5px;padding-left:22px;}
 .metal-dot{flex:none;width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(30,24,18,.18),0 1px 2px rgba(30,24,18,.12);}
 .metal-dots-note{margin-left:4px;font-size:11px;opacity:.6;white-space:nowrap;}
@@ -102,7 +106,10 @@ a:hover{color:var(--color-accent-700)}
     </div>
 
     <sc-if value="{{ errorMessage }}" hint-placeholder-val="{{ false }}">
-      <p style="font-size:13px;color:var(--color-accent-700);margin:-12px 0 16px;">{{ errorMessage }}</p>
+      <div class="page-notice is-err" role="alert"><span>{{ errorMessage }}</span><button type="button" class="page-notice-x" aria-label="Dismiss" onClick="{{ dismissNotice }}">×</button></div>
+    </sc-if>
+    <sc-if value="{{ notice }}" hint-placeholder-val="{{ false }}">
+      <div class="page-notice is-ok" role="status"><span>{{ notice }}</span><button type="button" class="page-notice-x" aria-label="Dismiss" onClick="{{ dismissNotice }}">×</button></div>
     </sc-if>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
@@ -1169,10 +1176,15 @@ class Component extends DCLogic {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to update status.');
-      this.loadProducts();
+      this.replaceProduct(json.data);
     } catch (err) {
-      this.setState({ errorMessage: err.message });
+      this.showNotice('error', err.message);
     }
+  }
+  // The server returns the saved product: swap it in, no full reload.
+  replaceProduct(data) {
+    if (!data || !data.id) { this.loadProducts(); return; }
+    this.setState({ products: this.state.products.map((x) => (x.id === data.id ? data : x)) });
   }
 
   async toggleFeatured(p) {
@@ -1186,10 +1198,11 @@ class Component extends DCLogic {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to update Featured.');
+      this.replaceProduct(json.data);
     } catch (err) {
-      this.setState({ errorMessage: err.message });
+      this.showNotice('error', err.message);
+      this.setState({ products: this.state.products.map((x) => (x.id === p.id ? { ...x, featured: !featured } : x)) });
     }
-    this.loadProducts();
   }
 
   async bulkSetFeatured(featured) {
@@ -1206,14 +1219,36 @@ class Component extends DCLogic {
     if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to update.` });
   }
 
+  // Shows a message at the top of the page (and brings it into view —
+  // a failure used to appear off-screen while the row just stayed put).
+  showNotice(kind, text) {
+    clearTimeout(this._noticeTimer);
+    this.setState(kind === 'error' ? { errorMessage: text, notice: '' } : { notice: text, errorMessage: '' });
+    if (kind !== 'error') this._noticeTimer = setTimeout(() => this.setState({ notice: '' }), 6000);
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+  }
+  // Drops deleted products from the list straight away — no full reload.
+  dropProducts(ids) {
+    const gone = new Set(ids);
+    const selectedIds = new Set([...this.state.selectedIds].filter((id) => !gone.has(id)));
+    this.setState({ products: this.state.products.filter((p) => !gone.has(p.id)), selectedIds });
+  }
+
   async removeProduct(p) {
+    if (this._deleting) return;
+    this._deleting = true;
     try {
       const res = await fetch(`/api/admin/products/${p.id}`, { method: 'DELETE', credentials: 'same-origin' });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
+      if (res.status === 404) { this.dropProducts([p.id]); this.showNotice('ok', `${p.sku} was already deleted.`); return; }
       if (!res.ok) throw new Error(json.error || 'Failed to delete.');
-      this.loadProducts();
+      this.dropProducts([p.id]);
+      const files = json.data && json.data.filesRemoved;
+      this.showNotice('ok', `Deleted ${p.sku}${files ? ` and its ${files} photo/video file${files === 1 ? '' : 's'}` : ''}.`);
     } catch (err) {
-      this.setState({ errorMessage: err.message });
+      this.showNotice('error', `Couldn't delete ${p.sku}: ${err.message}`);
+    } finally {
+      this._deleting = false;
     }
   }
 
@@ -1256,13 +1291,21 @@ class Component extends DCLogic {
     if (!ids.length) return;
     if (!window.confirm(`Delete ${ids.length} selected product(s)? This cannot be undone.`)) return;
     this.setState({ bulkBusy: true });
-    const results = await Promise.all(ids.map((id) =>
-      fetch(`/api/admin/products/${id}`, { method: 'DELETE', credentials: 'same-origin' }).then((r) => r.ok).catch(() => false)
-    ));
-    const failed = results.filter((ok) => !ok).length;
-    this.setState({ bulkBusy: false, selectedIds: new Set() });
-    await this.loadProducts();
-    if (failed) this.setState({ errorMessage: `${failed} of ${ids.length} product(s) failed to delete.` });
+    try {
+      // One request, one transaction — all of them or none.
+      const res = await fetch('/api/admin/products/bulk-delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ ids }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Failed to delete.');
+      this.dropProducts(ids);
+      const d = json.data;
+      this.showNotice('ok', `Deleted ${d.deleted} product${d.deleted === 1 ? '' : 's'}${d.filesRemoved ? ` and ${d.filesRemoved} photo/video file${d.filesRemoved === 1 ? '' : 's'}` : ''}.`);
+    } catch (err) {
+      this.showNotice('error', `Nothing was deleted: ${err.message}`);
+    } finally {
+      this.setState({ bulkBusy: false });
+    }
   }
 
   openBulkDiscount() {
@@ -1835,6 +1878,8 @@ class Component extends DCLogic {
       handleBulkPriceVisibility: (e) => this.setState({ bulkPriceVisibility: e.target.value }),
       bulkApplyPriceVisibility: () => this.bulkApplyPriceVisibility(),
       errorMessage: this.state.errorMessage,
+      notice: this.state.notice || '',
+      dismissNotice: () => this.setState({ notice: '', errorMessage: '' }),
       openAdd: () => this.openAdd(),
       dialogOpen: this.state.dialogOpen,
       dialogTitle: (this.state.editingId ? 'Edit ' : 'Add ') + typeLabel,

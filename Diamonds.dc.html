@@ -534,6 +534,9 @@ class Component extends DCLogic {
   pageSize = 24;
 
   async componentDidMount() {
+    // Ask for the data first: it no longer waits for the helper modules
+    // below (cart, filters, inquiry…) to download one after another.
+    this.loadProducts();
     // Lets Home's "Shop by Shape" row (and any other future link) deep-link
     // straight into a pre-filtered view, e.g. Diamonds.dc.html?shape=Oval —
     // matched against the same shape attribute names the filter itself uses.
@@ -567,7 +570,6 @@ class Component extends DCLogic {
       });
     });
 
-    this.loadProducts();
   }
   componentWillUnmount() {
     window.removeEventListener('aurum-cart-change', this._onChange);

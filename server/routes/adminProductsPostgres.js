@@ -16,7 +16,7 @@ const { createAndStorePreview, removePreview } = require('../lib/videoPreview');
 const r2Storage = require('../services/r2Storage');
 const os = require('os');
 const crypto = require('crypto');
-const { METAL_OPTIONS, getVariants } = require('../lib/productVariants');
+const { METAL_OPTIONS } = require('../lib/productVariants');
 const { writeAudit } = require('../lib/auditPostgres');
 const { COLUMN_DEFS: IMPORT_COLUMN_DEFS, buildTemplate, buildStockExport, importWorkbook, applyImport } = require('../lib/excelImportPostgres');
 const env = require('../config/env');
@@ -85,16 +85,6 @@ async function applyOwnDiscount(b, existing) {
   for (const c of PRODUCT_OFFER_COLUMNS) b[c] = merged[c];
 }
 
-async function categoryRow(id) {
-  if (!id) return null;
-  const row = await db.get('SELECT id, name FROM categories WHERE id = $1', [id]);
-  return row ? { id: Number(row.id), name: row.name } : null;
-}
-async function subcategoryRow(id) {
-  if (!id) return null;
-  const row = await db.get('SELECT id, name FROM subcategories WHERE id = $1', [id]);
-  return row ? { id: Number(row.id), name: row.name } : null;
-}
 // NOTE: both `AS sortOrder` and `AS originalName` must be double-quoted —
 // unquoted, Postgres would fold them to `sortorder`/`originalname`, silently
 // breaking every r.sortOrder / r.originalName read below.
@@ -105,25 +95,105 @@ async function mediaFor(productId) {
   );
   return rows.map((r) => ({ ...r, id: Number(r.id), url: toPublicMediaUrl(r.url), crop: r.crop ? JSON.parse(r.crop) : null }));
 }
-async function fullProduct(row, promotions) {
-  const [category, subcategory, media, rawVariants, promos] = await Promise.all([
-    categoryRow(row.category_id),
-    subcategoryRow(row.subcategory_id),
-    mediaFor(row.id),
-    getVariants(row.id),
-    promotions || loadLivePromotions(),
+// Every admin product response, for one product or the whole catalog, in a
+// FIXED number of queries (categories, subcategories, media, variations,
+// live sales — run together) instead of 4 per product. The list used to
+// fire ~1,100 queries for 283 products, on every load and after every save.
+async function fullProducts(rows) {
+  if (!rows.length) return [];
+  const ids = rows.map((r) => String(r.id));
+  const idSet = (key) => [...new Set(rows.map((r) => r[key]).filter((v) => v !== null && v !== undefined).map(String))];
+  const variantRows = db.all('SELECT * FROM product_variants WHERE product_id = ANY($1::bigint[])', [ids])
+    .catch((err) => { if (err && err.code === '42P01') return []; throw err; });
+  const [cats, subs, mediaRows, rawVariants, promos] = await Promise.all([
+    idSet('category_id').length ? db.all('SELECT id, name FROM categories WHERE id = ANY($1::bigint[])', [idSet('category_id')]) : [],
+    idSet('subcategory_id').length ? db.all('SELECT id, name FROM subcategories WHERE id = ANY($1::bigint[])', [idSet('subcategory_id')]) : [],
+    db.all(
+      `SELECT id, product_id, kind, url, sort_order AS "sortOrder", original_name AS "originalName", crop
+       FROM product_media WHERE product_id = ANY($1::bigint[]) ORDER BY product_id, sort_order`,
+      [ids]
+    ),
+    variantRows,
+    loadLivePromotions(),
   ]);
-  // Admin always sees the real price on every variant (no masking) — only
-  // the public route masks variant prices, same as it already does for the
-  // base product's totalPrice.
-  const variants = rawVariants.map((v) => ({
-    id: Number(v.id), metal: v.metal, price: Number(v.price),
-    coverMediaId: v.cover_media_id ? Number(v.cover_media_id) : null,
-  }));
-  // The offer customers get right now (own discount or a running sale),
-  // unmasked — so the list can show the effective price at a glance.
-  const offer = buildPublicOffer(resolveOffer(row, promos), row, true);
-  return serializeProduct({ ...row, id: Number(row.id) }, { category, subcategory, media, variants, offer, admin: true });
+  const catById = new Map(cats.map((c) => [Number(c.id), { id: Number(c.id), name: c.name }]));
+  const subById = new Map(subs.map((c) => [Number(c.id), { id: Number(c.id), name: c.name }]));
+  const mediaBy = new Map();
+  for (const m of mediaRows) {
+    const pid = Number(m.product_id);
+    if (!mediaBy.has(pid)) mediaBy.set(pid, []);
+    mediaBy.get(pid).push({ id: Number(m.id), kind: m.kind, url: toPublicMediaUrl(m.url), sortOrder: m.sortOrder, originalName: m.originalName, crop: m.crop ? JSON.parse(m.crop) : null });
+  }
+  const variantsBy = new Map();
+  for (const v of rawVariants) {
+    const pid = Number(v.product_id);
+    if (!variantsBy.has(pid)) variantsBy.set(pid, []);
+    // Admin always sees the real price on every variant (no masking).
+    variantsBy.get(pid).push({ id: Number(v.id), metal: v.metal, price: Number(v.price), coverMediaId: v.cover_media_id ? Number(v.cover_media_id) : null });
+  }
+  for (const list of variantsBy.values()) list.sort((a, b) => METAL_OPTIONS.indexOf(a.metal) - METAL_OPTIONS.indexOf(b.metal));
+  const now = new Date();
+  return rows.map((row) => {
+    const id = Number(row.id);
+    // The offer customers get right now (own discount or a running sale),
+    // unmasked — so the list can show the effective price at a glance.
+    const offer = buildPublicOffer(resolveOffer(row, promos, now), row, true);
+    return serializeProduct({ ...row, id }, {
+      category: row.category_id != null ? catById.get(Number(row.category_id)) || null : null,
+      subcategory: row.subcategory_id != null ? subById.get(Number(row.subcategory_id)) || null : null,
+      media: mediaBy.get(id) || [], variants: variantsBy.get(id) || [], offer, admin: true,
+    });
+  });
+}
+async function fullProduct(row) {
+  return (await fullProducts([row]))[0];
+}
+
+// Route ids must be whole numbers ("abc" used to reach Postgres and come
+// back as an unexplained server error).
+function productId(raw) {
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n <= 0) throw new ApiError(404, 'Product not found.');
+  return n;
+}
+
+// Files on disk / in R2 that belong to these media rows — and ONLY to them.
+// A file is removed only when no remaining product_media row (any product)
+// still points at it, and only from the products upload folder, so a
+// delete can never take another product's photo with it.
+const PRODUCT_FILE_RE = /^\/uploads\/products\/[A-Za-z0-9._-]+$/;
+async function removeMediaFiles(mediaRows) {
+  const candidates = [...new Map(mediaRows.filter((m) => m && PRODUCT_FILE_RE.test(String(m.url || ''))).map((m) => [m.url, m])).values()];
+  if (!candidates.length) return { removed: 0, kept: 0 };
+  const stillUsed = new Set((await db.all('SELECT DISTINCT url FROM product_media WHERE url = ANY($1)', [candidates.map((m) => m.url)])).map((r) => r.url));
+  const doomed = candidates.filter((m) => !stillUsed.has(m.url));
+  const removeOne = async (m) => {
+    await removeR2ObjectForUrl(m.url);
+    if (m.kind === 'video') await removePreview(m.url);
+    await fs.promises.unlink(path.join(env.rootDir, m.url.replace(/^\//, ''))).catch(() => {});
+  };
+  // A few at a time: fast for a bulk delete, gentle on R2.
+  for (let i = 0; i < doomed.length; i += 8) await Promise.all(doomed.slice(i, i + 8).map(removeOne));
+  return { removed: doomed.length, kept: candidates.length - doomed.length };
+}
+
+// Deletes products (and, by cascade, their media rows and metal variations)
+// in ONE transaction, then their files. Inquiry history is kept: each
+// inquiry line already stores its own SKU, name and quoted price, so only
+// its link to the product is cleared — that link is what used to make
+// deleting any product a customer had inquired about fail.
+async function deleteProducts(ids) {
+  const result = await db.transaction(async (client) => {
+    const found = (await client.query('SELECT id, sku FROM products WHERE id = ANY($1::bigint[]) FOR UPDATE', [ids.map(String)])).rows;
+    if (!found.length) return { found: [], media: [] };
+    const foundIds = found.map((r) => String(r.id));
+    const media = (await client.query('SELECT url, kind FROM product_media WHERE product_id = ANY($1::bigint[])', [foundIds])).rows;
+    await client.query('UPDATE inquiry_items SET product_id = NULL WHERE product_id = ANY($1::bigint[])', [foundIds]);
+    await client.query('DELETE FROM products WHERE id = ANY($1::bigint[])', [foundIds]);
+    return { found, media };
+  });
+  const files = await removeMediaFiles(result.media);
+  return { deleted: result.found, files };
 }
 
 router.get('/', asyncRoute(async (req, res) => {
@@ -133,9 +203,7 @@ router.get('/', asyncRoute(async (req, res) => {
   if (type) { params.push(type); sql += ` WHERE type = $${params.length}`; }
   sql += ' ORDER BY created_at DESC, id DESC';
   const rows = await db.all(sql, params);
-  const promotions = await loadLivePromotions();
-  const data = await Promise.all(rows.map((r) => fullProduct(r, promotions)));
-  res.json({ data });
+  res.json({ data: await fullProducts(rows) });
 }));
 
 router.post('/', asyncRoute(async (req, res) => {
@@ -149,7 +217,8 @@ router.post('/', asyncRoute(async (req, res) => {
   const cols = Object.keys(b);
   const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
   const values = cols.map((c) => b[c]);
-  const inserted = await db.get(`INSERT INTO products (${cols.join(', ')}) VALUES (${placeholders}) RETURNING id`, values);
+  const inserted = await db.get(`INSERT INTO products (${cols.join(', ')}) VALUES (${placeholders}) RETURNING id`, values)
+    .catch((err) => { if (err && err.code === '23505') throw new ApiError(409, `A product with SKU ${b.sku} already exists.`); throw err; });
   const row = await db.get('SELECT * FROM products WHERE id = $1', [inserted.id]);
 
   await writeAudit({ actor: req.adminUser.full_name, action: 'Added product', target: row.sku, module: 'Products' });
@@ -157,7 +226,7 @@ router.post('/', asyncRoute(async (req, res) => {
 }));
 
 router.put('/:id', asyncRoute(async (req, res) => {
-  const existing = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  const existing = await db.get('SELECT * FROM products WHERE id = $1', [productId(req.params.id)]);
   if (!existing) throw new ApiError(404, 'Product not found.');
   const b = pickBody(req.body || {});
   if (b.sku && b.sku !== existing.sku) {
@@ -169,7 +238,8 @@ router.put('/:id', asyncRoute(async (req, res) => {
   if (cols.length) {
     const setClause = cols.map((c, i) => `${c} = $${i + 1}`).join(', ');
     const values = cols.map((c) => b[c]);
-    await db.query(`UPDATE products SET ${setClause}, updated_at = NOW() WHERE id = $${cols.length + 1}`, [...values, existing.id]);
+    await db.query(`UPDATE products SET ${setClause}, updated_at = NOW() WHERE id = $${cols.length + 1}`, [...values, existing.id])
+      .catch((err) => { if (err && err.code === '23505') throw new ApiError(409, `A product with SKU ${b.sku} already exists.`); throw err; });
   }
   const row = await db.get('SELECT * FROM products WHERE id = $1', [existing.id]);
 
@@ -183,22 +253,31 @@ router.put('/:id', asyncRoute(async (req, res) => {
 }));
 
 router.delete('/:id', asyncRoute(async (req, res) => {
-  const existing = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
-  if (!existing) throw new ApiError(404, 'Product not found.');
-  // Raw (unresolved) urls — deliberately NOT mediaFor(), which applies the
-  // read-side toPublicMediaUrl() resolver. Cleanup needs the actual stored
-  // /uploads/... value to derive the right R2 key/local path regardless of
-  // R2_MEDIA_READS_ENABLED's state.
-  const media = await db.all('SELECT url, kind FROM product_media WHERE product_id = $1', [existing.id]);
-  await db.query('DELETE FROM products WHERE id = $1', [existing.id]);
-  for (const m of media) {
-    await removeR2ObjectForUrl(m.url);
-    if (m.kind === 'video') await removePreview(m.url);
-    const p = path.join(env.rootDir, m.url.replace(/^\//, ''));
-    fs.unlink(p, () => {});
+  const id = productId(req.params.id);
+  const { deleted, files } = await deleteProducts([id]);
+  if (!deleted.length) throw new ApiError(404, 'Product not found — it may already have been deleted.');
+  await writeAudit({ actor: req.adminUser.full_name, action: 'Deleted product', target: deleted[0].sku, module: 'Products' });
+  res.json({ data: { deleted: true, ids: [id], filesRemoved: files.removed } });
+}));
+
+// Many products in one request and one transaction (the page used to fire
+// one DELETE per selected product at once, and large selections partly
+// failed).
+router.post('/bulk-delete', asyncRoute(async (req, res) => {
+  const raw = Array.isArray((req.body || {}).ids) ? req.body.ids : [];
+  const ids = [...new Set(raw.map(Number).filter((n) => Number.isInteger(n) && n > 0))];
+  if (!ids.length) throw new ApiError(400, 'Choose at least one product to delete.');
+  if (ids.length > 2000) throw new ApiError(400, 'Too many products in one go (2000 max).');
+  const { deleted, files } = await deleteProducts(ids);
+  if (deleted.length) {
+    await writeAudit({
+      actor: req.adminUser.full_name,
+      action: deleted.length === 1 ? 'Deleted product' : `Deleted ${deleted.length} products`,
+      target: deleted.length === 1 ? deleted[0].sku : deleted.slice(0, 8).map((d) => d.sku).join(', ') + (deleted.length > 8 ? ` +${deleted.length - 8} more` : ''),
+      module: 'Products',
+    });
   }
-  await writeAudit({ actor: req.adminUser.full_name, action: 'Deleted product', target: existing.sku, module: 'Products' });
-  res.json({ data: { deleted: true } });
+  res.json({ data: { deleted: deleted.length, ids: deleted.map((d) => Number(d.id)), missing: ids.length - deleted.length, filesRemoved: files.removed } });
 }));
 
 // Turns an uploaded video into what the storefront actually serves: framed
@@ -235,7 +314,7 @@ function framesFrom(body) {
 }
 
 router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(async (req, res) => {
-  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [productId(req.params.id)]);
   if (!product) throw new ApiError(404, 'Product not found.');
   if (!req.files || !req.files.length) throw new ApiError(400, 'No files uploaded.');
   const maxOrderRow = await db.get('SELECT COALESCE(MAX(sort_order), -1) AS m FROM product_media WHERE product_id = $1', [product.id]);
@@ -288,7 +367,7 @@ router.post('/:id/media', upload.array('files', 12), convertHeic, asyncRoute(asy
 }));
 
 router.put('/:id/media/reorder', asyncRoute(async (req, res) => {
-  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [productId(req.params.id)]);
   if (!product) throw new ApiError(404, 'Product not found.');
   const order = Array.isArray((req.body || {}).order) ? req.body.order : null;
   if (!order || !order.length) throw new ApiError(400, 'order must be a non-empty array of media ids.');
@@ -311,22 +390,19 @@ router.put('/:id/media/reorder', asyncRoute(async (req, res) => {
 }));
 
 router.delete('/:id/media/:mediaId', asyncRoute(async (req, res) => {
-  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [req.params.mediaId, req.params.id]);
+  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [productId(req.params.mediaId), productId(req.params.id)]);
   if (!media) throw new ApiError(404, 'Media not found.');
-  const product = await db.get('SELECT sku FROM products WHERE id = $1', [req.params.id]);
+  const product = await db.get('SELECT sku FROM products WHERE id = $1', [productId(req.params.id)]);
   await db.query('DELETE FROM product_media WHERE id = $1', [media.id]); // authoritative — commits first
-  await removeR2ObjectForUrl(media.url); // best-effort cleanup after the DB delete commits
-  if (media.kind === 'video') await removePreview(media.url);
-  const p = path.join(env.rootDir, media.url.replace(/^\//, ''));
-  fs.unlink(p, () => {});
+  await removeMediaFiles([media]); // then its file(s), unless another row still uses them
   await writeAudit({ actor: req.adminUser.full_name, action: 'Removed media', target: product ? product.sku : `#${req.params.id}`, module: 'Products' });
   res.json({ data: { deleted: true } });
 }));
 
 router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute(async (req, res) => {
-  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [productId(req.params.id)]);
   if (!product) throw new ApiError(404, 'Product not found.');
-  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [req.params.mediaId, product.id]);
+  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [productId(req.params.mediaId), product.id]);
   if (!media) throw new ApiError(404, 'Media not found.');
   if (!req.file) throw new ApiError(400, 'No file uploaded.');
 
@@ -359,10 +435,7 @@ router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute
 
   if (newKind === 'video') await createAndStorePreview(req.file.path, newUrl);
   // DB UPDATE committed — only now clean up the superseded OLD media.
-  await removeR2ObjectForUrl(media.url);
-  if (media.kind === 'video') await removePreview(media.url);
-  const oldPath = path.join(env.rootDir, media.url.replace(/^\//, ''));
-  fs.unlink(oldPath, () => {});
+  await removeMediaFiles([media]);
 
   await writeAudit({ actor: req.adminUser.full_name, action: 'Edited media', target: product.sku, module: 'Products' });
   res.json({ data: { id: Number(media.id), kind: newKind, url: newUrl, originalName: req.file.originalname } });
@@ -374,9 +447,9 @@ router.put('/:id/media/:mediaId', upload.single('file'), convertHeic, asyncRoute
 // uploaded before this processing existed still has its full 9:16 frame to
 // choose from; one that's already square can be zoomed/shifted within it.
 router.post('/:id/media/:mediaId/reframe', asyncRoute(async (req, res) => {
-  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [productId(req.params.id)]);
   if (!product) throw new ApiError(404, 'Product not found.');
-  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [req.params.mediaId, product.id]);
+  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [productId(req.params.mediaId), product.id]);
   if (!media) throw new ApiError(404, 'Media not found.');
   if (media.kind !== 'video') throw new ApiError(400, 'Only videos can be re-framed here.');
   if (!String(media.url).startsWith('/uploads/')) throw new ApiError(400, 'This video is not stored by the site.');
@@ -418,9 +491,7 @@ router.post('/:id/media/:mediaId/reframe', asyncRoute(async (req, res) => {
   await db.query('UPDATE product_media SET url = $1, crop = NULL WHERE id = $2', [newUrl, media.id]);
   await createAndStorePreview(path.join(env.rootDir, newUrl.replace(/^\//, '')), newUrl);
   // Only after the database points at the new file is the old one removed.
-  await removeR2ObjectForUrl(media.url);
-  await removePreview(media.url);
-  fs.unlink(path.join(env.rootDir, media.url.replace(/^\//, '')), () => {});
+  await removeMediaFiles([media]);
   await writeAudit({ actor: req.adminUser.full_name, action: 'Re-framed video', target: product.sku, module: 'Products' });
   res.json({ data: { id: Number(media.id), kind: 'video', url: toPublicMediaUrl(newUrl), originalName: media.original_name } });
 }));
@@ -431,9 +502,9 @@ router.post('/:id/media/:mediaId/reframe', asyncRoute(async (req, res) => {
 // the shape the client already draws for image cropping. `crop: null`
 // clears it back to an uncropped, natural-aspect display.
 router.put('/:id/media/:mediaId/crop', asyncRoute(async (req, res) => {
-  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [productId(req.params.id)]);
   if (!product) throw new ApiError(404, 'Product not found.');
-  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [req.params.mediaId, product.id]);
+  const media = await db.get('SELECT * FROM product_media WHERE id = $1 AND product_id = $2', [productId(req.params.mediaId), product.id]);
   if (!media) throw new ApiError(404, 'Media not found.');
   if (media.kind !== 'video') throw new ApiError(400, 'Crop framing only applies to video media.');
 
@@ -461,7 +532,7 @@ router.put('/:id/media/:mediaId/crop', asyncRoute(async (req, res) => {
 // state, let the server reconcile" pattern as media reorder above), rather
 // than separate add/update/remove calls per row.
 router.put('/:id/variants', asyncRoute(async (req, res) => {
-  const product = await db.get('SELECT * FROM products WHERE id = $1', [req.params.id]);
+  const product = await db.get('SELECT * FROM products WHERE id = $1', [productId(req.params.id)]);
   if (!product) throw new ApiError(404, 'Product not found.');
   const variants = Array.isArray((req.body || {}).variants) ? req.body.variants : [];
 
